@@ -299,7 +299,7 @@ function D:RefreshList()
 					r.icon:SetTexture(t.icon)
 					r.label:SetText(t.name)
 					local isNew = not B.dex.tribes[t.id].viewed
-					r.right:SetText((isNew and "|cff3fa83f새|r  " or "") .. string.rep("★", s.rankDef.stars))
+					r.right:SetText((isNew and "|cff3fa83fNEW|r  " or "") .. string.rep("★", s.rankDef.stars))
 				else
 					r.icon:SetTexture(QUESTION)
 					r.icon:SetDesaturated(true)
