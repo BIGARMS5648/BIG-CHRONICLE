@@ -4,8 +4,8 @@
 local ADDON, ns = ...
 
 ns.TITLE = "BIG CHRONICLE"
-ns.ICON = "Interface\\AddOns\\" .. ADDON .. "\\Media\\Icon"  -- 글자 없는 두루마리 아이콘 (64×64 TGA)
-ns.VERSION = "1.2.0"
+ns.ICON = "Interface\\AddOns\\" .. ADDON .. "\\Media\\Icon"  -- 글자 없는 애드온 아이콘 (64×64 TGA)
+ns.VERSION = "1.3.0"
 _G.BigChronicle = ns
 
 do

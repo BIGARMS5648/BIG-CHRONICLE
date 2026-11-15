@@ -110,13 +110,13 @@ local function Layer()
 	return fxLayer
 end
 
-local function Acquire()
+local function Acquire(path, blend)
 	local tex = table.remove(freeTex)
 	if not tex then
 		tex = Layer():CreateTexture(nil, "OVERLAY")
-		tex:SetTexture(WHITE)
-		tex:SetBlendMode("ADD")
 	end
+	tex:SetTexture(path or WHITE)
+	tex:SetBlendMode(blend or "BLEND")
 	tex:Show()
 	return tex
 end
@@ -150,15 +150,20 @@ end)
 function E.Burst(x, y, opts)
 	if not Enabled() or not x or not y then return end
 	opts = opts or {}
-	local colors = opts.colors or { { 1, 0.85, 0.4 }, { 1, 0.95, 0.7 }, { 0.95, 0.65, 0.25 } }
+	-- 기본은 수첩에 어울리는 색종이 조각
+	local colors = opts.colors or { { 0.93, 0.47, 0.40 }, { 0.97, 0.80, 0.35 }, { 0.50, 0.68, 0.90 }, { 0.52, 0.76, 0.48 } }
 	local n = opts.count or 24
 	Layer()
 	for i = 1, n do
-		local tex = Acquire()
+		local tex = Acquire(opts.tex, opts.blend)
 		local c = colors[(i % #colors) + 1]
 		tex:SetVertexColor(c[1], c[2], c[3])
-		local size = math.random(3, opts.maxSize or 7)
-		tex:SetSize(size, size)
+		local size = math.random(opts.minSize or 4, opts.maxSize or 8)
+		if opts.tex then
+			tex:SetSize(size, size)
+		else
+			tex:SetSize(size, size * (0.45 + math.random() * 0.6)) -- 납작한 종이 조각
+		end
 		local ang = math.random() * math.pi * 2
 		local speed = (opts.speed or 140) * (0.4 + math.random() * 0.8)
 		particles[#particles + 1] = {
@@ -190,10 +195,24 @@ local clock = 0
 pulseDriver:SetScript("OnUpdate", function(self, dt)
 	clock = clock + dt
 	local any = false
+	local ended
 	for region, cfg in pairs(pulses) do
-		any = true
-		local a = cfg.min + (cfg.max - cfg.min) * (0.5 + 0.5 * math.sin(clock * cfg.speed))
-		region:SetAlpha(a)
+		if cfg.untilT and clock >= cfg.untilT then
+			ended = ended or {}
+			ended[#ended + 1] = region
+		else
+			any = true
+			local a = cfg.min + (cfg.max - cfg.min) * (0.5 + 0.5 * math.sin((clock - cfg.start) * cfg.speed - math.pi / 2))
+			region:SetAlpha(a)
+		end
+	end
+	if ended then
+		for _, region in ipairs(ended) do
+			local cfg = pulses[region]
+			pulses[region] = nil
+			-- 정해진 시간만 깜빡이고, 끝나면 은은하게 남기거나 숨긴다
+			if cfg.final and cfg.final > 0 then region:SetAlpha(cfg.final) else region:Hide() end
+		end
 	end
 	if not any then self:Hide() end
 end)
@@ -202,43 +221,38 @@ function E.Pulse(region, on, cfg)
 	if not region then return end
 	if on and Enabled() then
 		cfg = cfg or {}
-		pulses[region] = { min = cfg.min or 0.15, max = cfg.max or 0.9, speed = cfg.speed or 3 }
+		pulses[region] = { min = cfg.min or 0.15, max = cfg.max or 0.9, speed = cfg.speed or 3, start = clock,
+			untilT = cfg.duration and (clock + cfg.duration) or nil, final = cfg.final }
 		region:Show()
 		pulseDriver:Show()
 	else
 		pulses[region] = nil
-		if on then region:Show(); region:SetAlpha(cfg and cfg.max or 0.8) else region:Hide() end
+		if on then
+			region:Show()
+			region:SetAlpha(cfg and (cfg.final or cfg.max) or 0.8)
+		else
+			region:Hide()
+		end
 	end
 end
 
 ------------------------------------------------------------------------
 -- 도장 찍기: 커다랗게 떨어져 '쿵' 하고 자리 잡는다
 ------------------------------------------------------------------------
-function E.MakeSeal(parent, size, text)
+-- kind: "ach"(업적, 월계관 문양) / "dex"(도감, 발바닥 문양) / 그 밖(왕관 문양)
+function E.MakeSeal(parent, size, kind)
 	local f = CreateFrame("Frame", nil, parent)
 	f:SetSize(size, size)
-	local disc = f:CreateTexture(nil, "ARTWORK")
-	disc:SetAllPoints()
-	disc:SetTexture(WHITE)
-	disc:SetVertexColor(0.62, 0.10, 0.07)
-	if disc.SetMask then pcall(disc.SetMask, disc, CIRCLE_MASK) end
-	local ring = f:CreateTexture(nil, "OVERLAY")
-	ring:SetPoint("TOPLEFT", 4, -4)
-	ring:SetPoint("BOTTOMRIGHT", -4, 4)
-	ring:SetTexture(WHITE)
-	ring:SetVertexColor(0.85, 0.35, 0.28, 0.35)
-	if ring.SetMask then pcall(ring.SetMask, ring, CIRCLE_MASK) end
-	local inner = f:CreateTexture(nil, "OVERLAY", nil, 1)
-	inner:SetPoint("TOPLEFT", 7, -7)
-	inner:SetPoint("BOTTOMRIGHT", -7, 7)
-	inner:SetTexture(WHITE)
-	inner:SetVertexColor(0.55, 0.08, 0.05)
-	if inner.SetMask then pcall(inner.SetMask, inner, CIRCLE_MASK) end
-	local fs = f:CreateFontString(nil, "OVERLAY", UI.F.key)
-	fs:SetPoint("CENTER", 0, 0)
-	fs:SetTextColor(1, 0.82, 0.72)
-	fs:SetText(text or "")
-	f.text = fs
+	local tex = f:CreateTexture(nil, "OVERLAY")
+	tex:SetAllPoints()
+	if kind == "ach" or kind == "업적" then
+		tex:SetTexture(UI.TEX.sealAch)
+	elseif kind == "dex" or kind == "새 기록" then
+		tex:SetTexture(UI.TEX.sealDex)
+	else
+		tex:SetTexture(UI.TEX.seal)
+	end
+	f.tex = tex
 	f:Hide()
 	return f
 end
@@ -259,7 +273,9 @@ function E.Stamp(frame, key, holdFor)
 		frame:SetAlpha(math.min(1, p * 2.5))
 	end, function()
 		frame:SetScale(1)
-		E.BurstAt(frame, { count = 14, speed = 90, life = 0.7, colors = { { 1, 0.4, 0.3 }, { 1, 0.8, 0.5 } }, gravity = 60, lift = 20 })
+		-- 찍히는 순간 밀랍 부스러기가 튄다
+		E.BurstAt(frame, { count = 12, speed = 90, life = 0.6, tex = UI.TEX.ink, minSize = 3, maxSize = 6,
+			colors = { { 0.62, 0.10, 0.08 }, { 0.48, 0.06, 0.05 } }, gravity = 160, lift = 40 })
 		E.Sound("stamp")
 		if holdFor then
 			E.Tween((key or tostring(frame)) .. "-out", 0.6, function(p) frame:SetAlpha(1 - p) end,
@@ -313,73 +329,71 @@ end
 -- 장 제목 카드: 화면 가운데 영화 자막처럼 떠오른다
 ------------------------------------------------------------------------
 local card
-local function MakeFont(name, base, size)
+local function MakeFont(name, base, size, path, color)
 	local font = _G[name] or (CreateFont and CreateFont(name))
 	if not font then return end
 	local b = _G[base] or _G.GameFontNormalHuge
 	if b and font.CopyFontObject then pcall(font.CopyFontObject, font, b) end
-	if b and b.GetFont and font.SetFont then
-		local ok, path, _, flags = pcall(b.GetFont, b)
-		if ok and path then pcall(font.SetFont, font, path, size, flags or "") end
+	local applied = false
+	if path and font.SetFont then
+		local ok, res = pcall(font.SetFont, font, path, size, "")
+		applied = ok and res ~= false
 	end
-	if font.SetShadowOffset then font:SetShadowOffset(2, -2); font:SetShadowColor(0, 0, 0, 1) end
+	if not applied and b and b.GetFont and font.SetFont then
+		local ok, p, _, flags = pcall(b.GetFont, b)
+		if ok and p then pcall(font.SetFont, font, p, path and math.floor(size * 0.72) or size, flags or "") end
+	end
+	if font.SetShadowOffset then font:SetShadowOffset(0, 0) end
+	if color and font.SetTextColor then font:SetTextColor(color[1], color[2], color[3]) end
 end
 
 local function BuildCard()
 	if card then return card end
-	MakeFont("BigChronicleFontCinematic", "QuestTitleFont", 34)
-	MakeFont("BigChronicleFontCinematicSmall", "GameFontNormal", 14)
+	MakeFont("BigChronicleFontCinematic", "QuestTitleFont", 44, UI.PEN_FONT, { 0.12, 0.18, 0.38 })
+	MakeFont("BigChronicleFontCinematicLabel", "GameFontNormal", 22, UI.PEN_FONT, { 0.70, 0.17, 0.12 })
+	MakeFont("BigChronicleFontCinematicSmall", "GameFontNormal", 13, nil, { 0.25, 0.20, 0.15 })
 	local f = CreateFrame("Frame", "BigChronicleChapterCard", UIParent)
-	f:SetSize(900, 170)
-	f:SetPoint("CENTER", UIParent, "CENTER", 0, 150)
+	f:SetSize(640, 160)
+	f:SetPoint("CENTER", UIParent, "CENTER", 0, 170)
 	f:SetFrameStrata("FULLSCREEN_DIALOG")
 	f:EnableMouse(false)
 	f:Hide()
 
-	local shade = { 0, 0, 0, 0.6 }
-	local clear = { 0, 0, 0, 0 }
-	local bl = f:CreateTexture(nil, "BACKGROUND")
-	bl:SetPoint("TOPLEFT"); bl:SetPoint("BOTTOMRIGHT", f, "BOTTOM")
-	UI.Gradient(bl, "HORIZONTAL", clear, shade)
-	local br = f:CreateTexture(nil, "BACKGROUND")
-	br:SetPoint("TOPRIGHT"); br:SetPoint("BOTTOMLEFT", f, "BOTTOM")
-	UI.Gradient(br, "HORIZONTAL", shade, clear)
-	f.bg = { bl, br }
+	-- 수첩에서 찢어 낸 종이 띠 + 양쪽 끝 테이프
+	local strip = f:CreateTexture(nil, "BACKGROUND")
+	strip:SetAllPoints()
+	strip:SetTexture(UI.TEX.torn)
+	local grid = f:CreateTexture(nil, "BACKGROUND", nil, 1)
+	grid:SetPoint("TOPLEFT", 10, -18)
+	grid:SetPoint("BOTTOMRIGHT", -10, 18)
+	grid:SetTexture(UI.TEX.grid, "REPEAT", "REPEAT")
+	grid:SetTexCoord(0, 620 / 24, 0, 124 / 24)
+	grid:SetVertexColor(0.42, 0.60, 0.82, 0.22)
+	local tl = UI.Tape(f, 90, 24, 0.55)
+	tl:SetPoint("CENTER", f, "LEFT", 18, 30)
+	local tr = UI.Tape(f, 90, 24, -0.5)
+	tr:SetPoint("CENTER", f, "RIGHT", -18, 30)
 
-	local label = f:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicSmall")
-	label:SetPoint("TOP", 0, -26)
-	label:SetTextColor(0.95, 0.78, 0.4)
+	local label = f:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicLabel")
+	label:SetPoint("TOP", 0, -22)
 	f.label = label
 
 	local titleHolder = CreateFrame("Frame", nil, f)
-	titleHolder:SetSize(880, 50)
-	titleHolder:SetPoint("TOP", label, "BOTTOM", 0, -8)
+	titleHolder:SetSize(600, 56)
+	titleHolder:SetPoint("TOP", label, "BOTTOM", 0, -2)
 	local title = titleHolder:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematic")
 	title:SetPoint("CENTER")
-	title:SetTextColor(1, 0.9, 0.62)
 	f.title, f.titleHolder = title, titleHolder
 
-	local gold = { 0.95, 0.75, 0.35, 0.9 }
-	local goldClear = { 0.95, 0.75, 0.35, 0 }
-	local ll = f:CreateTexture(nil, "ARTWORK")
-	ll:SetHeight(1)
-	ll:SetPoint("RIGHT", f, "CENTER", -14, -20)
-	UI.Gradient(ll, "HORIZONTAL", goldClear, gold)
-	local lr = f:CreateTexture(nil, "ARTWORK")
-	lr:SetHeight(1)
-	lr:SetPoint("LEFT", f, "CENTER", 14, -20)
-	UI.Gradient(lr, "HORIZONTAL", gold, goldClear)
-	local gem = f:CreateTexture(nil, "OVERLAY")
-	gem:SetSize(8, 8)
-	gem:SetPoint("CENTER", f, "CENTER", 0, -20)
-	gem:SetColorTexture(1, 0.82, 0.45)
-	if gem.SetRotation then pcall(gem.SetRotation, gem, math.pi / 4) end
-	f.lines, f.gem = { ll, lr }, gem
-	ll:SetWidth(1); lr:SetWidth(1)
+	local under = f:CreateTexture(nil, "ARTWORK")
+	under:SetSize(320, 10)
+	under:SetPoint("TOP", titleHolder, "BOTTOM", 0, 6)
+	under:SetTexture(UI.TEX.underline)
+	under:SetVertexColor(0.70, 0.17, 0.12, 0.85)
+	f.under = under
 
 	local sub = f:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicSmall")
-	sub:SetPoint("TOP", f, "CENTER", 0, -32)
-	sub:SetTextColor(0.92, 0.88, 0.8)
+	sub:SetPoint("TOP", under, "BOTTOM", 0, -4)
 	f.sub = sub
 	card = f
 	return f
@@ -389,32 +403,29 @@ end
 function E.ShowCard(label, title, sub)
 	if not Enabled() then return end
 	local f = BuildCard()
-	f.label:SetText(label or "")
-	f.title:SetText(title or "")
+	f.label:SetText(UI.PenText(label or ""))
+	f.title:SetText(UI.PenText(title or ""))
 	f.sub:SetText(sub or "")
-	f:SetAlpha(1)
+	f:SetAlpha(0)
 	f:Show()
-	for _, t in ipairs(f.bg) do t:SetAlpha(0) end
-	f.label:SetAlpha(0); f.title:SetAlpha(0); f.sub:SetAlpha(0); f.gem:SetAlpha(0)
-	f.titleHolder:SetScale(1.15)
+	f.under:SetWidth(1)
 	E.Sound("chapter")
-	-- 1) 어두운 띠
-	E.Tween("card-bg", 0.4, function(p) for _, t in ipairs(f.bg) do t:SetAlpha(p) end end)
-	-- 2) 금빛 선이 가운데에서 양쪽으로
-	E.Tween("card-lines", 0.7, function(p)
-		local w = 1 + 300 * E.Ease.outCubic(p)
-		f.lines[1]:SetWidth(w); f.lines[2]:SetWidth(w)
-		f.gem:SetAlpha(p)
-	end, nil, 0.15)
-	-- 3) 글자
-	E.Tween("card-label", 0.4, function(p) f.label:SetAlpha(p) end, nil, 0.3)
-	E.Tween("card-title", 0.7, function(p)
-		f.title:SetAlpha(p)
-		f.titleHolder:SetScale(1.15 - 0.15 * E.Ease.outCubic(p))
-	end, nil, 0.45)
-	E.Tween("card-sub", 0.6, function(p) f.sub:SetAlpha(p) end, nil, 0.9)
-	-- 4) 잠시 머문 뒤 사라진다
-	E.Tween("card-out", 1.0, function(p) f:SetAlpha(1 - p) end, function() f:Hide() end, 4.6)
+	-- 1) 종이 띠가 위에서 툭 떨어져 테이프로 붙는다
+	E.Tween("card-in", 0.5, function(p)
+		local k = E.Ease.outBack(p)
+		f:ClearAllPoints()
+		f:SetPoint("CENTER", UIParent, "CENTER", 0, 170 + 50 * (1 - k))
+		f:SetAlpha(math.min(1, p * 2))
+		f.titleHolder:SetScale(1.08 - 0.08 * math.min(1, p))
+	end)
+	-- 2) 빨간 색연필로 밑줄을 쭉
+	E.Tween("card-under", 0.5, function(p) f.under:SetWidth(1 + 320 * E.Ease.outCubic(p)) end, nil, 0.45)
+	-- 3) 잠시 머문 뒤 위로 날아가며 사라진다
+	E.Tween("card-out", 0.8, function(p)
+		f:SetAlpha(1 - p)
+		f:ClearAllPoints()
+		f:SetPoint("CENTER", UIParent, "CENTER", 0, 170 + 30 * p)
+	end, function() f:Hide() end, 4.4)
 end
 
 -- 새 장(章)에 들어섰을 때
@@ -424,7 +435,7 @@ function E.ChapterCard(chIdx, isStart)
 	local num, name = ch.title:match("^(.-)%s*·%s*(.+)$")
 	num = num or ch.title
 	if isStart then
-		E.ShowCard("B I G   C H R O N I C L E", ns.PlayerName() .. "의 이야기가 시작됩니다", ch.title .. "  —  " .. ch.desc)
+		E.ShowCard("BIG CHRONICLE", ns.PlayerName() .. "의 도감 수첩, 첫 장", ch.title .. "  —  " .. ch.desc)
 	else
 		E.ShowCard(num:gsub("(%d+)", " %1 "), name or ch.title, ch.desc)
 	end

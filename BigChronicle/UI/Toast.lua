@@ -1,5 +1,5 @@
 -- BIG CHRONICLE :: 알림 팝업
--- 새로운 종족/개체/희귀 개체 발견 시 화면 위쪽에 작은 두루마리가 펼쳐지듯 나타난다
+-- 새로운 종족/개체/희귀 개체/업적을 발견하면 화면 위쪽에 테이프 붙은 포스트잇이 툭 떨어진다
 
 local ADDON, ns = ...
 local UI = ns.UI
@@ -14,18 +14,27 @@ local STYLE = {
 	achievement = { hold = 5.0, sound = { "UI_ALERT_ACHIEVEMENT", "UI_EPICLOOT_TOAST", "LEVELUPSOUND" } },
 }
 
-local OPEN, FADE_OUT = 0.3, 0.8
+local OPEN, FADE_OUT = 0.35, 0.7
+local TOP_Y, DROP = -120, 46
 
--- 알림 종류별 반짝이 색
+-- 알림 종류별 포스트잇 색
+local NOTE = {
+	species     = { 1.00, 0.93, 0.52 },
+	tribe       = { 0.72, 0.95, 0.68 },
+	rare        = { 0.86, 0.76, 1.00 },
+	rank        = { 1.00, 0.80, 0.60 },
+	achievement = { 1.00, 0.88, 0.55 },
+}
+-- 알림 종류별로 튀는 조각 (색종이 / 잉크 방울)
 local BURST = {
-	achievement = { { 1, 0.85, 0.35 }, { 1, 0.95, 0.65 }, { 0.95, 0.6, 0.2 } },
-	rank        = { { 1, 0.85, 0.35 }, { 1, 0.95, 0.65 } },
-	rare        = { { 0.8, 0.55, 1 }, { 0.95, 0.8, 1 }, { 0.6, 0.4, 1 } },
-	tribe       = { { 0.55, 1, 0.45 }, { 0.85, 1, 0.7 }, { 1, 0.9, 0.5 } },
-	species     = { { 1, 0.9, 0.6 } },
+	achievement = { colors = { { 0.93, 0.47, 0.40 }, { 0.97, 0.80, 0.35 }, { 0.50, 0.68, 0.90 }, { 0.52, 0.76, 0.48 } }, count = 30 },
+	rank        = { colors = { { 0.97, 0.80, 0.35 }, { 0.93, 0.47, 0.40 } }, count = 20 },
+	rare        = { colors = { { 0.42, 0.20, 0.62 }, { 0.30, 0.12, 0.48 } }, count = 18, tex = "ink" },
+	tribe       = { colors = { { 0.52, 0.76, 0.48 }, { 0.97, 0.80, 0.35 } }, count = 20 },
+	species     = { colors = { { 0.97, 0.85, 0.40 } }, count = 8 },
 }
 local MAX_QUEUE = 4
-local HEIGHT = 66
+local WIDTH, HEIGHT = 350, 98
 
 function Toast:Init()
 	self.queue = {}
@@ -34,52 +43,50 @@ end
 function Toast:Build()
 	if self.frame then return end
 	UI:InitTheme()
-	local col = UI.COL
 	local f = CreateFrame("Frame", "BigChronicleToast", UIParent)
-	f:SetSize(360, HEIGHT)
-	f:SetPoint("TOP", UIParent, "TOP", 0, -140)
+	f:SetSize(WIDTH, HEIGHT)
+	f:SetPoint("TOP", UIParent, "TOP", 0, TOP_Y)
 	f:SetFrameStrata("DIALOG")
-	f:SetClipsChildren(true)
-	UI.Paper(f, { vignette = 16 })
 	f:Hide()
 
-	local holder = CreateFrame("Frame", nil, UIParent)
-	holder:SetFrameStrata("DIALOG")
-	holder:SetAllPoints(f)
-	local topRoller = UI.Roller(holder, "TOP", 10)
-	local bottomRoller = UI.Roller(holder, "BOTTOM", 10)
-	holder:Hide()
-	f.holder = holder
+	local note = f:CreateTexture(nil, "BACKGROUND")
+	note:SetPoint("TOPLEFT", -8, 6)
+	note:SetPoint("BOTTOMRIGHT", 14, -16)
+	note:SetTexture(UI.TEX.sticky)
+	f.note = note
+	local tape = UI.Tape(f, 84, 24, -0.07)
+	tape:SetPoint("CENTER", f, "TOP", -6, 2)
 
 	local icon = f:CreateTexture(nil, "ARTWORK")
-	icon:SetSize(40, 40)
-	icon:SetPoint("LEFT", 16, 0)
+	icon:SetSize(42, 42)
+	icon:SetPoint("LEFT", 16, -4)
 	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	f.icon = icon
-	local ring = CreateFrame("Frame", nil, f)
-	ring:SetPoint("TOPLEFT", icon, -2, 2)
-	ring:SetPoint("BOTTOMRIGHT", icon, 2, -2)
-	UI.Outline(ring, { col.edge[1], col.edge[2], col.edge[3], 0.8 })
+	local frameLine = CreateFrame("Frame", nil, f)
+	frameLine:SetPoint("TOPLEFT", icon, -2, 2)
+	frameLine:SetPoint("BOTTOMRIGHT", icon, 2, -2)
+	UI.Outline(frameLine, { 0.20, 0.14, 0.08, 0.7 })
 
 	local title = UI.Text(f, UI.F.heading)
-	title:SetPoint("TOPLEFT", icon, "TOPRIGHT", 12, 0)
+	title:SetPoint("TOPLEFT", icon, "TOPRIGHT", 12, 4)
 	title:SetPoint("RIGHT", -14, 0)
 	f.title = title
 
 	local body = UI.Text(f, UI.F.body)
-	body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
+	body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -3)
 	body:SetPoint("RIGHT", -14, 0)
 	body:SetWordWrap(false)
+	body:SetTextColor(0.16, 0.13, 0.10)
 	f.body = body
 
-	local seal = ns.Effects.MakeSeal(f, 42, "업적")
-	seal:SetPoint("RIGHT", -12, 2)
+	local seal = ns.Effects.MakeSeal(f, 60, "ach")
+	seal:SetPoint("TOPRIGHT", -10, -6)
 	f.seal = seal
 
 	local brand = UI.Text(f, UI.F.tiny)
-	brand:SetPoint("BOTTOMRIGHT", -12, 7)
+	brand:SetPoint("BOTTOMRIGHT", -14, 8)
 	brand:SetJustifyH("RIGHT")
-	brand:SetText("BIG CHRONICLE")
+	brand:SetTextColor(0.35, 0.30, 0.24)
 	f.brand = brand
 
 	f:EnableMouse(true)
@@ -89,37 +96,41 @@ function Toast:Build()
 		Toast:Next()
 	end)
 
-	-- 두루마리가 위아래로 펼쳐졌다가 사라진다
+	local function place(dy)
+		f:ClearAllPoints()
+		f:SetPoint("TOP", UIParent, "TOP", 0, TOP_Y + dy)
+	end
+	-- 포스트잇이 툭 떨어져 붙었다가, 잠시 뒤 떼어져 사라진다
 	f:SetScript("OnUpdate", function(self, elapsed)
 		self.t = (self.t or 0) + elapsed
 		local hold = self.hold or 3
+		local E = ns.Effects
 		if self.t < OPEN then
-			local k = self.t / OPEN
-			k = 1 - (1 - k) * (1 - k)
-			self:SetHeight(math.max(4, HEIGHT * k))
-			self:SetAlpha(1)
-			self.holder:SetAlpha(1)
+			local p = self.t / OPEN
+			place(DROP * (1 - E.Ease.outBack(p)))
+			self:SetAlpha(math.min(1, p * 2))
 		elseif self.pendingFX then
-			-- 다 펼쳐진 순간: 반짝이가 튀고, 업적이면 도장이 쾅
+			-- 붙는 순간: 조각이 튀고, 업적이면 밀랍 인장이 쾅
 			local kind = self.pendingFX
 			self.pendingFX = nil
-			self:SetHeight(HEIGHT)
-			local colors = BURST[kind]
-			if colors then ns.Effects.BurstAt(self, { colors = colors, count = kind == "species" and 10 or 26, speed = 150 }) end
-			if kind == "achievement" then ns.Effects.Stamp(self.seal, "toast-seal") end
-		elseif self.t < OPEN + hold then
-			self:SetHeight(HEIGHT)
+			place(0)
 			self:SetAlpha(1)
+			local b = BURST[kind]
+			if b then
+				E.BurstAt(self, { colors = b.colors, count = b.count, speed = 150,
+					tex = b.tex == "ink" and UI.TEX.ink or nil, minSize = b.tex and 4 or nil, maxSize = b.tex and 9 or nil })
+			end
+			if kind == "achievement" then E.Stamp(self.seal, "toast-seal") end
+		elseif self.t < OPEN + hold then
+			-- 가만히 붙어 있는다
 		elseif self.t < OPEN + hold + FADE_OUT then
-			local a = 1 - (self.t - OPEN - hold) / FADE_OUT
-			self:SetAlpha(a)
-			self.holder:SetAlpha(a)
+			local p = (self.t - OPEN - hold) / FADE_OUT
+			self:SetAlpha(1 - p)
+			place(18 * p)
 		else
 			Toast:Next()
 		end
 	end)
-	f:SetScript("OnShow", function(self) self.holder:Show() end)
-	f:SetScript("OnHide", function(self) self.holder:Hide() end)
 	self.frame = f
 end
 
@@ -164,12 +175,19 @@ function Toast:Next()
 		f:Hide()
 		return
 	end
-	local col = UI.COL
 	local style = STYLE[item.kind] or STYLE.species
+	local tint = NOTE[item.kind] or NOTE.species
+	f.note:SetVertexColor(tint[1], tint[2], tint[3])
 	f.icon:SetTexture(item.icon or ns.ICON)
-	f.title:SetText(item.title)
-	local tc = (item.kind == "rare" and col.rare) or (item.kind == "tribe" and col.good) or (item.kind == "achievement" and col.title) or col.accent
-	f.title:SetTextColor(tc[1], tc[2], tc[3])
+	f.title:SetText(UI.PenText(item.title))
+	-- 포스트잇 위의 글씨는 테마와 상관없이 잉크 색
+	if item.kind == "rare" then
+		f.title:SetTextColor(0.42, 0.16, 0.58)
+	elseif item.kind == "achievement" or item.kind == "rank" then
+		f.title:SetTextColor(0.66, 0.16, 0.10)
+	else
+		f.title:SetTextColor(0.12, 0.21, 0.44)
+	end
 	f.body:SetText(item.body)
 	f.link = item.link
 	f.brand:SetText(item.link and (item.link.ach and "눌러서 업적 보기" or "눌러서 도감 보기") or "BIG CHRONICLE")
@@ -177,9 +195,9 @@ function Toast:Next()
 	f.t = 0
 	f.pendingFX = item.kind
 	f.seal:Hide()
-	f.body:SetPoint("RIGHT", item.kind == "achievement" and -62 or -14, 0)
-	f.title:SetPoint("RIGHT", item.kind == "achievement" and -62 or -14, 0)
-	f:SetHeight(4)
+	f.body:SetPoint("RIGHT", item.kind == "achievement" and -70 or -14, 0)
+	f.title:SetPoint("RIGHT", item.kind == "achievement" and -70 or -14, 0)
+	f:SetAlpha(0)
 	f:Show()
 	PlayStyleSound(style)
 end

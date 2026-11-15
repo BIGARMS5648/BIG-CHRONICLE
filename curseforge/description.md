@@ -79,31 +79,35 @@ Inspired by the Wrath-era achievements for classic (level 1–60) content, focus
 - **Battlegrounds, Reputation, Trials, Chronicle** — battles joined, exalted factions, your first death and deathless levels, personal notes and exports
 - **Little Joys** — playful achievements based on real-world dates: 7- and 30-day streaks, 100 days together, weekend warrior, night owl, New Year's Day…
 
-Every achievement unrolls a scroll notification and adds a short line of story to your journal.
+Every achievement drops a sticky note stamped with a red wax seal and adds a short line of story to your journal.
 
 ---
 
 ## ✨ Effects
 
-- The window **unrolls like a scroll** every time you open it
-- Reaching a new chapter shows a **cinematic chapter title** in the middle of the screen
-- Achievement notifications **stamp a wax seal** and burst with gold sparkles — purple for rare creatures, green for new tribes
-- The first time you open a newly found tribe, a **"new record" seal** thuds onto the page
+- The **leather cover flips open** every time you open the notebook
+- Reaching a new chapter drops a **torn, taped-on note with a handwritten chapter title**, underlined in red pen
+- Achievement notifications **stamp a red wax seal** with flying wax crumbs and confetti (ink drops for rare creatures, green confetti for new tribes)
+- The first time you open a newly found tribe, a **paw-print wax seal** thuds onto the page
 - Journal pages sweep across like a turning page
-- Newly earned achievements glow until you've seen them
+- Newly earned achievements sparkle for three seconds when you first see them, then keep a quiet NEW tag and a highlighter mark until you leave the tab
 - The **minimap button glows** when something new happened while the window was closed
 - Every effect can be turned off in the settings
 
 ---
 
-## 🎨 Scroll UI
+## 🎨 Field Notebook UI
 
-A **parchment scroll** window with wooden rollers at the top and bottom, inspired by immersive dialogue addons.
+The window looks like an adventurer's **leather-bound, spiral field notebook**.
 
-- **Parchment (light) and Dark** themes
+- A stitched **leather cover**, grid-paper pages, punched holes with **spiral rings** and a red bookmark ribbon
+- Colorful **index tabs** along the top (Journal, Bestiary, Achievements, Stats, Settings)
+- **Handwritten pen titles**, panels taped on with masking tape, **highlighter** for the selected line
+- Monster 3D models appear as a **polaroid photo** held by a paper clip; checkboxes are ticked in pen
+- **Cream notebook (light) and Night notebook (dark)** themes
 - Lore is revealed with a **typewriter effect** (click or press Space to show it all at once)
 - New journal entries gently fade in
-- Discovering a new tribe or rare creature unrolls a **small scroll notification** at the top of the screen — click it to jump straight to that creature's bestiary page
+- Discovering a new tribe or rare creature drops a **taped sticky note** at the top of the screen — click it to jump straight to that creature's bestiary page
 - **Keyboard shortcuts**: `1–5` switch tabs · `←/→` turn journal pages · `↑/↓` browse the bestiary · `Space` skip the typewriter · `Esc` close (disabled automatically in combat)
 
 ---
@@ -155,3 +159,12 @@ Please leave bug reports and ideas in the comments. Typing `/bc debug` shows int
 ## Special thanks
 
 루마 · 절미 · 판초네 콘체타 · KLEROS
+
+---
+
+## Credits for free assets
+
+- Paper and leather textures: [Subtle Patterns](https://github.com/atlemo/SubtlePatterns) — CC BY-SA 3.0
+- Icons and wax seal design: [game-icons.net](https://game-icons.net) (Lorc, Delapouite and contributors) — CC BY 3.0
+- Handwriting font: Nanum Pen Script (NHN) — SIL Open Font License 1.1
+- Full details are in `Media/LICENSES.txt` inside the addon folder

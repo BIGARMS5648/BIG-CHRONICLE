@@ -350,9 +350,9 @@ local okFx, errFx = pcall(function()
 	assert((ns.Minimap.news or 0) >= 1 and ns.Minimap.button.glow:IsShown(), "minimap glows for news")
 	ns.UI:Open("journal")
 	assert((ns.Minimap.news or 0) == 0 and not ns.Minimap.button.glow:IsShown(), "opening clears news")
-	assert(f.clip:GetHeight() < 100, "scroll starts rolled up")
+	assert(f.flap:IsShown() and f.flap:GetWidth() > 900, "notebook starts with the cover closed")
 	run(1)
-	assert(f.clip:GetHeight() > 640, "scroll unrolls fully")
+	assert(not f.flap:IsShown(), "cover flips open")
 	-- 장 제목 카드
 	ns:Fire("CHAPTER_STARTED", 2)
 	local card = _G.BigChronicleChapterCard
@@ -382,10 +382,26 @@ local okFx, errFx = pcall(function()
 	assert(ns.JournalTab.sweep:IsShown(), "page sweep runs")
 	run(1)
 	assert(not ns.JournalTab.sweep:IsShown(), "page sweep ends")
+	-- 업적 NEW: 3초만 반짝이고 멈춘다, 다시 그려도 다시 깜빡이지 않는다
+	ns.char.ach.unseen = { level10 = true }
+	ns.UI:SelectTab("achievements")
+	ns.AchievementsTab.cat = "growth"; ns.AchievementsTab:Refresh(true)
+	local row
+	for _, r in ipairs(ns.AchievementsTab.pool.items) do if r:IsShown() and r.def and r.def.id == "level10" then row = r end end
+	assert(row and row.newTag:IsShown() and row.glow:IsShown(), "new achievement shows NEW and glows")
+	run(1)
+	local mid = row.glow:GetAlpha()
+	run(3)
+	assert(math.abs(row.glow:GetAlpha() - 0.35) < 0.001, "blink stops after 3 seconds (alpha " .. tostring(row.glow:GetAlpha()) .. ")")
+	ns.AchievementsTab:Refresh()
+	run(1)
+	assert(math.abs(row.glow:GetAlpha() - 0.35) < 0.001 and row.newTag:IsShown(), "refresh does not restart the blink")
+	ns.UI:SelectTab("journal")
+	assert(next(ns.AchievementsTab.sessionNew) == nil, "leaving the tab clears NEW")
 	-- 연출을 끄면 바로 펼쳐진다
 	ns.db.effects = false
 	f:Hide(); ns.UI:Open("journal")
-	assert(f.clip:GetHeight() > 640, "no animation when effects are off")
+	assert(not f.flap:IsShown(), "no animation when effects are off")
 	ns:Fire("CHAPTER_STARTED", 3)
 	ns.db.effects = true
 end)

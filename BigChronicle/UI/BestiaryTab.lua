@@ -51,7 +51,7 @@ function D:Create(parent)
 	self.panel = p
 
 	-- 왼쪽: 완성도 + 검색 + 목록
-	local left = UI.Section(p)
+	local left = UI.Section(p, { tape = true, tapeX = -40 })
 	left:SetPoint("TOPLEFT", 0, 0)
 	left:SetPoint("BOTTOMLEFT", 0, 0)
 	left:SetWidth(LIST_W)
@@ -92,19 +92,34 @@ function D:Create(parent)
 	self.listScroll = listScroll
 	self.listPool = UI.Pool(function() return D:CreateListRow(listScroll.child) end)
 
-	-- 오른쪽 카드: 모델 + 개체 정보
-	local card = UI.Section(p)
+	-- 오른쪽 카드: 테이프로 붙인 폴라로이드 사진 + 개체 메모
+	local card = UI.Section(p, { tint = col.page })
 	card:SetPoint("TOPRIGHT", 0, 0)
 	card:SetPoint("BOTTOMRIGHT", 0, 0)
 	card:SetWidth(CARD_W)
 	self.card = card
 
-	local stage = UI.Section(card)
-	stage:SetPoint("TOPLEFT", 8, -8)
-	stage:SetPoint("TOPRIGHT", -8, -8)
-	stage:SetHeight(178)
-	UI.Color(stage.bg, col.shade, (col.shade[4] or 0.07) * 2.2)
-	UI.Outline(stage, { col.edge[1], col.edge[2], col.edge[3], 0.45 })
+	local polaroid = CreateFrame("Frame", nil, card)
+	polaroid:SetPoint("TOPLEFT", 12, -14)
+	polaroid:SetPoint("TOPRIGHT", -12, -14)
+	polaroid:SetHeight(222)
+	UI.Paper(polaroid, { tint = { 1, 1, 0.98 }, shadow = 0.35 })
+	self.polaroid = polaroid
+	local tape = UI.Tape(polaroid, 86, 22, 0.06)
+	tape:SetPoint("CENTER", polaroid, "TOP", 0, 2)
+	local clipTex = card:CreateTexture(nil, "OVERLAY", nil, 7)
+	clipTex:SetSize(18, 72)
+	clipTex:SetPoint("TOPRIGHT", card, "TOPRIGHT", -18, 20)
+	clipTex:SetTexture(UI.TEX.clip)
+
+	local stage = CreateFrame("Frame", nil, polaroid)
+	stage:SetPoint("TOPLEFT", 10, -10)
+	stage:SetPoint("TOPRIGHT", -10, -10)
+	stage:SetHeight(172)
+	local stageBg = stage:CreateTexture(nil, "BACKGROUND")
+	stageBg:SetAllPoints()
+	UI.Gradient(stageBg, "VERTICAL", { 0.10, 0.09, 0.08, 1 }, { 0.26, 0.23, 0.20, 1 })
+	stage.bg = stageBg
 	self.stage = stage
 
 	local ok, model = pcall(CreateFrame, "PlayerModel", nil, stage)
@@ -128,41 +143,43 @@ function D:Create(parent)
 		self.model = model
 	end
 	local bigIcon = stage:CreateTexture(nil, "ARTWORK")
-	bigIcon:SetSize(72, 72)
-	bigIcon:SetPoint("CENTER", 0, 14)
+	bigIcon:SetSize(64, 64)
+	bigIcon:SetPoint("CENTER", 0, 12)
 	bigIcon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	self.bigIcon = bigIcon
 	local modelHint = UI.Text(stage, UI.F.tiny)
-	modelHint:SetPoint("TOP", bigIcon, "BOTTOM", 0, -10)
-	modelHint:SetWidth(CARD_W - 30)
+	modelHint:SetPoint("TOP", bigIcon, "BOTTOM", 0, -8)
+	modelHint:SetWidth(CARD_W - 50)
 	modelHint:SetJustifyH("CENTER")
+	modelHint:SetTextColor(0.85, 0.82, 0.76)
 	self.modelHint = modelHint
 	local rotateHint = UI.Text(stage, UI.F.tiny)
-	rotateHint:SetPoint("BOTTOM", 0, 6)
+	rotateHint:SetPoint("BOTTOM", 0, 5)
 	rotateHint:SetJustifyH("CENTER")
 	rotateHint:SetText("드래그하여 돌려 보기")
+	rotateHint:SetTextColor(0.85, 0.82, 0.76)
 	self.rotateHint = rotateHint
 
-	local cardName = card:CreateFontString(nil, "OVERLAY", UI.F.header)
-	cardName:SetPoint("TOPLEFT", stage, "BOTTOMLEFT", 4, -10)
-	cardName:SetWidth(CARD_W - 24)
-	cardName:SetJustifyH("LEFT")
+	-- 사진 아래 여백에 손글씨로 이름
+	local cardName = polaroid:CreateFontString(nil, "OVERLAY", UI.F.header)
+	cardName:SetPoint("TOPLEFT", stage, "BOTTOMLEFT", 2, -6)
+	cardName:SetPoint("TOPRIGHT", stage, "BOTTOMRIGHT", -2, -6)
+	cardName:SetJustifyH("CENTER")
+	cardName:SetWordWrap(false)
 	self.cardName = cardName
-	local cardRule = UI.Rule(card, 0.4)
-	cardRule:SetPoint("TOPLEFT", cardName, "BOTTOMLEFT", 0, -6)
-	cardRule:SetWidth(CARD_W - 24)
-	local reassign = UI.Button(card, "종족 다시 분류", CARD_W - 20, 24, function()
+
+	local reassign = UI.Button(card, "종족 다시 분류", CARD_W - 24, 26, function()
 		if D.species then D:ShowReassign(D.species) end
 	end)
-	reassign:SetPoint("BOTTOM", 0, 10)
-
-	local cardInfo = UI.Text(card, UI.F.small, col.text)
-	cardInfo:SetPoint("TOPLEFT", cardName, "BOTTOMLEFT", 0, -13)
-	cardInfo:SetPoint("BOTTOMRIGHT", reassign, "TOPRIGHT", -6, 8)
-	cardInfo:SetSpacing(3)
-	self.cardInfo = cardInfo
+	reassign:SetPoint("BOTTOM", 0, 12)
 	UI.Tooltip(reassign, "종족 다시 분류", "자동 분류가 틀렸다면 이 개체가 속한 종족을 직접 정할 수 있습니다.\n(목록에서 개체를 오른쪽 클릭해도 됩니다)")
 	self.reassignBtn = reassign
+
+	local cardInfo = UI.Text(card, UI.F.small, col.text)
+	cardInfo:SetPoint("TOPLEFT", polaroid, "BOTTOMLEFT", 2, -12)
+	cardInfo:SetPoint("BOTTOMRIGHT", reassign, "TOPRIGHT", -2, 8)
+	cardInfo:SetSpacing(3)
+	self.cardInfo = cardInfo
 
 	-- 가운데: 상세 (종이 위에 바로)
 	local mid = CreateFrame("Frame", nil, p)
@@ -171,7 +188,7 @@ function D:Create(parent)
 	mid:EnableMouse(true)
 	mid:SetScript("OnMouseDown", function() UI.FinishTyping() end) -- 클릭하면 글을 바로 끝까지 보여 준다
 	self.mid = mid
-	local stamp = ns.Effects.MakeSeal(mid, 58, "새 기록")
+	local stamp = ns.Effects.MakeSeal(mid, 76, "dex")
 	stamp:SetPoint("TOPRIGHT", -18, -6)
 	stamp:SetFrameLevel(mid:GetFrameLevel() + 30)
 	self.stamp = stamp
@@ -494,6 +511,7 @@ function D:DrawTribe(id)
 	no:SetFontObject(UI.F.tiny)
 	no:SetTextColor(Col(col.accent))
 	no:SetWidth(self.width - 60)
+	no:SetJustifyH("LEFT")
 	no:ClearAllPoints()
 	no:SetPoint("TOPLEFT", icon, "TOPRIGHT", 12, -1)
 	no:SetText(B:FormatNo(id) .. (found and def.en and def.en ~= def.name and ("   ·   " .. def.en) or ""))
@@ -502,6 +520,7 @@ function D:DrawTribe(id)
 	head:SetFontObject(UI.F.title)
 	head:SetTextColor(Col(col.title))
 	head:SetWidth(self.width - 60)
+	head:SetJustifyH("LEFT")
 	head:ClearAllPoints()
 	head:SetPoint("TOPLEFT", no, "BOTTOMLEFT", 0, -3)
 	head:SetText(found and def.name or "???")
@@ -509,6 +528,7 @@ function D:DrawTribe(id)
 	local sub = self.textPool:Acquire()
 	sub:SetFontObject(UI.F.small)
 	sub:SetWidth(self.width - 60)
+	sub:SetJustifyH("LEFT")
 	sub:ClearAllPoints()
 	sub:SetPoint("TOPLEFT", head, "BOTTOMLEFT", 0, -4)
 	if found then
@@ -530,7 +550,9 @@ function D:DrawTribe(id)
 	elseif not found or firstView then
 		self.stamp:Hide()
 	end
-	self.y = self.y + 66
+	-- 손글씨 제목은 줄 높이가 커서, 실제 글자 높이로 다음 줄 위치를 잡는다
+	local headH = (no:GetStringHeight() or 12) + 3 + (head:GetStringHeight() or 30) + 4 + (sub:GetStringHeight() or 14)
+	self.y = self.y + math.max(56, headH) + 12
 
 	if not found then
 		local hint = self:Text("“" .. (def.hint or "...") .. "”", UI.F.body, col.sub, 0, 12)
@@ -709,8 +731,8 @@ function D:RefreshCard()
 		self.bigIcon:SetDesaturated(not found)
 		self.modelHint:Show()
 		self.modelHint:SetText(found and "개체를 선택하면\n그 모습이 이곳에 나타납니다." or "")
-		self.cardName:SetText(found and def.name or (def and "???" or "도감"))
-		self.cardName:SetTextColor(Col(col.title))
+		self.cardName:SetText(UI.PenText(found and def.name or (def and "???" or "도감")))
+		self.cardName:SetTextColor(0.12, 0.21, 0.44) -- 폴라로이드는 늘 흰 종이라 잉크 색 고정
 		local info = ""
 		if found then
 			local s = B:CollectAll()[def.id]
@@ -745,11 +767,11 @@ function D:RefreshCard()
 	self.modelHint:SetShown(not showedModel)
 	self.modelHint:SetText(showedModel and "" or "모습을 불러올 수 없습니다.")
 
-	self.cardName:SetText(name)
+	self.cardName:SetText(UI.PenText(name))
 	if B.IsRare(c.cls) then
-		self.cardName:SetTextColor(Col(col.rare))
+		self.cardName:SetTextColor(0.42, 0.16, 0.58)
 	else
-		self.cardName:SetTextColor(Col(col.creature))
+		self.cardName:SetTextColor(0.05, 0.33, 0.40)
 	end
 
 	local lines = {}

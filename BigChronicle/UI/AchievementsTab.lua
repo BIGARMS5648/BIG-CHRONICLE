@@ -9,6 +9,7 @@ local NAV_W = 206
 local ROW_H = 52
 
 T.cat = nil         -- nil = 전체
+T.sessionNew = {}   -- 이번에 처음 본 새 업적 (탭을 떠날 때까지 NEW 표시)
 T.filter = "all"    -- all / done / todo
 
 local function Col(c) return c[1], c[2], c[3] end
@@ -25,14 +26,14 @@ function T:Create(parent)
 	local p = CreateFrame("Frame", nil, parent)
 	p:SetAllPoints()
 	self.panel = p
-	-- 업적 탭을 떠나면 '새로 이룬' 표시를 지운다
+	-- 업적 탭을 떠나면 NEW 표시를 지운다
 	p:SetScript("OnHide", function()
-		if ns.char and ns.char.ach.unseen then wipe(ns.char.ach.unseen) end
+		wipe(T.sessionNew)
 		if self.pool then for _, r in ipairs(self.pool.items) do ns.Effects.Pulse(r.glow, false) end end
 	end)
 
 	-- 왼쪽: 점수와 분류
-	local nav = UI.Section(p)
+	local nav = UI.Section(p, { tape = true, tapeX = 30 })
 	nav:SetPoint("TOPLEFT", 0, 0)
 	nav:SetPoint("BOTTOMLEFT", 0, 0)
 	nav:SetWidth(NAV_W)
@@ -57,7 +58,7 @@ function T:Create(parent)
 	for _, c in ipairs(ns.ACH_CATS) do cats[#cats + 1] = c end
 	for i, c in ipairs(cats) do
 		local r = UI.NavRow(nav, 22)
-		r:SetPoint("TOPLEFT", nav, "TOPLEFT", 0, -92 - (i - 1) * 23)
+		r:SetPoint("TOPLEFT", nav, "TOPLEFT", 0, -122 - (i - 1) * 23)
 		r:SetPoint("RIGHT", nav, "RIGHT", 0, 0)
 		r.label:SetText(c.name)
 		r.cat = c.id
@@ -91,11 +92,11 @@ function T:Create(parent)
 	desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -5)
 	self.desc = desc
 	local rule = UI.Rule(main, 0.4)
-	rule:SetPoint("TOPLEFT", 0, -46)
-	rule:SetPoint("TOPRIGHT", 0, -46)
+	rule:SetPoint("TOPLEFT", 0, -58)
+	rule:SetPoint("TOPRIGHT", 0, -58)
 
 	local scroll = UI.Scroll(main)
-	scroll:SetPoint("TOPLEFT", 0, -54)
+	scroll:SetPoint("TOPLEFT", 0, -66)
 	scroll:SetPoint("BOTTOMRIGHT", -14, 4)
 	self.scroll = scroll
 	self.pool = UI.Pool(function() return T:CreateRow(scroll.child) end)
@@ -129,6 +130,12 @@ function T:CreateRow(parent)
 	icon:SetPoint("LEFT", 8, 0)
 	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	r.icon = icon
+	local check = r:CreateTexture(nil, "OVERLAY", nil, 3)
+	check:SetSize(30, 30)
+	check:SetPoint("CENTER", icon, "BOTTOMRIGHT", 0, 6)
+	check:SetTexture(UI.TEX.check)
+	UI.Tint(check, col.good)
+	r.check = check
 	local name = r:CreateFontString(nil, "OVERLAY", UI.F.heading)
 	name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 10, -1)
 	name:SetJustifyH("LEFT")
@@ -225,15 +232,28 @@ function T:Refresh(resetScroll)
 			r:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 0, -y)
 			r:SetWidth(width)
 			r.def, r.done = def, isDone
-			local unseen = ach.unseen and ach.unseen[def.id]
-			r.newTag:SetShown(unseen and true or false)
-			ns.Effects.Pulse(r.glow, unseen and true or false, { min = 0.1, max = 1, speed = 4 })
+			-- 새로 이룬 업적: 처음 보여 줄 때 3초 동안만 반짝이고, NEW 표시는 탭을 떠날 때까지 남는다
+			local isNewNow = ach.unseen and ach.unseen[def.id]
+			if isNewNow then
+				ach.unseen[def.id] = nil
+				T.sessionNew[def.id] = true
+				ns.Effects.Pulse(r.glow, true, { min = 0.05, max = 0.9, speed = 5, duration = 3, final = 0.35 })
+			elseif T.sessionNew[def.id] then
+				-- 이미 한 번 반짝인 업적은 다시 그릴 때 은은한 바탕만 남긴다
+				ns.Effects.Pulse(r.glow, false)
+				r.glow:Show()
+				r.glow:SetAlpha(0.35)
+			else
+				ns.Effects.Pulse(r.glow, false)
+			end
+			r.newTag:SetShown(T.sessionNew[def.id] and true or false)
 			if self.focusId == def.id then
 				self.focusRowY = y
 				UI.FadeIn(r, 0.6)
 			end
 			r.icon:SetTexture(def.icon)
 			r.icon:SetDesaturated(not isDone)
+			r.check:SetShown(isDone)
 			r.icon:SetAlpha(isDone and 1 or 0.55)
 			r.name:SetText(def.name)
 			r.desc:SetText(def.desc)

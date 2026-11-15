@@ -448,6 +448,46 @@ if not ok then issue("UI 오류: " .. tostring(err)) end
 for _, e in ipairs(ns.errors) do issue("런타임 오류(UI): " .. e) end
 
 ------------------------------------------------------------------------
+-- 미리보기 장면 저장 (PREVIEW_DIR 가 있으면 화면마다 JSON을 남긴다 → tests/preview/render.py)
+------------------------------------------------------------------------
+local pdir = os.getenv("PREVIEW_DIR")
+if pdir then
+	local function step(n) for _ = 1, n do M.runOnUpdate(0.05) end end
+	local function settle() step(80); M.runTimers(); ns.UI.FinishTyping() end
+	-- 앞선 재접속 시험에서 남은 프레임까지 모두 숨기고, 지금 창만 남긴다
+	local function clean()
+		if ns.Toast.frame then ns.Toast.queue = {} end
+		for _, c in ipairs(UIParent.__children) do
+			if c ~= ns.UI.frame then c:Hide() end
+		end
+	end
+	local function dump(name) clean(); M.Dump(pdir .. "/" .. name .. ".json") end
+	-- PREVIEW_THEME=dark 이면 테마를 바꾸고 다시 접속해서 찍는다
+	local theme = os.getenv("PREVIEW_THEME")
+	if theme then
+		ns.db.theme = theme
+		relog(5)
+	end
+	clean()
+	ns.UI:Open("journal")
+	local f = ns.UI.frame
+	f:Hide(); ns.UI:Open("journal"); settle(); dump("journal")
+	ns.UI:SelectTab("bestiary")
+	ns.BestiaryTab:SelectTribe("centaur")
+	for name, c in pairs(ns.Bestiary.dex.creatures) do if c.tribe == "centaur" then ns.BestiaryTab.species = name end end
+	ns.BestiaryTab:Refresh(); settle(); dump("bestiary")
+	ns.UI:SelectTab("achievements"); ns.AchievementsTab.cat = nil; ns.AchievementsTab:Refresh(true); settle(); dump("achievements")
+	ns.UI:SelectTab("stats"); settle(); dump("stats")
+	ns.UI:SelectTab("settings"); settle(); dump("settings")
+	f:Hide(); ns.UI:Open("journal"); step(5); dump("opening"); settle()
+	f:Hide()
+	ns.Toast:Show("업적 달성!", "「백 가지 이야기」   +10점", "Interface\\Icons\\INV_Misc_Note_01", "achievement", { ach = "quest100" })
+	step(14); M.Dump(pdir .. "/toast.json"); settle()
+	ns:Fire("CHAPTER_STARTED", 4); step(24); M.Dump(pdir .. "/chapter.json"); settle()
+	print("== 미리보기 장면 저장: " .. pdir)
+end
+
+------------------------------------------------------------------------
 -- 출력
 ------------------------------------------------------------------------
 if not quiet then

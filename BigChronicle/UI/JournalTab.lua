@@ -22,16 +22,23 @@ function UI.NavRow(parent, height)
 	local b = CreateFrame("Button", nil, parent)
 	b:SetHeight(height or 24)
 	local sel = b:CreateTexture(nil, "BACKGROUND")
-	sel:SetAllPoints()
-	UI.Color(sel, C.sel)
+	sel:SetPoint("TOPLEFT", 2, -2)
+	sel:SetPoint("BOTTOMRIGHT", -4, 1)
+	sel:SetTexture(UI.TEX.tape)
+	UI.Tint(sel, C.sel)
 	sel:Hide()
+	-- 선택 표시: 빨간 색연필로 그은 짧은 줄
 	local bar = b:CreateTexture(nil, "ARTWORK")
-	bar:SetPoint("TOPLEFT"); bar:SetPoint("BOTTOMLEFT"); bar:SetWidth(3)
-	UI.Color(bar, C.accent)
+	bar:SetPoint("LEFT", -2, 0)
+	bar:SetSize(10, 6)
+	bar:SetTexture(UI.TEX.underline)
+	UI.Tint(bar, C.accent)
 	bar:Hide()
 	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetAllPoints()
-	UI.Color(hl, C.hover)
+	hl:SetPoint("TOPLEFT", 2, -2)
+	hl:SetPoint("BOTTOMRIGHT", -4, 1)
+	hl:SetTexture(UI.TEX.tape)
+	UI.Tint(hl, C.hover)
 	local label = UI.Text(b, UI.F.body)
 	label:SetPoint("LEFT", 10, 0)
 	label:SetJustifyV("MIDDLE")
@@ -72,21 +79,21 @@ function J:Create(parent)
 	end
 
 	-- 왼쪽: 장 목록 + 분류 필터
-	local nav = UI.Section(p)
+	local nav = UI.Section(p, { tape = true, tapeX = 20 })
 	nav:SetPoint("TOPLEFT", 0, 0)
 	nav:SetPoint("BOTTOMLEFT", 0, 0)
 	nav:SetWidth(NAV_W)
 
 	local h1 = UI.Text(nav, UI.F.heading)
-	h1:SetPoint("TOPLEFT", 10, -10)
-	h1:SetText("전기의 장(章)")
+	h1:SetPoint("TOPLEFT", 12, -12)
+	h1:SetText("전기의 장")
 
 	self.chapterButtons = {}
 	local prev = h1
 	for i = 0, #C.CHAPTERS do
 		local b = UI.NavRow(nav, 23)
 		b.label:SetText(i == 0 and "전체 기록" or C.CHAPTERS[i].title)
-		b:SetPoint("TOPLEFT", nav, "TOPLEFT", 0, -32 - i * 24)
+		b:SetPoint("TOPLEFT", nav, "TOPLEFT", 4, -40 - i * 24)
 		b:SetPoint("RIGHT", nav, "RIGHT", 0, 0)
 		b.onClick = function()
 			local changed = J.chapter ~= i
@@ -146,11 +153,11 @@ function J:Create(parent)
 	desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -5)
 	self.desc = desc
 	local rule = UI.Rule(main, 0.4)
-	rule:SetPoint("TOPLEFT", 0, -46)
-	rule:SetPoint("TOPRIGHT", 0, -46)
+	rule:SetPoint("TOPLEFT", 0, -58)
+	rule:SetPoint("TOPRIGHT", 0, -58)
 
 	local scroll = UI.Scroll(main)
-	scroll:SetPoint("TOPLEFT", 4, -54)
+	scroll:SetPoint("TOPLEFT", 4, -66)
 	scroll:SetPoint("BOTTOMRIGHT", -14, 72)
 	self.scroll = scroll
 	self.sweep = ns.Effects.MakeSweep(main)
@@ -269,7 +276,7 @@ function J:Refresh(keepScroll, reason)
 	if self.chapter == 0 then
 		self.title:SetText("전체 기록")
 	else
-		self.title:SetText(C.CHAPTERS[self.chapter].title)
+		self.title:SetText(UI.PenText(C.CHAPTERS[self.chapter].title))
 	end
 	if #list > 0 then
 		local first, last = list[1].e, list[#list].e
