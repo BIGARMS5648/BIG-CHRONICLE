@@ -246,6 +246,7 @@ function UI:Build()
 	end)
 	f:SetScript("OnHide", function()
 		UI.FinishTyping()
+		if ns.Effects and ns.Effects.Enabled() then ns.Effects.Sound("close") end
 	end)
 	f:SetScript("OnKeyDown", function(self, key)
 		if InCombatLockdown and InCombatLockdown() then return end

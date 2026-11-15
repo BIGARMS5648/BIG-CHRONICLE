@@ -162,13 +162,21 @@ def wax_seal(base_mask, emblem_mask, out_size=128, color=(150, 22, 18)):
         engraved = ImageChops.subtract(blob, base_mask)  # 원래 도안의 문양 부분
     else:
         # 다른 문양을 가운데에 눌러 찍는다
-        em = emblem_mask.resize((int(S * 0.46), int(S * 0.46)), Image.LANCZOS)
+        # 원래 도안에 파여 있던 둥근 자리(문양 영역)를 재서, 원과 문양을 정확히 그 가운데에 맞춘다
+        hollow = ImageChops.subtract(blob, base_mask).point(lambda v: 255 if v > 127 else 0)
+        x0, y0, x1, y1 = hollow.getbbox()
+        c = ((x0 + x1) / 2, (y0 + y1) / 2)
+        r1 = min(x1 - x0, y1 - y0) / 2          # 원 바깥 반지름 = 원래 파인 자리
+        r2 = r1 * 0.90
+        # 문양은 여백을 잘라 낸 뒤, 원 안에 여유 있게 들어가도록 줄여 한가운데에 놓는다
+        eb = emblem_mask.point(lambda v: 255 if v > 127 else 0).getbbox()
+        em = emblem_mask.crop(eb)
+        fit = (2 * r2 * 0.96) / math.hypot(*em.size)
+        em = em.resize((max(1, int(em.size[0] * fit)), max(1, int(em.size[1] * fit))), Image.LANCZOS)
         layer = Image.new("L", (S, S), 0)
-        layer.paste(em, ((S - em.size[0]) // 2 - int(S * 0.02), (S - em.size[1]) // 2 + int(S * 0.01)))
+        layer.paste(em, (int(round(c[0] - em.size[0] / 2)), int(round(c[1] - em.size[1] / 2))))
         ring = Image.new("L", (S, S), 0)
         d = ImageDraw.Draw(ring)
-        r1, r2 = S * 0.33, S * 0.305
-        c = (S * 0.48, S * 0.51)
         d.ellipse((c[0] - r1, c[1] - r1, c[0] + r1, c[1] + r1), fill=255)
         d.ellipse((c[0] - r2, c[1] - r2, c[0] + r2, c[1] + r2), fill=0)
         engraved = ImageChops.lighter(layer, ring)
@@ -403,6 +411,19 @@ def main():
         p.unlink()
     for n in ICONS:
         save_tga(mask_icon(masks[n], 64), f"Icons/{n}.tga")
+    # 효과: Kenney 입자 팩(CC0)과 RPG 오디오(CC0). 캐시 폴더의 kenney/ 에 받아 둔 파일을 쓴다.
+    K = CACHE / "kenney"
+    (MEDIA / "FX").mkdir(exist_ok=True)
+    (MEDIA / "Sounds").mkdir(exist_ok=True)
+    for src, dst in (("star_06", "Star"), ("light_01", "Glow"), ("dirt_02", "Crumb"), ("magic_05", "Magic")):
+        g = Image.open(K / f"p_{src}.png").convert("RGBA")
+        lum = g.convert("L")
+        a = ImageChops.multiply(lum, g.getchannel("A"))   # 검은 바탕이든 투명 바탕이든 밝기를 알파로
+        out = Image.new("RGBA", g.size, (255, 255, 255, 0))
+        out.putalpha(a)
+        save_tga(out.resize((64, 64), Image.LANCZOS), f"FX/{dst}.tga")
+    for n in ("bookOpen", "bookClose", "bookFlip1", "bookFlip2", "bookFlip3", "bookPlace1"):
+        shutil.copy(K / f"{n}.ogg", MEDIA / "Sounds" / f"{n}.ogg")
     if (MEDIA / "Fonts").exists():
         shutil.rmtree(MEDIA / "Fonts")   # 글꼴은 게임 기본 글꼴을 쓴다
     print("done")

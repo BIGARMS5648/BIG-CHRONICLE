@@ -165,4 +165,5 @@ Please leave bug reports and ideas in the comments. Typing `/bc debug` shows int
 
 - Leather cover: [Poly Haven "Brown Leather"](https://polyhaven.com/a/brown_leather) — CC0
 - Paper pages: [ambientCG "Paper 005"](https://ambientcg.com/view?id=Paper005) — CC0
+- Effect particles and sounds: [Kenney](https://kenney.nl) Particle Pack and RPG Audio — CC0
 - Tab icons and wax seal design: [game-icons.net](https://game-icons.net) (Lorc, Delapouite and contributors) — CC BY 3.0

@@ -77,14 +77,29 @@ end
 ------------------------------------------------------------------------
 -- 효과음
 ------------------------------------------------------------------------
+-- 동봉한 효과음 (Kenney RPG Audio, CC0). 못 틀면 게임 기본 효과음으로 대신한다.
+local SND = "Interface\\AddOns\\" .. ADDON .. "\\Media\\Sounds\\"
+local FILES = {
+	open  = { "bookOpen.ogg" },
+	close = { "bookClose.ogg" },
+	page  = { "bookFlip1.ogg", "bookFlip2.ogg", "bookFlip3.ogg" },
+	stamp = { "bookPlace1.ogg" },
+}
 local SOUNDS = {
 	open    = { "IG_QUEST_LOG_OPEN", "IG_SPELLBOOK_OPEN" },
+	close   = { "IG_QUEST_LOG_CLOSE", "IG_SPELLBOOK_CLOSE" },
 	page    = { "IG_ABILITY_PAGE_TURN", "IG_QUEST_LOG_OPEN" },
 	stamp   = { "UI_EPICLOOT_TOAST", "IG_QUEST_LIST_COMPLETE" },
 	chapter = { "UI_LEGENDARY_LOOT_TOAST", "UI_EPICLOOT_TOAST", "LEVELUPSOUND" },
 }
 function E.Sound(kind)
-	if not (ns.db and ns.db.sound) or not SOUNDKIT or not PlaySound then return end
+	if not (ns.db and ns.db.sound) then return end
+	local files = FILES[kind]
+	if files and PlaySoundFile then
+		local ok, played = pcall(PlaySoundFile, SND .. files[math.random(#files)], "SFX")
+		if ok and played then return end
+	end
+	if not SOUNDKIT or not PlaySound then return end
 	for _, key in ipairs(SOUNDS[kind] or {}) do
 		local id = SOUNDKIT[key]
 		if id then
@@ -275,7 +290,9 @@ function E.Stamp(frame, key, holdFor)
 		-- 찍히는 순간 밀랍 부스러기가 튄다
 		E.BurstAt(frame, { count = 10, speed = 80, life = 0.55, tex = UI.TEX.ink, minSize = 3, maxSize = 6, spreadW = 6,
 			colors = { { 0.55, 0.09, 0.07 }, { 0.42, 0.05, 0.04 } }, gravity = 170, lift = 40 })
-		E.BurstAt(frame, { count = 10, speed = 30, life = 1.2, spreadW = 20 })
+		E.BurstAt(frame, { count = 8, speed = 30, life = 1.2, spreadW = 20 })
+		E.BurstAt(frame, { count = 1, speed = 0, life = 0.7, spreadW = 0, tex = UI.TEX.glow, blend = "ADD",
+			minSize = 110, maxSize = 110, lift = 0, gravity = 0, colors = { { 1, 0.75, 0.5 } } })
 		E.Sound("stamp")
 		if holdFor then
 			E.Tween((key or tostring(frame)) .. "-out", 0.6, function(p) frame:SetAlpha(1 - p) end,

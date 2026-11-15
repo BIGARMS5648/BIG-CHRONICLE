@@ -1,3 +1,9 @@
+## 1.7.0
+
+- **Sound effects**: opening and closing the notebook, turning pages and stamping a seal now play book sounds (Kenney RPG Audio, CC0). They follow the existing "notification sound" option
+- **Particles**: sparkles, wax crumbs and the glow under a stamped seal now use hand-made sprites (Kenney Particle Pack, CC0)
+- Fixed the wax seals: the ring and the emblem are now centered exactly in the pressed circle
+
 ## 1.6.0
 
 - **Simple leather notebook**: all ornaments (gold frame, corner pieces, plaque, banner, straps, sketches) are gone. The cover now uses a real leather photo texture and the pages a real paper photo texture (CC0, from Poly Haven and ambientCG), with flat tabs and buttons and thin border lines

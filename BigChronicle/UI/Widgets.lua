@@ -11,11 +11,12 @@ UI.WHITE = WHITE
 local MEDIA = "Interface\\AddOns\\" .. ADDON .. "\\Media\\"
 UI.MEDIA = MEDIA
 local function M(name) return MEDIA .. name end
-local STAR = "Interface\\Cooldown\\star4"
 UI.TEX = {
 	leather = M "Leather", paper = M "Paper", panel = M "Paper",
 	seal = M "Seal", sealDex = M "SealDex", sealAch = M "SealAch",
-	check = "Interface\\Buttons\\UI-CheckBox-Check", dust = STAR, ink = WHITE,
+	check = "Interface\\Buttons\\UI-CheckBox-Check",
+	-- 효과 입자 (Kenney Particle Pack, CC0)
+	dust = M "FX\\Star", glow = M "FX\\Glow", ink = M "FX\\Crumb", magic = M "FX\\Magic",
 }
 UI.ICON = setmetatable({}, { __index = function(_, k) return MEDIA .. "Icons\\" .. k end })
 -- 가죽 위 글씨 색 (테마와 상관없이 같다)

@@ -20,3 +20,14 @@ BIG CHRONICLE - third-party assets
    Changes : rasterized; the seals were shaded and colored as red wax.
 
 Fonts: none bundled. The addon uses the game's own fonts.
+
+4) Effect particles: Kenney "Particle Pack"
+   Files   : FX\Star.tga, FX\Glow.tga, FX\Crumb.tga, FX\Magic.tga
+             (star_06, light_01, dirt_02, magic_05; resized to 64x64)
+   Source  : https://kenney.nl/assets/particle-pack
+   License : CC0 1.0 (public domain)
+
+5) Sound effects: Kenney "RPG Audio"
+   Files   : Sounds\bookOpen.ogg, bookClose.ogg, bookFlip1-3.ogg, bookPlace1.ogg
+   Source  : https://kenney.nl/assets/rpg-audio
+   License : CC0 1.0 (public domain)

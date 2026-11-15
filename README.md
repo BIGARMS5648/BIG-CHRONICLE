@@ -151,6 +151,7 @@ TOC에는 Forever 인터페이스 번호 `16001`이 들어 있습니다. 출시 
 
 - 가죽 표지: [Poly Haven "Brown Leather"](https://polyhaven.com/a/brown_leather) — CC0
 - 종이 속지: [ambientCG "Paper 005"](https://ambientcg.com/view?id=Paper005) — CC0
+- 효과 입자·효과음: [Kenney](https://kenney.nl) Particle Pack, RPG Audio — CC0
 - 탭 아이콘·밀랍 인장 도안: [game-icons.net](https://game-icons.net) (Lorc, Delapouite 외) — CC BY 3.0
 - 자세한 내용은 `BigChronicle/Media/LICENSES.txt`
 
