@@ -1,3 +1,12 @@
+## 1.5.0
+
+- **Gilded leather book redesign**: worn red-brown leather, a thick gold frame with ornate vine corners and red gems, buckled straps on the spine, a gold title plaque with laurels, a red banner, trapezoid leather tabs (gold when selected), gold-rimmed leather list buttons with count badges, torn-edged parchment panels with engraving-style ink illustrations, gold icon frames and a gold scrollbar
+- Serif (Nanum Myeongjo) text throughout, Cinzel for the title
+- **Real page turns**: changing chapters or pages in the journal now flips an actual parchment sheet (forward or backward) instead of sweeping a band of light across an empty area
+- **Real cover opening**: the front cover now swings on its spine — it narrows as it lifts, and its inside face folds away to the left
+- **Wax seals for bestiary discoveries**: notifications for new tribes, new creatures, rares and research ranks are now stamped with a red dragon seal, the same way achievements get a laurel seal
+- Free assets used are credited in `Media/LICENSES.txt`
+
 ## 1.4.0
 
 - **Antique tome redesign**: the cute notebook look is gone. The window is now a heavy, leather-bound tome with gold-tooled fillets, brass corner guards, a raised-band spine, a silk bookmark and aged parchment pages with darkened edges

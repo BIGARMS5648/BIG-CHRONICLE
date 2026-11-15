@@ -5,7 +5,7 @@ local UI = ns.UI
 local T = {}
 ns.AchievementsTab = T
 
-local NAV_W = 206
+local NAV_W = 222
 local ROW_H = 52
 
 T.cat = nil         -- nil = 전체
@@ -32,8 +32,9 @@ function T:Create(parent)
 		if self.pool then for _, r in ipairs(self.pool.items) do ns.Effects.Pulse(r.glow, false) end end
 	end)
 
-	-- 왼쪽: 점수와 분류
-	local nav = UI.Section(p)
+	-- 왼쪽: 가죽 칸에 점수와 분류
+	local L = UI.LEATHER
+	local nav = UI.Section(p, { leather = true })
 	nav:SetPoint("TOPLEFT", 0, 0)
 	nav:SetPoint("BOTTOMLEFT", 0, 0)
 	nav:SetWidth(NAV_W)
@@ -42,24 +43,27 @@ function T:Create(parent)
 	label:SetPoint("TOP", 0, -12)
 	label:SetJustifyH("CENTER")
 	label:SetText("업적 점수")
+	UI.OnLeather(label, L.sub)
 	local points = nav:CreateFontString(nil, "OVERLAY", UI.F.title)
-	points:SetPoint("TOP", label, "BOTTOM", 0, -4)
+	points:SetPoint("TOP", label, "BOTTOM", 0, -3)
+	UI.OnLeather(points, L.title)
 	self.points = points
-	local bar = UI.Bar(nav, NAV_W - 24, 10)
-	bar:SetPoint("TOP", points, "BOTTOM", 0, -8)
+	local bar = UI.Bar(nav, NAV_W - 28, 11)
+	bar:SetPoint("TOP", points, "BOTTOM", 0, -7)
 	self.bar = bar
 	local summary = UI.Text(nav, UI.F.small)
-	summary:SetPoint("TOP", bar, "BOTTOM", 0, -6)
+	summary:SetPoint("TOP", bar, "BOTTOM", 0, -7)
 	summary:SetJustifyH("CENTER")
+	UI.OnLeather(summary, L.sub)
 	self.summary = summary
 
 	self.catRows = {}
 	local cats = { { id = nil, name = "전체" } }
 	for _, c in ipairs(ns.ACH_CATS) do cats[#cats + 1] = c end
 	for i, c in ipairs(cats) do
-		local r = UI.NavRow(nav, 22)
-		r:SetPoint("TOPLEFT", nav, "TOPLEFT", 4, -108 - (i - 1) * 23)
-		r:SetPoint("RIGHT", nav, "RIGHT", 0, 0)
+		local r = UI.NavRow(nav, 25, { badge = true })
+		r:SetPoint("TOPLEFT", nav, "TOPLEFT", 8, -100 - (i - 1) * 27)
+		r:SetPoint("RIGHT", nav, "RIGHT", -8, 0)
 		r.label:SetText(c.name)
 		r.cat = c.id
 		r.onClick = function()
@@ -71,20 +75,23 @@ function T:Create(parent)
 
 	local filters = { { "all", "전체" }, { "done", "달성" }, { "todo", "미달성" } }
 	self.filterButtons = {}
-	local bw = math.floor((NAV_W - 24 - 8) / 3)
+	local bw = math.floor((NAV_W - 20 - 8) / 3)
 	for i, f in ipairs(filters) do
-		local b = UI.Button(nav, f[2], bw, 22, function()
+		local b = UI.Button(nav, f[2], bw, 26, function()
 			T.filter = f[1]
 			T:Refresh(true)
 		end)
-		b:SetPoint("BOTTOMLEFT", 12 + (i - 1) * (bw + 4), 10)
+		b:SetPoint("BOTTOMLEFT", 10 + (i - 1) * (bw + 4), 9)
 		self.filterButtons[f[1]] = b
 	end
 
-	-- 오른쪽: 목록
-	local main = CreateFrame("Frame", nil, p)
-	main:SetPoint("TOPLEFT", nav, "TOPRIGHT", 18, 0)
-	main:SetPoint("BOTTOMRIGHT", 0, 0)
+	-- 오른쪽: 양피지 위의 업적 목록
+	local sheet = UI.Section(p)
+	sheet:SetPoint("TOPLEFT", nav, "TOPRIGHT", 12, 0)
+	sheet:SetPoint("BOTTOMRIGHT", 0, 0)
+	local main = CreateFrame("Frame", nil, sheet)
+	main:SetPoint("TOPLEFT", 20, -14)
+	main:SetPoint("BOTTOMRIGHT", -18, 14)
 	local title = main:CreateFontString(nil, "OVERLAY", UI.F.header)
 	title:SetPoint("TOPLEFT", 4, -4)
 	self.title = title
@@ -97,7 +104,7 @@ function T:Create(parent)
 
 	local scroll = UI.Scroll(main)
 	scroll:SetPoint("TOPLEFT", 0, -66)
-	scroll:SetPoint("BOTTOMRIGHT", -14, 4)
+	scroll:SetPoint("BOTTOMRIGHT", -18, 2)
 	self.scroll = scroll
 	self.pool = UI.Pool(function() return T:CreateRow(scroll.child) end)
 
@@ -119,7 +126,7 @@ function T:CreateRow(parent)
 	local glow = r:CreateTexture(nil, "BORDER")
 	glow:SetAllPoints()
 	glow:SetTexture(UI.WHITE)
-	glow:SetVertexColor(col.gold[1], col.gold[2], col.gold[3], 0.28)
+	glow:SetVertexColor(1, 0.80, 0.35, 0.45)
 	glow:Hide()
 	r.glow = glow
 	local hl = r:CreateTexture(nil, "HIGHLIGHT")
@@ -130,11 +137,7 @@ function T:CreateRow(parent)
 	icon:SetPoint("LEFT", 8, 0)
 	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	r.icon = icon
-	local iconFrame = CreateFrame("Frame", nil, r)
-	iconFrame:SetPoint("TOPLEFT", icon, -2, 2)
-	iconFrame:SetPoint("BOTTOMRIGHT", icon, 2, -2)
-	UI.Outline(iconFrame, { col.coverDark[1], col.coverDark[2], col.coverDark[3], 0.9 })
-	UI.Outline(iconFrame, { col.gold[1], col.gold[2], col.gold[3], 0.7 }, 1)
+	UI.FrameIcon(icon, 4)
 	local rule = r:CreateTexture(nil, "BORDER", nil, 1)
 	rule:SetPoint("BOTTOMLEFT", 4, -2)
 	rule:SetPoint("BOTTOMRIGHT", -4, -2)

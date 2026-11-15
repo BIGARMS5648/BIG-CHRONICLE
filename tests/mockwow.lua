@@ -101,6 +101,16 @@ function Obj:ClearAllPoints() self.__points = {} end
 function Obj:GetPoint() return "CENTER", nil, "CENTER", 0, 0 end
 function Obj:GetName() return self.__name end
 function Obj:GetParent() return self.__parent end
+function Obj:SetParent(p)
+	local old = self.__parent
+	if old and old.__children then
+		for i, c in ipairs(old.__children) do
+			if c == self then table.remove(old.__children, i) break end
+		end
+	end
+	self.__parent = p
+	if p and p.__children then p.__children[#p.__children + 1] = self end
+end
 function Obj:SetMinMaxValues(a, b) self.__min, self.__max = a, b end
 function Obj:GetMinMaxValues() return self.__min, self.__max end
 function Obj:SetValue(v)

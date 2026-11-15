@@ -351,8 +351,14 @@ local okFx, errFx = pcall(function()
 	ns.UI:Open("journal")
 	assert((ns.Minimap.news or 0) == 0 and not ns.Minimap.button.glow:IsShown(), "opening clears news")
 	assert(f.flap:IsShown() and f.flap:GetWidth() > 900, "book starts with the front cover closed")
-	run(1)
-	assert(not f.flap:IsShown(), "cover flips open")
+	run(0.7)
+	local w1 = f.flap:GetWidth()
+	assert(f.flap:IsShown() and w1 > 1 and w1 < 900, "the cover narrows as it swings up (" .. tostring(w1) .. ")")
+	run(0.3)
+	assert(not f.flap:IsShown() and f.flapInside:IsShown() and f.flapInside:GetWidth() > 1,
+		"past upright, the inside of the cover swings out to the left")
+	run(0.6)
+	assert(not f.flap:IsShown() and not f.flapInside:IsShown(), "cover flips open")
 	-- 장 제목 카드
 	ns:Fire("CHAPTER_STARTED", 2)
 	local card = _G.BigChronicleChapterCard
@@ -365,8 +371,19 @@ local okFx, errFx = pcall(function()
 	ns.Toast:Show("업적 달성!", "「테스트」", nil, "achievement", { ach = "level10" })
 	run(0.5)
 	assert(ns.Toast.frame.seal:IsShown(), "achievement toast stamps a seal")
+	assert(ns.Toast.frame.seal.kind == "ach", "achievement toast uses the laurel seal")
 	assert(_G.BigChronicleFX ~= nil, "particles burst")
 	run(8)
+	-- 도감 발견 알림에도 붉은 밀랍 인장이 찍힌다 (종족·개체·희귀·연구 등급 모두)
+	for _, kind in ipairs({ "tribe", "species", "rare", "rank" }) do
+		ns.Toast.queue = {}; ns.Toast.frame:Hide()
+		ns.Toast:Show("새로운 발견!", "테스트 개체", nil, kind, { tribe = "centaur" })
+		assert(not ns.Toast.frame.seal:IsShown(), kind .. " toast: seal waits until the note lands")
+		run(0.6)
+		assert(ns.Toast.frame.seal:IsShown(), kind .. " toast stamps a wax seal")
+		assert(ns.Toast.frame.seal.kind == "dex", kind .. " toast uses the bestiary seal")
+		run(8)
+	end
 	-- 도감: 처음 펼치는 종족 페이지에 도장
 	local B = ns.Bestiary
 	B.dex.tribes.centaur.viewed = nil
@@ -375,13 +392,36 @@ local okFx, errFx = pcall(function()
 	assert(ns.BestiaryTab.stamp:IsShown() and B.dex.tribes.centaur.viewed, "first view stamps the page")
 	run(3)
 	assert(not ns.BestiaryTab.stamp:IsShown(), "stamp fades")
-	-- 일지: 책장 넘김
+	-- 일지: 책장 넘김 (장을 바꾸면 한 장이 넘어간다)
 	ns.UI:SelectTab("journal")
-	ns.JournalTab.chapter = 0; ns.JournalTab:Refresh()
-	ns.Effects.Sweep(ns.JournalTab.sweep, ns.JournalTab.scroll, "journal-sweep")
-	assert(ns.JournalTab.sweep:IsShown(), "page sweep runs")
+	local J, sheet = ns.JournalTab, ns.JournalTab.turner
+	J.chapter = 0; J:Refresh()
+	J.chapterButtons[2].onClick()
+	assert(sheet:IsShown() and J.chapter == 2, "forward turn: new chapter drawn under the turning page")
+	assert(sheet:GetWidth() > 600, "the page starts flat over the parchment")
+	run(0.3)
+	local midW = sheet:GetWidth()
+	assert(midW > 1 and midW < 600, "the page narrows as it lifts (" .. tostring(midW) .. ")")
+	run(0.5)
+	assert(not sheet:IsShown(), "forward turn ends")
+	-- 앞의 장으로: 앞 쪽이 넘어와 덮은 뒤에 내용이 바뀐다
+	J.chapterButtons[1].onClick()
+	assert(sheet:IsShown() and J.chapter == 2, "backward turn keeps the old page until covered")
+	run(0.6)
+	assert(J.chapter == 1, "backward turn applies after the page lands")
+	run(0.4)
+	assert(not sheet:IsShown(), "backward turn ends")
+	-- 연달아 넘겨도 어긋나지 않는다
+	J.chapterButtons[3].onClick(); J.chapterButtons[4].onClick(); J.chapterButtons[0].onClick()
+	assert(J.chapter == 4, "rapid turns finish the previous one first")
 	run(1)
-	assert(not ns.JournalTab.sweep:IsShown(), "page sweep ends")
+	assert(J.chapter == 0 and not sheet:IsShown(), "rapid turns settle on the last chapter")
+	-- 연출을 끄면 바로 바뀐다
+	ns.db.effects = false
+	J.chapterButtons[5].onClick()
+	assert(J.chapter == 5 and not sheet:IsShown(), "no page turn when effects are off")
+	ns.db.effects = true
+	J.chapter = 0; J:Refresh()
 	-- 업적 NEW: 3초만 반짝이고 멈춘다, 다시 그려도 다시 깜빡이지 않는다
 	ns.char.ach.unseen = { level10 = true }
 	ns.UI:SelectTab("achievements")
@@ -401,7 +441,7 @@ local okFx, errFx = pcall(function()
 	-- 연출을 끄면 바로 펼쳐진다
 	ns.db.effects = false
 	f:Hide(); ns.UI:Open("journal")
-	assert(not f.flap:IsShown(), "no animation when effects are off")
+	assert(not f.flap:IsShown() and not f.flapInside:IsShown(), "no animation when effects are off")
 	ns:Fire("CHAPTER_STARTED", 3)
 	ns.db.effects = true
 end)

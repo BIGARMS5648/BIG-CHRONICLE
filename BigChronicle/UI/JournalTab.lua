@@ -6,7 +6,7 @@ local J = {}
 ns.JournalTab = J
 
 local PAGE_SIZE = 80
-local NAV_W = 206
+local NAV_W = 222
 
 J.chapter = 0       -- 0 = 전체
 J.page = nil        -- nil = 기본(가장 최근 기록이 보이는 쪽)
@@ -14,55 +14,6 @@ J.filters = {}
 
 local function Hex(c)
 	return string.format("%02x%02x%02x", math.floor(c[1] * 255), math.floor(c[2] * 255), math.floor(c[3] * 255))
-end
-
--- 왼쪽 목록의 한 줄 (선택하면 잉크 띠가 깔리고 왼쪽에 검붉은 표시가 선다)
-function UI.NavRow(parent, height)
-	local C = UI.COL
-	local b = CreateFrame("Button", nil, parent)
-	b:SetHeight(height or 24)
-	local sel = b:CreateTexture(nil, "BACKGROUND")
-	sel:SetPoint("TOPLEFT", 2, -1)
-	sel:SetPoint("BOTTOMRIGHT", -4, 1)
-	UI.Gradient(sel, "HORIZONTAL", { C.sel[1], C.sel[2], C.sel[3], C.sel[4] * 1.4 }, { C.sel[1], C.sel[2], C.sel[3], 0 })
-	sel:Hide()
-	local bar = b:CreateTexture(nil, "ARTWORK")
-	bar:SetPoint("TOPLEFT", 2, -2)
-	bar:SetPoint("BOTTOMLEFT", 2, 2)
-	bar:SetWidth(3)
-	bar:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.9)
-	bar:Hide()
-	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 2, -1)
-	hl:SetPoint("BOTTOMRIGHT", -4, 1)
-	UI.Gradient(hl, "HORIZONTAL", { C.hover[1], C.hover[2], C.hover[3], C.hover[4] * 1.6 }, { C.hover[1], C.hover[2], C.hover[3], 0 })
-	local label = UI.Text(b, UI.F.body)
-	label:SetPoint("LEFT", 10, 0)
-	label:SetJustifyV("MIDDLE")
-	label:SetWordWrap(false)
-	b.label = label
-	local right = UI.Text(b, UI.F.small)
-	right:SetPoint("RIGHT", -8, 0)
-	right:SetJustifyH("RIGHT")
-	right:SetJustifyV("MIDDLE")
-	b.right = right
-	label:SetPoint("RIGHT", right, "LEFT", -4, 0)
-	function b:SetSelected(on)
-		sel:SetShown(on)
-		bar:SetShown(on)
-		if on then
-			label:SetTextColor(C.title[1], C.title[2], C.title[3])
-		else
-			label:SetTextColor(C.text[1], C.text[2], C.text[3])
-		end
-	end
-	function b:SetDim()
-		label:SetTextColor(C.muted[1], C.muted[2], C.muted[3])
-	end
-	b:SetScript("OnClick", function(self, button)
-		if self.onClick then self.onClick(self, button) end
-	end)
-	return b
 end
 
 function J:Create(parent)
@@ -75,30 +26,40 @@ function J:Create(parent)
 		if self.filters[g.id] == nil then self.filters[g.id] = true end
 	end
 
-	-- 왼쪽: 장 목록 + 분류 필터
-	local nav = UI.Section(p)
+	-- 왼쪽: 가죽 칸에 장 목록 + 분류 필터
+	local L = UI.LEATHER
+	local nav = UI.Section(p, { leather = true })
 	nav:SetPoint("TOPLEFT", 0, 0)
 	nav:SetPoint("BOTTOMLEFT", 0, 0)
 	nav:SetWidth(NAV_W)
 
 	local h1 = UI.Text(nav, UI.F.heading)
-	h1:SetPoint("TOPLEFT", 12, -12)
+	h1:SetPoint("TOPLEFT", 14, -12)
 	h1:SetText("전기의 장")
+	UI.OnLeather(h1, L.title)
 
 	self.chapterButtons = {}
 	local prev = h1
 	for i = 0, #C.CHAPTERS do
-		local b = UI.NavRow(nav, 23)
+		local b = UI.NavRow(nav, 27, { badge = true })
 		b.label:SetText(i == 0 and "전체 기록" or C.CHAPTERS[i].title)
-		b:SetPoint("TOPLEFT", nav, "TOPLEFT", 4, -40 - i * 24)
-		b:SetPoint("RIGHT", nav, "RIGHT", 0, 0)
+		b:SetPoint("TOPLEFT", nav, "TOPLEFT", 8, -36 - i * 29)
+		b:SetPoint("RIGHT", nav, "RIGHT", -8, 0)
 		b.onClick = function()
-			local changed = J.chapter ~= i
-			J.chapter = i
-			J.page = nil
-			J.scrollPending = true
-			J:Refresh()
-			if changed then ns.Effects.Sweep(J.sweep, J.scroll, "journal-sweep") end
+			UI:FinishTurn(J.turner)
+			local cur = J.chapter or 0
+			local function apply()
+				J.chapter = i
+				J.page = nil
+				J.scrollPending = true
+				J:Refresh()
+			end
+			if cur == i then
+				apply()
+			else
+				-- 뒤의 장으로 가면 앞으로, 앞의 장으로 가면 뒤로 넘긴다
+				UI:TurnPage(J.turner, i > cur and 1 or -1, apply)
+			end
 		end
 		if i > 0 then
 			UI.Tooltip(b, C.CHAPTERS[i].title, function()
@@ -112,22 +73,23 @@ function J:Create(parent)
 	end
 
 	local h2 = UI.Text(nav, UI.F.heading)
-	h2:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 10, -14)
+	h2:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 6, -14)
 	h2:SetText("기록 분류")
+	UI.OnLeather(h2, L.title)
 	prev = h2
 	self.filterChecks = {}
 	for idx, g in ipairs(C.GROUPS) do
 		local cb = UI.Check(nav, g.name,
 			function() return J.filters[g.id] end,
-			function(v) J.filters[g.id] = v; J.page = nil; J.scrollPending = true; J:Refresh() end)
+			function(v) J.filters[g.id] = v; J.page = nil; J.scrollPending = true; J:Refresh() end, nil, true)
 		cb:SetSize(14, 14)
 		local colIdx = (idx - 1) % 2
 		local rowIdx = math.floor((idx - 1) / 2)
-		cb:SetPoint("TOPLEFT", h2, "BOTTOMLEFT", 2 + colIdx * 96, -10 - rowIdx * 22)
+		cb:SetPoint("TOPLEFT", h2, "BOTTOMLEFT", 4 + colIdx * 98, -11 - rowIdx * 23)
 		self.filterChecks[g.id] = cb
 	end
 
-	local sortBtn = UI.Button(nav, "", NAV_W - 20, 22, function()
+	local sortBtn = UI.Button(nav, "", NAV_W - 20, 26, function()
 		ns.db.newestFirst = not ns.db.newestFirst
 		J.page = nil
 		J.scrollPending = true
@@ -136,10 +98,18 @@ function J:Create(parent)
 	sortBtn:SetPoint("BOTTOMLEFT", 10, 10)
 	self.sortBtn = sortBtn
 
-	-- 오른쪽: 본문 (종이 위에 바로)
-	local main = CreateFrame("Frame", nil, p)
-	main:SetPoint("TOPLEFT", nav, "TOPRIGHT", 18, 0)
-	main:SetPoint("BOTTOMRIGHT", 0, 0)
+	-- 오른쪽: 본문 (양피지 한 장, 아래쪽에 희미한 잉크 삽화)
+	local sheet = UI.Section(p, { sketch = UI.TEX.sketchCamp, sketchW = 330 })
+	sheet:SetPoint("TOPLEFT", nav, "TOPRIGHT", 12, 0)
+	sheet:SetPoint("BOTTOMRIGHT", 0, 0)
+	sheet.sketch:ClearAllPoints()
+	sheet.sketch:SetPoint("BOTTOMRIGHT", -16, 84)
+	self.sheet = sheet
+	-- 장을 바꾸거나 쪽을 넘길 때 이 양피지 위로 한 장이 넘어간다
+	self.turner = ns.Effects.MakePageTurn(sheet)
+	local main = CreateFrame("Frame", nil, sheet)
+	main:SetPoint("TOPLEFT", 20, -14)
+	main:SetPoint("BOTTOMRIGHT", -18, 16)
 	self.main = main
 
 	local title = main:CreateFontString(nil, "OVERLAY", UI.F.header)
@@ -155,9 +125,8 @@ function J:Create(parent)
 
 	local scroll = UI.Scroll(main)
 	scroll:SetPoint("TOPLEFT", 4, -66)
-	scroll:SetPoint("BOTTOMRIGHT", -14, 72)
+	scroll:SetPoint("BOTTOMRIGHT", -18, 76)
 	self.scroll = scroll
-	self.sweep = ns.Effects.MakeSweep(main)
 	self.pool = UI.Pool(function()
 		local fs = scroll.child:CreateFontString(nil, "OVERLAY", UI.F.body)
 		fs:SetJustifyH("LEFT")
@@ -174,21 +143,21 @@ function J:Create(parent)
 
 	-- 쪽 넘기기
 	local rule2 = UI.Rule(main, 0.4)
-	rule2:SetPoint("BOTTOMLEFT", 0, 66)
-	rule2:SetPoint("BOTTOMRIGHT", 0, 66)
-	local prevBtn = UI.Button(main, "이전 쪽", 104, 22, function() J:TurnPage(-1) end, "←")
+	rule2:SetPoint("BOTTOMLEFT", 0, 70)
+	rule2:SetPoint("BOTTOMRIGHT", 0, 70)
+	local prevBtn = UI.Button(main, "이전 쪽", 116, 26, function() J:TurnPage(-1) end, "←")
 	prevBtn:SetPoint("BOTTOMLEFT", 0, 38)
-	local nextBtn = UI.Button(main, "다음 쪽", 104, 22, function() J:TurnPage(1) end, "→")
+	local nextBtn = UI.Button(main, "다음 쪽", 116, 26, function() J:TurnPage(1) end, "→")
 	nextBtn:SetPoint("BOTTOMRIGHT", 0, 38)
 	local pageText = UI.Text(main, UI.F.heading)
-	pageText:SetPoint("BOTTOM", 0, 43)
+	pageText:SetPoint("BOTTOM", 0, 44)
 	pageText:SetJustifyH("CENTER")
 	self.prevBtn, self.nextBtn, self.pageText = prevBtn, nextBtn, pageText
 
 	-- 나만의 기록
-	local note = UI.EditBox(main, 420, 26, "나만의 기록을 남겨 보세요… (예: 오늘 처음으로 그리핀을 탔다)")
+	local note = UI.EditBox(main, 420, 28, "나만의 기록을 남겨 보세요… (예: 오늘 처음으로 그리핀을 탔다)")
 	note:SetPoint("BOTTOMLEFT", 0, 2)
-	note:SetPoint("RIGHT", main, "RIGHT", -196, 0)
+	note:SetPoint("RIGHT", main, "RIGHT", -206, 0)
 	local function submit()
 		local t = note:GetText()
 		if t and ns.Trim(t) ~= "" then
@@ -199,9 +168,9 @@ function J:Create(parent)
 	end
 	note:SetScript("OnEnterPressed", submit)
 	self.note = note
-	local addBtn = UI.Button(main, "기록하기", 90, 26, submit)
+	local addBtn = UI.Button(main, "기록하기", 96, 28, submit, nil, "red")
 	addBtn:SetPoint("LEFT", note, "RIGHT", 8, 0)
-	local exportBtn = UI.Button(main, "내보내기", 90, 26, function() UI:ShowExport() end)
+	local exportBtn = UI.Button(main, "내보내기", 96, 28, function() UI:ShowExport() end)
 	exportBtn:SetPoint("LEFT", addBtn, "RIGHT", 6, 0)
 	UI.Tooltip(exportBtn, "내보내기", "지금까지의 모험 전기 전체를 복사할 수 있는 글로 보여 줍니다.")
 
@@ -210,12 +179,14 @@ function J:Create(parent)
 end
 
 function J:TurnPage(dir)
+	UI:FinishTurn(self.turner)
 	local pages = self.pages or 1
 	local page = math.max(1, math.min(pages, (self.curPage or 1) + dir))
 	if page == self.curPage then return false end
-	self.page = page
-	self:Refresh(true)
-	ns.Effects.Sweep(self.sweep, self.scroll, "journal-sweep")
+	UI:TurnPage(self.turner, dir, function()
+		self.page = page
+		self:Refresh(true)
+	end)
 	return true
 end
 

@@ -118,18 +118,26 @@ def draw_texture(canvas, n, alpha):
         tc = n["tc"]
         sw, sh = src.size
         if len(tc) == 8:
-            # 90도 돌린 띠 (바느질선)
-            L = tc[2]
-            strip = Image.new("RGBA", (int(sw * max(1, L)), sh))
+            # 90도 돌린 띠 (세로 금테): 화면 아래로 갈수록 u 가 늘고, 화면 가로가 v 다
+            ulx, uly, llx, lly, urx, ury, lrx, lry = tc
+            L = max(1e-3, abs(llx - ulx))
+            strip = Image.new("RGBA", (max(1, int(sw * L)), sh))
             for i in range(int(math.ceil(L))):
                 strip.paste(src, (i * sw, 0))
-            img = strip.rotate(-90, expand=True).resize((w, h))
-        elif len(tc) == 4 and (tc[1] > 1.001 or tc[3] > 1.001):
-            tw, th = max(1, int(sw * (tc[1] - tc[0]))), max(1, int(sh * (tc[3] - tc[2])))
+            if uly > ury:
+                strip = ImageOps.flip(strip)
+            img = strip.transpose(Image.TRANSPOSE).resize((w, h))
+        elif len(tc) == 4 and (abs(tc[1] - tc[0]) > 1.001 or abs(tc[3] - tc[2]) > 1.001):
+            l, r, t, b = tc
+            tw, th = max(1, int(sw * abs(r - l))), max(1, int(sh * abs(b - t)))
             tiled = Image.new("RGBA", (tw, th))
             for x in range(0, tw, sw):
                 for y in range(0, th, sh):
                     tiled.paste(src, (x, y))
+            if l > r:
+                tiled = ImageOps.mirror(tiled)
+            if t > b:
+                tiled = ImageOps.flip(tiled)
             img = tiled.resize((w, h))
         elif len(tc) == 4:
             # 좌표가 거꾸로면 뒤집어서 쓴다 (모서리 장식)
@@ -199,6 +207,7 @@ def draw_text(canvas, n, alpha):
             x0 = cx - natural / 2
         x1 = x0 + natural + 1
     width = max(10, x1 - x0)
+    wrap_width = width if n.get("fixw") else width * 1.2 + 8  # 폭이 정해지지 않은 글자는 줄을 바꾸지 않는다
     # 줄 나누기 (글자 단위)
     lines, line, lw = [], [], 0
     for s, c in segs:
@@ -207,7 +216,7 @@ def draw_text(canvas, n, alpha):
                 lines.append(line); line, lw = [], 0
                 continue
             cw = f.getlength(ch)
-            if lw + cw > width + 0.5 and line:
+            if lw + cw > wrap_width + 0.5 and line:
                 lines.append(line); line, lw = [], 0
             line.append((ch, c)); lw += cw
     lines.append(line)

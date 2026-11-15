@@ -1,5 +1,5 @@
 -- BIG CHRONICLE :: 알림 팝업
--- 새로운 종족/개체/희귀 개체/업적을 발견하면 화면 위쪽에 양피지 전갈이 내려앉는다
+-- 새로운 종족/개체/희귀 개체/업적을 발견하면 화면 위쪽에 양피지 전갈이 내려앉고, 붉은 밀랍 인장이 찍힌다
 
 local ADDON, ns = ...
 local UI = ns.UI
@@ -34,7 +34,7 @@ local BURST = {
 	species     = { count = 6 },
 }
 local MAX_QUEUE = 4
-local WIDTH, HEIGHT = 360, 92
+local WIDTH, HEIGHT = 380, 88
 
 function Toast:Init()
 	self.queue = {}
@@ -49,58 +49,51 @@ function Toast:Build()
 	f:SetFrameStrata("DIALOG")
 	f:Hide()
 
-	-- 양피지 한 장 + 그을린 가장자리 + 잉크 이중 테두리
+	-- 가장자리가 그을린 양피지 한 장
 	local shadow = f:CreateTexture(nil, "BACKGROUND", nil, -8)
-	shadow:SetPoint("TOPLEFT", -1, -1)
-	shadow:SetPoint("BOTTOMRIGHT", 4, -5)
-	shadow:SetColorTexture(0, 0, 0, 0.35)
-	local paper = UI.Tiled(f, "BACKGROUND", -6, UI.TEX.paper, 512, 512)
-	paper:SetVertexColor(0.95, 0.89, 0.76)
-	local vig = f:CreateTexture(nil, "BACKGROUND", nil, -5)
-	vig:SetAllPoints()
-	vig:SetTexture(UI.TEX.vignette)
-	vig:SetVertexColor(0.36, 0.21, 0.09, 0.55)
-	local edge = { 0.30, 0.19, 0.11 }
-	UI.Outline(f, { edge[1], edge[2], edge[3], 0.85 }, 0)
-	UI.Outline(f, { edge[1], edge[2], edge[3], 0.35 }, 4)
-	UI.Corners(f, UI.TEX.ornCorner, 16, 2, { edge[1], edge[2], edge[3], 0.8 }, "BORDER", 2)
+	shadow:SetPoint("TOPLEFT", 0, -3)
+	shadow:SetPoint("BOTTOMRIGHT", 6, -8)
+	shadow:SetTexture(UI.TEX.panel)
+	shadow:SetVertexColor(0, 0, 0, 0.55)
+	local paper = f:CreateTexture(nil, "BACKGROUND", nil, -6)
+	paper:SetPoint("TOPLEFT", -3, 3)
+	paper:SetPoint("BOTTOMRIGHT", 3, -3)
+	paper:SetTexture(UI.TEX.panel)
+	paper:SetVertexColor(0.96, 0.90, 0.77)
 	local stripe = f:CreateTexture(nil, "BORDER", nil, 3)
-	stripe:SetPoint("TOPLEFT", 5, -5)
-	stripe:SetPoint("BOTTOMLEFT", 5, 5)
+	stripe:SetPoint("TOPLEFT", 9, -10)
+	stripe:SetPoint("BOTTOMLEFT", 9, 10)
 	stripe:SetWidth(3)
 	f.stripe = stripe
 
 	local icon = f:CreateTexture(nil, "ARTWORK")
 	icon:SetSize(42, 42)
-	icon:SetPoint("LEFT", 18, 0)
+	icon:SetPoint("LEFT", 22, 0)
 	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	f.icon = icon
-	local frameLine = CreateFrame("Frame", nil, f)
-	frameLine:SetPoint("TOPLEFT", icon, -2, 2)
-	frameLine:SetPoint("BOTTOMRIGHT", icon, 2, -2)
-	UI.Outline(frameLine, { 0.20, 0.14, 0.08, 0.9 })
-	UI.Outline(frameLine, { 0.86, 0.70, 0.40, 0.8 }, 1)
+	UI.FrameIcon(icon, 4)
 
 	local title = UI.Text(f, UI.F.heading)
-	title:SetPoint("TOPLEFT", icon, "TOPRIGHT", 12, 4)
-	title:SetPoint("RIGHT", -14, 0)
+	title:SetPoint("TOPLEFT", icon, "TOPRIGHT", 14, 3)
+	title:SetPoint("RIGHT", -74, 0)
+	title:SetWordWrap(false)
 	f.title = title
 
 	local body = UI.Text(f, UI.F.body)
-	body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -3)
-	body:SetPoint("RIGHT", -14, 0)
+	body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
+	body:SetPoint("RIGHT", -74, 0)
 	body:SetWordWrap(false)
-	body:SetTextColor(0.16, 0.13, 0.10)
+	body:SetTextColor(0.16, 0.10, 0.06)
 	f.body = body
 
-	local seal = ns.Effects.MakeSeal(f, 62, "ach")
-	seal:SetPoint("TOPRIGHT", -8, -2)
+	-- 붉은 밀랍 인장: 업적은 월계관, 도감(종족·개체·희귀·연구 등급)은 용 문장
+	local seal = ns.Effects.MakeSeal(f, 64, "ach")
+	seal:SetPoint("TOPRIGHT", -8, -3)
 	f.seal = seal
 
 	local brand = UI.Text(f, UI.F.tiny)
-	brand:SetPoint("BOTTOMRIGHT", -14, 9)
-	brand:SetJustifyH("RIGHT")
-	brand:SetTextColor(0.40, 0.32, 0.22)
+	brand:SetPoint("BOTTOMLEFT", icon, "BOTTOMRIGHT", 14, -6)
+	brand:SetTextColor(0.42, 0.33, 0.22)
 	f.brand = brand
 
 	f:EnableMouse(true)
@@ -124,7 +117,7 @@ function Toast:Build()
 			place(DROP * (1 - E.Ease.outCubic(p)))
 			self:SetAlpha(math.min(1, p * 1.6))
 		elseif self.pendingFX then
-			-- 자리 잡는 순간: 금가루가 피어오르고, 업적이면 밀랍 인장이 찍힌다
+			-- 자리 잡는 순간: 금가루가 피어오르고 밀랍 인장이 찍힌다
 			local kind = self.pendingFX
 			self.pendingFX = nil
 			place(0)
@@ -133,7 +126,7 @@ function Toast:Build()
 			if b then
 				E.BurstAt(self, { colors = b.colors, count = b.count, speed = 45, spreadW = 150, life = 1.8 })
 			end
-			if kind == "achievement" then E.Stamp(self.seal, "toast-seal") end
+			E.Stamp(self.seal, "toast-seal")
 		elseif self.t < OPEN + hold then
 			-- 가만히 붙어 있는다
 		elseif self.t < OPEN + hold + FADE_OUT then
@@ -202,8 +195,8 @@ function Toast:Next()
 	f.t = 0
 	f.pendingFX = item.kind
 	f.seal:Hide()
-	f.body:SetPoint("RIGHT", item.kind == "achievement" and -70 or -14, 0)
-	f.title:SetPoint("RIGHT", item.kind == "achievement" and -70 or -14, 0)
+	f.seal.kind = item.kind == "achievement" and "ach" or "dex"
+	f.seal.tex:SetTexture(f.seal.kind == "ach" and UI.TEX.sealAch or UI.TEX.sealDex)
 	f:SetAlpha(0)
 	f:Show()
 	PlayStyleSound(style)

@@ -43,10 +43,13 @@ function O:Create(parent)
 	p:SetAllPoints()
 	self.panel = p
 
-	local left = CreateFrame("Frame", nil, p)
-	left:SetPoint("TOPLEFT", 30, 0)
-	left:SetPoint("BOTTOMLEFT", 30, 0)
-	left:SetWidth(470)
+	-- 왼쪽: 양피지 칸에 설정 항목
+	local leftPanel = UI.Section(p)
+	leftPanel:SetPoint("TOPLEFT", 0, 0)
+	leftPanel:SetPoint("BOTTOMRIGHT", -366, 0)
+	local left = CreateFrame("Frame", nil, leftPanel)
+	left:SetPoint("TOPLEFT", 30, -14)
+	left:SetPoint("BOTTOMRIGHT", -20, 14)
 
 	local title = left:CreateFontString(nil, "OVERLAY", UI.F.header)
 	title:SetPoint("TOPLEFT", 0, -4)
@@ -80,13 +83,15 @@ function O:Create(parent)
 	self.checks[#self.checks + 1] = mm
 
 	-- 오른쪽: 테마 / 데이터 관리 / 정보
-	local right = UI.Section(p)
-	right:SetPoint("TOPRIGHT", -30, 0)
-	right:SetPoint("BOTTOMRIGHT", -30, 0)
-	right:SetWidth(330)
+	local right = UI.Section(p, { sketch = UI.TEX.sketchCamp, sketchW = 300 })
+	right:SetPoint("TOPRIGHT", 0, 0)
+	right:SetPoint("BOTTOMRIGHT", 0, 0)
+	right:SetWidth(354)
+	right.sketch:ClearAllPoints()
+	right.sketch:SetPoint("BOTTOM", 0, 10)
 
 	local h0 = right:CreateFontString(nil, "OVERLAY", UI.F.header)
-	h0:SetPoint("TOP", 0, -12)
+	h0:SetPoint("TOP", 0, -18)
 	h0:SetText("장정 테마")
 	local themeNote = UI.Text(right, UI.F.small)
 	themeNote:SetPoint("TOP", h0, "BOTTOM", 0, -6)
@@ -95,14 +100,14 @@ function O:Create(parent)
 	themeNote:SetText("테마를 바꾸면 UI를 다시 불러옵니다.")
 
 	self.themeButtons = {}
-	local tb1 = UI.Button(right, "양피지", 138, 26, function() O:SetTheme("light") end)
+	local tb1 = UI.Button(right, "양피지", 138, 28, function() O:SetTheme("light") end)
 	tb1:SetPoint("TOPRIGHT", themeNote, "BOTTOM", -4, -10)
-	local tb2 = UI.Button(right, "흑단", 138, 26, function() O:SetTheme("dark") end)
+	local tb2 = UI.Button(right, "흑단", 138, 28, function() O:SetTheme("dark") end)
 	tb2:SetPoint("TOPLEFT", themeNote, "BOTTOM", 4, -10)
 	self.themeButtons.light, self.themeButtons.dark = tb1, tb2
 
 	local div = UI.Divider(right, 290)
-	div:SetPoint("TOP", themeNote, "BOTTOM", 0, -44)
+	div:SetPoint("TOP", themeNote, "BOTTOM", 0, -48)
 
 	local h = right:CreateFontString(nil, "OVERLAY", UI.F.header)
 	h:SetPoint("TOP", div, "BOTTOM", 0, -8)
@@ -113,19 +118,19 @@ function O:Create(parent)
 	note:SetJustifyH("CENTER")
 	note:SetText("기록은 캐릭터마다 따로 저장됩니다.\n초기화한 기록은 되돌릴 수 없습니다.")
 
-	local b1 = UI.Button(right, "모험 일지 초기화", 290, 24, function()
+	local b1 = UI.Button(right, "모험 일지 초기화", 290, 26, function()
 		Confirm("BIGCHRONICLE_RESET_JOURNAL", "BIG CHRONICLE\n\n이 캐릭터의 모험 일지와 통계를 모두 지울까요?", function() ns:ResetData("journal") end)
 	end)
 	b1:SetPoint("TOP", note, "BOTTOM", 0, -12)
-	local b2 = UI.Button(right, "몬스터 도감 초기화", 290, 24, function()
+	local b2 = UI.Button(right, "몬스터 도감 초기화", 290, 26, function()
 		Confirm("BIGCHRONICLE_RESET_DEX", "BIG CHRONICLE\n\n이 캐릭터의 몬스터 도감을 모두 지울까요?", function() ns:ResetData("dex") end)
 	end)
 	b2:SetPoint("TOP", b1, "BOTTOM", 0, -6)
-	local b3 = UI.Button(right, "모든 기록 초기화", 290, 24, function()
+	local b3 = UI.Button(right, "모든 기록 초기화", 290, 26, function()
 		Confirm("BIGCHRONICLE_RESET_ALL", "BIG CHRONICLE\n\n이 캐릭터의 일지와 도감을 모두 지우고 처음부터 다시 기록할까요?", function() ns:ResetData("all") end)
 	end)
 	b3:SetPoint("TOP", b2, "BOTTOM", 0, -6)
-	local b4 = UI.Button(right, "미니맵 버튼 위치 초기화", 290, 24, function()
+	local b4 = UI.Button(right, "미니맵 버튼 위치 초기화", 290, 26, function()
 		ns.db.minimap.angle = ns.DEFAULTS.minimap.angle
 		if ns.Minimap then ns.Minimap:Update() end
 	end)

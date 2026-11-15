@@ -85,30 +85,31 @@ Every achievement arrives as a parchment dispatch sealed with red wax and adds a
 
 ## ✨ Effects
 
-- The **heavy leather front cover**, stamped with a gold griffin, swings open every time you open the book
-- Reaching a new chapter unfurls a **dark cinematic band with a gilded chapter title**, with drifting gold dust
-- Achievement notifications **press a red wax seal** as gold dust rises (violet embers for rare creatures)
+- The **leather front cover**, set with a gold griffin medallion, really swings open on its spine every time you open the book
+- Changing chapters or turning journal pages **flips an actual parchment sheet** — forward for later chapters, backward for earlier ones
+- Reaching a new chapter unfurls a **dark cinematic band with a gilded chapter title between laurel branches**, with drifting gold dust
+- Every notification is **stamped with a red wax seal** — a laurel seal for achievements, a dragon seal for bestiary discoveries (new tribes, new creatures, rares and research ranks)
 - The first time you open a newly found tribe, a **dragon wax seal** is pressed onto the page
-- Journal pages sweep across like a turning page
 - Newly earned achievements glow gold for three seconds when you first see them, then keep a quiet NEW tag until you leave the tab
 - The **minimap button glows** when something new happened while the window was closed
 - Every effect can be turned off in the settings
 
 ---
 
-## 🎨 Antique Tome UI
+## 🎨 Gilded Leather Book UI
 
-The window looks like a scholar's **leather-bound tome**, filled in over a lifetime of adventure.
+The window looks like an old RPG adventurer's handbook: **worn leather bound in heavy gold**.
 
-- A **tooled leather binding** with gold fillets, **brass corner guards**, a raised-band spine and a silk bookmark
-- **Aged parchment** pages with stained, darkened edges and a visible page block
-- **Serif (Myeongjo) titles**, ink-framed panels with corner ornaments, fleur-de-lys dividers
-- **Leather index tabs** and gold-tooled buttons; the selected line is marked with an ink band and an oxblood rule
-- Monster 3D models appear in a **gilt leather frame** with a gold nameplate
+- Cracked **red-brown leather**, a **thick gold frame** with vine-work **corner pieces** set with red gems, and **buckled straps** on the spine
+- A **gold title plaque** with a compass ornament and laurel branches, a **red banner** hanging at the top left, and a red close button
+- **Trapezoid leather tabs** — the selected one glows gold
+- Lists are **gold-rimmed leather buttons** with count badges; content sits on **torn, burnt-edged parchment panels**
+- **Engraving-style ink illustrations** in the corners of the parchment, gold icon frames and a gold scrollbar
+- **Serif (Myeongjo) text** throughout, with Cinzel for the English title
 - **Parchment (light) and Ebony (dark)** themes
 - Lore is revealed with a **typewriter effect** (click or press Space to show it all at once)
 - New journal entries gently fade in
-- Discovering a new tribe or rare creature brings a **parchment dispatch** to the top of the screen — click it to jump straight to that creature's bestiary page
+- Discovering a new tribe or rare creature brings a **wax-sealed parchment dispatch** to the top of the screen — click it to jump straight to that creature's bestiary page
 - **Keyboard shortcuts**: `1–5` switch tabs · `←/→` turn journal pages · `↑/↓` browse the bestiary · `Space` skip the typewriter · `Esc` close (disabled automatically in combat)
 
 ---
@@ -166,6 +167,6 @@ Please leave bug reports and ideas in the comments. Typing `/bc debug` shows int
 ## Credits for free assets
 
 - Parchment and leather textures: [Subtle Patterns](https://github.com/atlemo/SubtlePatterns) — CC BY-SA 3.0
-- Crest, icons and wax seal design: [game-icons.net](https://game-icons.net) (Lorc, Delapouite and contributors) — CC BY 3.0
-- Title font: Nanum Myeongjo ExtraBold (NHN) — SIL Open Font License 1.1
+- Crest, ornaments, illustrations, icons and wax seal design: [game-icons.net](https://game-icons.net) (Lorc, Delapouite and contributors) — CC BY 3.0
+- Fonts: Nanum Myeongjo ExtraBold and Bold (NHN), Cinzel Bold (The Cinzel Project Authors) — SIL Open Font License 1.1
 - Full details are in `Media/LICENSES.txt` inside the addon folder

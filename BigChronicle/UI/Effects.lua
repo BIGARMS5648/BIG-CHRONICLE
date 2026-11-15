@@ -1,7 +1,7 @@
 -- BIG CHRONICLE :: 화면 연출
 -- OnUpdate로 움직이는 작은 연출들:
 --   Tween(움직임) · Burst(금가루) · Pulse(은은한 빛) · Stamp(밀랍 인장)
---   ChapterCard(화면 가운데 장 제목) · Sweep(책장 넘김)
+--   ChapterCard(화면 가운데 장 제목) · TurnPage(책장 넘김)
 
 local ADDON, ns = ...
 local UI = ns.UI
@@ -285,44 +285,119 @@ function E.Stamp(frame, key, holdFor)
 end
 
 ------------------------------------------------------------------------
--- 책장 넘김: 종이빛 띠가 왼쪽에서 오른쪽으로 쓸고 지나간다
+-- 책장 넘김: 책등을 축으로 양피지 한 장이 실제로 넘어간다
+--   앞으로(dir >= 0): 지금 쪽이 오른쪽 끝부터 들려 책등 쪽으로 넘어가고, 그 아래 새 쪽이 드러난다
+--   뒤로(dir < 0) : 앞 쪽이 책등 너머에서 넘어와 내려앉은 뒤, 그 쪽의 내용이 나타난다
 ------------------------------------------------------------------------
-function E.MakeSweep(parent)
-	local band = CreateFrame("Frame", nil, parent)
-	band:SetFrameLevel((parent:GetFrameLevel() or 1) + 20)
-	band:SetWidth(140)
+function E.MakePageTurn(page)
 	local C = UI.COL
-	local c0 = { C.paperTop[1], C.paperTop[2], C.paperTop[3], 0 }
-	local c1 = { C.paperTop[1], C.paperTop[2], C.paperTop[3], 0.95 }
-	local l = band:CreateTexture(nil, "OVERLAY")
-	l:SetPoint("TOPLEFT"); l:SetPoint("BOTTOMLEFT"); l:SetWidth(70)
-	UI.Gradient(l, "HORIZONTAL", c0, c1)
-	local r = band:CreateTexture(nil, "OVERLAY")
-	r:SetPoint("TOPRIGHT"); r:SetPoint("BOTTOMRIGHT"); r:SetWidth(70)
-	UI.Gradient(r, "HORIZONTAL", c1, c0)
-	local edge = band:CreateTexture(nil, "OVERLAY", nil, 1)
-	edge:SetPoint("TOP"); edge:SetPoint("BOTTOM"); edge:SetWidth(1)
-	edge:SetColorTexture(C.edge[1], C.edge[2], C.edge[3], 0.35)
-	band:Hide()
-	return band
+	local sheet = CreateFrame("Frame", nil, page)
+	sheet:SetPoint("TOPLEFT", page, "TOPLEFT", -3, 3)
+	sheet:SetPoint("BOTTOMLEFT", page, "BOTTOMLEFT", -3, -3)
+	sheet:SetWidth(1)
+	sheet:SetFrameLevel(page:GetFrameLevel() + 35)
+	sheet:EnableMouse(false)
+	-- 가장자리가 그을린 양피지 한 장: 폭이 줄면 통째로 눌려 원근처럼 보인다
+	local paper = sheet:CreateTexture(nil, "BACKGROUND", nil, 0)
+	paper:SetAllPoints()
+	paper:SetTexture(UI.TEX.panel)
+	UI.Tint(paper, C.page)
+	local ghost = sheet:CreateTexture(nil, "BORDER")
+	ghost:SetPoint("TOPLEFT", 6, -6)
+	ghost:SetPoint("BOTTOMRIGHT", -6, 6)
+	ghost:SetTexture(UI.TEX.ghost)
+	UI.Tint(ghost, C.text, 0.20)
+	-- 들릴수록 바깥쪽이 그늘진다
+	local shade = sheet:CreateTexture(nil, "ARTWORK")
+	shade:SetPoint("TOPLEFT", 3, -4)
+	shade:SetPoint("BOTTOMRIGHT", -3, 4)
+	UI.Gradient(shade, "HORIZONTAL", { 0, 0, 0, 0 }, { 0, 0, 0, 0.55 })
+	-- 말려 올라가는 끝자락이 빛을 받는다
+	local curl = sheet:CreateTexture(nil, "ARTWORK", nil, 2)
+	curl:SetPoint("TOPRIGHT", -4, -4); curl:SetPoint("BOTTOMRIGHT", -4, 4); curl:SetWidth(40)
+	UI.Gradient(curl, "HORIZONTAL", { 1, 0.97, 0.9, 0 }, { 1, 0.97, 0.9, 0.3 })
+	-- 책장 끝의 밝은 모서리
+	local rim = sheet:CreateTexture(nil, "OVERLAY")
+	rim:SetPoint("TOPRIGHT", -3, -4); rim:SetPoint("BOTTOMRIGHT", -3, 4); rim:SetWidth(2)
+	rim:SetColorTexture(1, 0.95, 0.85, 0.4)
+	-- 아래 쪽에 드리우는 그림자
+	local cast = sheet:CreateTexture(nil, "BACKGROUND", nil, -2)
+	cast:SetPoint("TOPLEFT", sheet, "TOPRIGHT", -3, -6)
+	cast:SetPoint("BOTTOMLEFT", sheet, "BOTTOMRIGHT", -3, 6)
+	cast:SetWidth(1)
+	UI.Gradient(cast, "HORIZONTAL", { 0, 0, 0, 0.5 }, { 0, 0, 0, 0 })
+	sheet.paper, sheet.shade, sheet.rim, sheet.cast, sheet.page, sheet.curl = paper, shade, rim, cast, page, curl
+	sheet:Hide()
+	return sheet
 end
 
-function E.Sweep(band, area, key)
-	if not band or not area then return end
-	if not Enabled() then return end
-	local w = area:GetWidth() or 500
-	band:ClearAllPoints()
-	band:SetPoint("TOP", area, "TOP")
-	band:SetPoint("BOTTOM", area, "BOTTOM")
-	band:Show()
+-- 넘기던 책장을 곧바로 끝낸다 (연달아 넘길 때)
+function E.FinishTurn(sheet)
+	if not sheet or not sheet.busy then return end
+	E.Stop("page-turn")
+	E.Stop("page-turn-fade")
+	local apply = sheet.pending
+	sheet.pending, sheet.busy = nil, false
+	sheet:Hide()
+	if apply then apply() end
+end
+
+local function TurnPose(sheet, W, theta)
+	-- theta: 0 = 평평하게 누운 쪽, pi/2 = 책등 위에 곧게 선 쪽
+	local c, sn = math.cos(theta), math.sin(theta)
+	local w = math.max(1, W * c)
+	sheet:SetWidth(w)
+	sheet.shade:SetAlpha(0.2 + 0.8 * sn)
+	sheet.curl:SetWidth(math.max(1, math.min(40, w * 0.3)))
+	sheet.curl:SetAlpha(sn)
+	sheet.rim:SetAlpha(sn)
+	sheet.cast:SetWidth(math.max(1, 90 * sn * c * 2))
+	sheet.cast:SetAlpha(math.min(1, c * 2))
+end
+
+function E.TurnPage(sheet, dir, apply)
+	if not sheet then
+		if apply then apply() end
+		return
+	end
+	E.FinishTurn(sheet)
+	if not Enabled() then
+		if apply then apply() end
+		return
+	end
+	local page = sheet.page
+	local W = (page:GetWidth() or 640) + 6
+	sheet:SetAlpha(1)
+	sheet:Show()
+	sheet.busy = true
 	E.Sound("page")
-	E.Tween(key or "sweep", 0.4, function(p)
-		local x = -140 + (w + 140) * E.Ease.inOut(p)
-		band:ClearAllPoints()
-		band:SetPoint("TOPLEFT", area, "TOPLEFT", x, 0)
-		band:SetPoint("BOTTOMLEFT", area, "BOTTOMLEFT", x, 0)
-		band:SetAlpha(1 - math.max(0, p - 0.8) * 5)
-	end, function() band:Hide() end)
+	if (dir or 1) >= 0 then
+		-- 새 쪽을 먼저 그려 두고, 지금 쪽(종이)이 그 위에서 넘어간다
+		if apply then apply() end
+		TurnPose(sheet, W, 0)
+		E.Tween("page-turn", 0.55, function(p)
+			TurnPose(sheet, W, math.pi / 2 * E.Ease.inOut(p))
+		end, function()
+			sheet.busy = false
+			sheet:Hide()
+		end)
+	else
+		-- 앞 쪽이 넘어와 덮은 뒤에 내용을 바꾸고, 종이를 걷어 낸다
+		sheet.pending = apply
+		TurnPose(sheet, W, math.pi / 2)
+		E.Tween("page-turn", 0.5, function(p)
+			TurnPose(sheet, W, math.pi / 2 * (1 - E.Ease.inOut(p)))
+		end, function()
+			local fn = sheet.pending
+			sheet.pending = nil
+			if fn then fn() end
+			E.Tween("page-turn-fade", 0.18, function(p) sheet:SetAlpha(1 - p) end, function()
+				sheet.busy = false
+				sheet:Hide()
+				sheet:SetAlpha(1)
+			end)
+		end)
+	end
 end
 
 ------------------------------------------------------------------------
@@ -398,6 +473,16 @@ local function BuildCard()
 	local title = titleHolder:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematic")
 	title:SetPoint("CENTER")
 	f.title, f.titleHolder = title, titleHolder
+	-- 제목 양옆의 금빛 월계수 가지
+	local laurelL = titleHolder:CreateTexture(nil, "ARTWORK")
+	laurelL:SetSize(88, 44)
+	laurelL:SetPoint("RIGHT", title, "LEFT", -12, 0)
+	laurelL:SetTexture(UI.TEX.laurel)
+	laurelL:SetTexCoord(1, 0, 0, 1)
+	local laurelR = titleHolder:CreateTexture(nil, "ARTWORK")
+	laurelR:SetSize(88, 44)
+	laurelR:SetPoint("LEFT", title, "RIGHT", 12, 0)
+	laurelR:SetTexture(UI.TEX.laurel)
 
 	local rule = UI.Divider(f, 300, gold)
 	rule:SetPoint("TOP", titleHolder, "BOTTOM", 0, -2)

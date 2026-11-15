@@ -4,10 +4,11 @@
 
   - 양피지·가죽 질감: Subtle Patterns (CC BY-SA 3.0)  https://github.com/atlemo/SubtlePatterns
   - 문장·아이콘·밀랍 인장 도안: game-icons.net (CC BY 3.0)  npm @iconify-json/game-icons
-  - 제목 글꼴: 나눔명조 ExtraBold (SIL OFL 1.1)  https://github.com/google/fonts/tree/main/ofl/nanummyeongjo
-  - 얼룩, 그을린 가장자리, 놋쇠 모서리, 책등 띠, 테두리 장식, 금가루, 체크, 잉크 방울은 이 스크립트가 직접 그린다.
+  - 글꼴: 나눔명조 ExtraBold·Bold, Cinzel (SIL OFL 1.1)  https://github.com/google/fonts
+  - 금테, 모서리 장식, 명판, 깃발, 가죽끈과 버클, 탭, 버튼, 찢어진 양피지, 잉크 삽화는
+    tools/ornate.py 가 높이 지도에 빛을 계산해서 직접 그린다.
 
-사용법 (Python + Pillow + numpy, Node + Playwright 필요):
+사용법 (Python + Pillow + numpy + fontTools, Node + Playwright 필요):
     NODE_PATH=$(npm root -g) python3 tools/build_assets.py <캐시_폴더>
 """
 import json
@@ -239,14 +240,6 @@ def parchment_tex(src):
     return Image.fromarray(np.clip(v, 0, 255).astype(np.uint8)).convert("RGB")
 
 
-def leather_tex(src):
-    S = 256
-    g = np.asarray(seamless_resize(src, (S, S)).convert("L"), dtype=np.float32)
-    g = (g - g.mean()) * 1.35
-    wear = periodic_noise(S, 40, 5) * 16 + periodic_noise(S, 10, 6) * 5
-    return Image.fromarray(np.clip(205 + g + wear, 0, 255).astype(np.uint8)).convert("RGB")
-
-
 def vignette_tex():
     """페이지 가장자리가 그을리고 바랜 느낌 (흰색 + 알파, 게임에서 짙은 갈색을 입힌다)."""
     S = 256
@@ -260,64 +253,6 @@ def vignette_tex():
     broad = np.clip((r - 0.45) / 0.55, 0, 1) ** 2 * 0.45
     a = np.clip(edge * 0.95 + broad, 0, 1)
     img = np.dstack([np.full((S, S), 255, np.uint8)] * 3 + [(a * 255).astype(np.uint8)])
-    return Image.fromarray(img, "RGBA")
-
-
-def brass_corner_tex():
-    """표지 모서리의 놋쇠 장식 (왼쪽 위 기준, 나머지는 게임에서 뒤집어 쓴다)."""
-    K, S = 4, 64
-    N = S * K
-    m = Image.new("L", (N, N), 0)
-    d = ImageDraw.Draw(m)
-    d.polygon([(0, 0), (N * 0.98, 0), (0, N * 0.98)], fill=255)
-    # 빗변을 오목하게 깎아 낸다
-    c, r = N * 0.95, N * 0.62
-    d.ellipse((c - r, c - r, c + r, c + r), fill=0)
-    # 양 끝을 둥글게
-    m = m.filter(ImageFilter.GaussianBlur(K * 0.8)).point(lambda v: 255 if v > 128 else 0)
-    plate = np.asarray(m, dtype=np.float32) / 255
-    # 높이: 판 + 경사진 가장자리 + 새긴 선 + 리벳
-    bevel = np.asarray(m.filter(ImageFilter.GaussianBlur(K * 2.2)), dtype=np.float32) / 255
-    eng = Image.new("L", (N, N), 0)
-    de = ImageDraw.Draw(eng)
-    r2 = r + N * 0.09
-    de.arc((c - r2, c - r2, c + r2, c + r2), 180, 270, fill=255, width=int(K * 1.6))
-    de.line((N * 0.10, N * 0.10, N * 0.10, N * 0.30), fill=255, width=int(K * 1.2))
-    de.line((N * 0.10, N * 0.10, N * 0.30, N * 0.10), fill=255, width=int(K * 1.2))
-    e = np.asarray(eng.filter(ImageFilter.GaussianBlur(K * 0.5)), dtype=np.float32) / 255 * plate
-    yy, xx = np.mgrid[0:N, 0:N].astype(np.float32)
-    rivet = np.zeros((N, N), np.float32)
-    for (rx, ry, rr) in [(N * 0.20, N * 0.20, N * 0.065)]:
-        dd = np.sqrt((xx - rx) ** 2 + (yy - ry) ** 2) / rr
-        rivet += np.clip(1 - dd * dd, 0, 1) ** 0.5
-    height = bevel * 0.8 - e * 0.25 + rivet * 0.5
-    diffuse, spec = shade(height, strength=N / 10)
-    base = np.array([176, 136, 70], np.float32)
-    patina = (periodic_noise(N, 30, 11) * 0.5 + 0.5)[..., None]
-    lit = base * (0.45 + 0.8 * diffuse[..., None]) + 255 * 0.65 * spec[..., None]
-    lit = lit * (0.82 + 0.18 * patina) - e[..., None] * 40
-    rgb = np.clip(lit, 0, 255).astype(np.uint8)
-    seal = Image.fromarray(np.dstack([rgb, (plate * 255).astype(np.uint8)]), "RGBA")
-    # 둘레의 그림자 (어느 쪽으로 뒤집어도 어색하지 않게 고르게)
-    shadow = Image.new("RGBA", (N, N), (0, 0, 0, 0))
-    shadow.putalpha(m.filter(ImageFilter.GaussianBlur(K * 2.5)).point(lambda v: int(v * 0.7)))
-    out = Image.new("RGBA", (N, N), (0, 0, 0, 0))
-    out.alpha_composite(shadow)
-    out.alpha_composite(seal)
-    return out.resize((S, S), Image.LANCZOS)
-
-
-def spine_band_tex():
-    """책등의 볼록한 띠 (가로 64 × 세로 16, 회색조 → 게임에서 가죽 색을 입힌다)."""
-    W, H = 64, 16
-    y = np.linspace(-1, 1, H)
-    prof = np.clip(1 - y ** 2, 0, 1) ** 0.6
-    light = 0.62 + 0.55 * (-np.gradient(prof) * 3) + 0.25 * prof
-    col = np.clip(light * 205, 0, 255)
-    alpha = np.clip(prof * 1.6, 0, 1) * 255
-    img = np.zeros((H, W, 4), np.uint8)
-    img[..., 0] = img[..., 1] = img[..., 2] = col[:, None].astype(np.uint8)
-    img[..., 3] = alpha[:, None].astype(np.uint8)
     return Image.fromarray(img, "RGBA")
 
 
@@ -348,6 +283,44 @@ def dust_tex():
     a = np.clip(np.exp(-r * r * 5) * 1.15 - 0.03, 0, 1)
     img = np.dstack([np.full((S, S), 255, np.uint8)] * 3 + [(a * 255).astype(np.uint8)])
     return Image.fromarray(img, "RGBA")
+
+
+def ghost_page_tex():
+    """넘어가는 책장 앞면에 비치는 희미한 글씨 자국 (흰색 마스크).
+    일지 양피지 칸 비율(약 640×470)로 그린 뒤 512×512로 줄인다 — 게임에서 다시 늘어나며 비율이 맞는다."""
+    W, H = 1024, 752
+    rng = random.Random(21)
+    m = Image.new("L", (W, H), 0)
+    d = ImageDraw.Draw(m)
+
+    def words(x0, x1, y, h, gap=10):
+        x = x0
+        while x < x1:
+            w = rng.randint(18, 70)
+            if x + w > x1:
+                w = x1 - x
+            if w > 6:
+                d.rounded_rectangle((x, y, x + w, y + h), radius=h // 2, fill=rng.randint(150, 230))
+            x += w + gap
+
+    d.rounded_rectangle((40, 40, 330, 66), radius=8, fill=235)
+    words(42, 640, 84, 8, 12)
+    d.line((36, 116, W - 40, 116), fill=150, width=2)
+    d.line((300, 146, 420, 146), fill=170, width=2)
+    d.rounded_rectangle((440, 136, 600, 156), radius=6, fill=210)
+    d.line((620, 146, 740, 146), fill=170, width=2)
+    y = 182
+    while y < H - 150:
+        words(60, rng.randint(W - 300, W - 60), y, 9)
+        y += rng.choice((32, 32, 32, 46))
+    d.line((36, H - 128, W - 40, H - 128), fill=140, width=2)
+    for x0, x1 in ((40, 200), (W - 200, W - 40)):
+        d.rounded_rectangle((x0, H - 112, x1, H - 84), radius=8, outline=170, width=3)
+    d.rounded_rectangle((40, H - 66, W - 360, H - 34), radius=8, outline=160, width=3)
+    m = m.filter(ImageFilter.GaussianBlur(1.6)).resize((512, 512), Image.LANCZOS)
+    out = Image.new("RGBA", (512, 512), (255, 255, 255, 0))
+    out.putalpha(m)
+    return out
 
 
 def pen_stroke(w, h, pts_fn, width, K=4):
@@ -393,21 +366,6 @@ def ink_tex():
     return out
 
 
-def ribbon_tex():
-    """책갈피 끈 (끝이 V자로 갈라진 비단 끈)"""
-    W, H, K = 16, 128, 4
-    a = np.zeros((H * K, W * K, 4), dtype=np.float32)
-    xx = np.linspace(-1, 1, W * K)
-    shine = 0.70 + 0.22 * np.cos(xx * math.pi / 2) ** 2 + 0.10 * np.exp(-((xx + 0.35) ** 2) / 0.02)
-    a[..., 0] = a[..., 1] = a[..., 2] = 255 * shine[None, :]
-    a[..., 3] = 255
-    img = Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGBA")
-    m = Image.new("L", (W * K, H * K), 255)
-    ImageDraw.Draw(m).polygon([(0, H * K), (W * K / 2, H * K - 12 * K), (W * K, H * K)], fill=0)
-    img.putalpha(m)
-    return img.resize((W, H), Image.LANCZOS)
-
-
 def mask_icon(mask, size):
     m = mask.resize((size, size), Image.LANCZOS)
     icon = Image.new("RGBA", (size, size), (255, 255, 255, 0))
@@ -417,26 +375,31 @@ def mask_icon(mask, size):
 
 # ---------------------------------------------------------------- 실행
 ICONS = ["quill-ink", "dragon-head", "laurel-crown", "hourglass", "cog", "griffin-symbol"]
-OBSOLETE = ["Grid", "Ring", "Hole", "Tape", "Sticky", "Torn", "Underline", "PenCircle", "Paperclip", "Stitch", "Paper"]
+OBSOLETE = ["Grid", "Ring", "Hole", "Tape", "Sticky", "Torn", "Underline", "PenCircle", "Paperclip", "Stitch", "Paper",
+            "SpineBand", "Ribbon"]
 
 
 def main():
+    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+    import ornate as O
+
     paper_src = Image.open(subtle("natural_paper.png")).convert("RGB")
     leather_src = Image.open(subtle("leather_1.png")).convert("RGB")
 
-    save_tga(parchment_tex(paper_src), "Parchment.tga")
-    save_tga(leather_tex(leather_src), "Leather.tga")
+    parchment = parchment_tex(paper_src)
+    save_tga(parchment, "Parchment.tga")
+    leather = O.worn_leather(leather_src)
+    save_tga(leather, "Leather.tga")
     save_tga(vignette_tex(), "Vignette.tga")
-    save_tga(brass_corner_tex(), "Corner.tga")
-    save_tga(spine_band_tex(), "SpineBand.tga")
     save_tga(orn_corner_tex(), "OrnCorner.tga")
     save_tga(dust_tex(), "Dust.tga")
     save_tga(check_tex(), "Check.tga")
     save_tga(ink_tex(), "Ink.tga")
-    save_tga(ribbon_tex(), "Ribbon.tga")
+    save_tga(ghost_page_tex(), "PageGhost.tga")
 
     icons = game_icons()
-    names = ["wax-seal", "dragon-head", "laurel-crown", "fleur-de-lys"] + ICONS
+    names = ["wax-seal", "dragon-head", "laurel-crown", "fleur-de-lys", "curling-vines", "curled-leaf", "compass",
+             "stone-bridge", "castle-ruins", "pine-tree", "forest-camp", "tower-flag"] + ICONS
     masks = render_masks(icons, list(dict.fromkeys(names)))
 
     save_tga(wax_seal(masks["wax-seal"], None), "Seal.tga")
@@ -444,6 +407,30 @@ def main():
     save_tga(wax_seal(masks["wax-seal"], masks["laurel-crown"], color=(140, 24, 22)), "SealAch.tga")
     save_tga(mask_icon(masks["fleur-de-lys"], 64), "Fleuron.tga")
     save_tga(mask_icon(masks["griffin-symbol"], 256), "Emblem.tga")
+
+    # 금테 장정
+    save_tga(O.gold_bar(), "GoldBar.tga")
+    save_tga(O.ornate_corner(masks), "Corner.tga")
+    save_tga(O.laurel_tex(), "Laurel.tga")
+    save_tga(O.title_plaque(masks, leather), "Plaque.tga")
+    save_tga(O.banner_tex(masks), "Banner.tga")
+    save_tga(O.strap_tex(leather), "Strap.tga")
+    save_tga(O.cover_medallion(masks, leather), "Medallion.tga")
+    save_tga(O.tab_tex(True, leather), "TabActive.tga")
+    save_tga(O.tab_tex(False, leather), "Tab.tga")
+    save_tga(O.button_tex("normal", leather), "Button.tga")
+    save_tga(O.button_tex("active", leather), "ButtonActive.tga")
+    save_tga(O.button_tex("red", leather), "ButtonRed.tga")
+    save_tga(O.badge_tex(), "Badge.tga")
+    save_tga(O.field_tex(), "Field.tga")
+    save_tga(O.icon_frame_tex(), "IconFrame.tga")
+    save_tga(O.close_tex(), "Close.tga")
+    save_tga(O.scroll_thumb_tex(), "ScrollThumb.tga")
+    save_tga(O.scroll_arrow_tex(), "ScrollArrow.tga")
+    save_tga(O.checkbox_tex(), "CheckBox.tga")
+    save_tga(O.parchment_panel(parchment), "Panel.tga")
+    save_tga(O.sketch_scene(masks, "castle"), "SketchCastle.tga")
+    save_tga(O.sketch_scene(masks, "camp"), "SketchCamp.tga")
 
     # 예전 디자인에서 쓰던 파일 정리
     for n in OBSOLETE:
@@ -458,10 +445,17 @@ def main():
     for n in ICONS:
         save_tga(mask_icon(masks[n], 64), f"Icons/{n}.tga")
 
-    font = fetch(FONT.format("NanumMyeongjo-ExtraBold.ttf"), "NanumMyeongjo-ExtraBold.ttf")
-    shutil.copy(font, MEDIA / "Fonts" / "NanumMyeongjo-ExtraBold.ttf")
-    ofl = fetch(FONT.format("OFL.txt"), "NanumMyeongjo-OFL.txt")
-    shutil.copy(ofl, MEDIA / "Fonts" / "NanumMyeongjo-OFL.txt")
+    # 글꼴: 나눔명조 ExtraBold(제목)·Bold(본문), Cinzel Bold(영문 제목, 가변 글꼴에서 굵기 700으로 고정)
+    for name in ("NanumMyeongjo-ExtraBold.ttf", "NanumMyeongjo-Bold.ttf"):
+        shutil.copy(fetch(FONT.format(name), name), MEDIA / "Fonts" / name)
+    shutil.copy(fetch(FONT.format("OFL.txt"), "NanumMyeongjo-OFL.txt"), MEDIA / "Fonts" / "NanumMyeongjo-OFL.txt")
+    cinzel_base = "https://raw.githubusercontent.com/google/fonts/main/ofl/cinzel/{}"
+    vf = fetch(cinzel_base.format("Cinzel%5Bwght%5D.ttf"), "Cinzel-VF.ttf")
+    from fontTools.ttLib import TTFont
+    from fontTools.varLib import instancer
+    inst = instancer.instantiateVariableFont(TTFont(vf), {"wght": 700})
+    inst.save(MEDIA / "Fonts" / "Cinzel-Bold.ttf")
+    shutil.copy(fetch(cinzel_base.format("OFL.txt"), "Cinzel-OFL.txt"), MEDIA / "Fonts" / "Cinzel-OFL.txt")
     print("done")
 
 

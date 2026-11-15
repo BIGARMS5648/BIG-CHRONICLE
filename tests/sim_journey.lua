@@ -472,6 +472,10 @@ if pdir then
 	ns.UI:Open("journal")
 	local f = ns.UI.frame
 	f:Hide(); ns.UI:Open("journal"); settle(); dump("journal")
+	-- 책장 넘김 중간 모습 (앞으로 / 뒤로)
+	ns.JournalTab.chapterButtons[3].onClick(); step(5); dump("turn"); settle()
+	ns.JournalTab.chapterButtons[1].onClick(); step(5); dump("turnback"); settle()
+	ns.JournalTab.chapterButtons[#ns.JournalTab.chapterButtons].onClick(); settle()
 	ns.UI:SelectTab("bestiary")
 	ns.BestiaryTab:SelectTribe("centaur")
 	for name, c in pairs(ns.Bestiary.dex.creatures) do if c.tribe == "centaur" then ns.BestiaryTab.species = name end end
