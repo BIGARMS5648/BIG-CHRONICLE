@@ -16,29 +16,26 @@ local function Hex(c)
 	return string.format("%02x%02x%02x", math.floor(c[1] * 255), math.floor(c[2] * 255), math.floor(c[3] * 255))
 end
 
--- 왼쪽 목록의 한 줄 (선택 시 왼쪽에 진한 띠)
+-- 왼쪽 목록의 한 줄 (선택하면 잉크 띠가 깔리고 왼쪽에 검붉은 표시가 선다)
 function UI.NavRow(parent, height)
 	local C = UI.COL
 	local b = CreateFrame("Button", nil, parent)
 	b:SetHeight(height or 24)
 	local sel = b:CreateTexture(nil, "BACKGROUND")
-	sel:SetPoint("TOPLEFT", 2, -2)
+	sel:SetPoint("TOPLEFT", 2, -1)
 	sel:SetPoint("BOTTOMRIGHT", -4, 1)
-	sel:SetTexture(UI.TEX.tape)
-	UI.Tint(sel, C.sel)
+	UI.Gradient(sel, "HORIZONTAL", { C.sel[1], C.sel[2], C.sel[3], C.sel[4] * 1.4 }, { C.sel[1], C.sel[2], C.sel[3], 0 })
 	sel:Hide()
-	-- 선택 표시: 빨간 색연필로 그은 짧은 줄
 	local bar = b:CreateTexture(nil, "ARTWORK")
-	bar:SetPoint("LEFT", -2, 0)
-	bar:SetSize(10, 6)
-	bar:SetTexture(UI.TEX.underline)
-	UI.Tint(bar, C.accent)
+	bar:SetPoint("TOPLEFT", 2, -2)
+	bar:SetPoint("BOTTOMLEFT", 2, 2)
+	bar:SetWidth(3)
+	bar:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.9)
 	bar:Hide()
 	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 2, -2)
+	hl:SetPoint("TOPLEFT", 2, -1)
 	hl:SetPoint("BOTTOMRIGHT", -4, 1)
-	hl:SetTexture(UI.TEX.tape)
-	UI.Tint(hl, C.hover)
+	UI.Gradient(hl, "HORIZONTAL", { C.hover[1], C.hover[2], C.hover[3], C.hover[4] * 1.6 }, { C.hover[1], C.hover[2], C.hover[3], 0 })
 	local label = UI.Text(b, UI.F.body)
 	label:SetPoint("LEFT", 10, 0)
 	label:SetJustifyV("MIDDLE")
@@ -79,7 +76,7 @@ function J:Create(parent)
 	end
 
 	-- 왼쪽: 장 목록 + 분류 필터
-	local nav = UI.Section(p, { tape = true, tapeX = 20 })
+	local nav = UI.Section(p)
 	nav:SetPoint("TOPLEFT", 0, 0)
 	nav:SetPoint("BOTTOMLEFT", 0, 0)
 	nav:SetWidth(NAV_W)
@@ -276,7 +273,7 @@ function J:Refresh(keepScroll, reason)
 	if self.chapter == 0 then
 		self.title:SetText("전체 기록")
 	else
-		self.title:SetText(UI.PenText(C.CHAPTERS[self.chapter].title))
+		self.title:SetText(C.CHAPTERS[self.chapter].title)
 	end
 	if #list > 0 then
 		local first, last = list[1].e, list[#list].e

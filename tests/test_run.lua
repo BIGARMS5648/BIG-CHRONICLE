@@ -350,7 +350,7 @@ local okFx, errFx = pcall(function()
 	assert((ns.Minimap.news or 0) >= 1 and ns.Minimap.button.glow:IsShown(), "minimap glows for news")
 	ns.UI:Open("journal")
 	assert((ns.Minimap.news or 0) == 0 and not ns.Minimap.button.glow:IsShown(), "opening clears news")
-	assert(f.flap:IsShown() and f.flap:GetWidth() > 900, "notebook starts with the cover closed")
+	assert(f.flap:IsShown() and f.flap:GetWidth() > 900, "book starts with the front cover closed")
 	run(1)
 	assert(not f.flap:IsShown(), "cover flips open")
 	-- 장 제목 카드

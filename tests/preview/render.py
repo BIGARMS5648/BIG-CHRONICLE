@@ -44,14 +44,17 @@ def load_tex(path):
     elif p.endswith("WHITE8X8"):
         img = Image.new("RGBA", (8, 8), (255, 255, 255, 255))
     elif "/Icons/" in p:
-        # 게임 아이콘은 없으므로 무늬만 그린다
+        # 게임 아이콘은 없으므로 차분한 색의 자리 표시만 그린다
         name = p.split("/")[-1]
         h = abs(hash(name)) % 360
-        img = Image.new("RGBA", (64, 64), (0, 0, 0, 255))
+        base = tuple(int(70 + 30 * math.sin(math.radians(h + k * 120))) for k in range(3))
+        img = Image.new("RGBA", (64, 64), base + (255,))
         d = ImageDraw.Draw(img)
-        col = tuple(int(150 + 80 * math.sin(math.radians(h + k * 120))) for k in range(3))
-        d.rectangle((2, 2, 61, 61), fill=col + (255,), outline=(30, 30, 30, 255), width=3)
-        d.text((8, 22), name[:9], fill=(20, 20, 20, 255))
+        for i in range(32):
+            k = i / 32
+            c = tuple(int(v * (0.55 + 0.45 * k)) for v in base)
+            d.rectangle((i, i, 63 - i, 63 - i), outline=c + (255,))
+        d.ellipse((20, 18, 44, 42), fill=tuple(min(255, v + 70) for v in base) + (255,))
     _tex_cache[path] = img
     return img
 
@@ -60,8 +63,9 @@ def font(path, size):
     key = (path, size)
     if key not in _font_cache:
         f = BODY_FONT
-        if "NanumPen" in (path or ""):
-            f = str(MEDIA / "Fonts" / "NanumPenScript.ttf")
+        m = re.search(r"AddOns/BigChronicle/Media/(Fonts/.+)$", (path or "").replace("\\", "/"))
+        if m and (MEDIA / m.group(1)).exists():
+            f = str(MEDIA / m.group(1))
         _font_cache[key] = ImageFont.truetype(f, max(6, int(round(size))))
     return _font_cache[key]
 
@@ -128,8 +132,15 @@ def draw_texture(canvas, n, alpha):
                     tiled.paste(src, (x, y))
             img = tiled.resize((w, h))
         elif len(tc) == 4:
-            box = (int(tc[0] * sw), int(tc[2] * sh), max(int(tc[0] * sw) + 1, int(tc[1] * sw)), max(int(tc[2] * sh) + 1, int(tc[3] * sh)))
-            img = src.crop(box).resize((w, h))
+            # 좌표가 거꾸로면 뒤집어서 쓴다 (모서리 장식)
+            l, r, t, b = tc
+            img = src
+            if l > r:
+                img, l, r = ImageOps.mirror(img), 1 - l, 1 - r
+            if t > b:
+                img, t, b = ImageOps.flip(img), 1 - t, 1 - b
+            box = (int(l * sw), int(t * sh), max(int(l * sw) + 1, int(r * sw)), max(int(t * sh) + 1, int(b * sh)))
+            img = img.crop(box).resize((w, h))
         else:
             img = src.resize((w, h))
         if n["desat"]:

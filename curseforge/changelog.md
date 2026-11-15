@@ -1,3 +1,12 @@
+## 1.4.0
+
+- **Antique tome redesign**: the cute notebook look is gone. The window is now a heavy, leather-bound tome with gold-tooled fillets, brass corner guards, a raised-band spine, a silk bookmark and aged parchment pages with darkened edges
+- Serif (Nanum Myeongjo) titles, ink-framed panels with corner ornaments, fleur-de-lys dividers, leather index tabs and gold-tooled buttons
+- The bestiary portrait is now a gilt leather frame with a gold nameplate
+- Themes renamed to **Parchment** (light) and **Ebony** (dark)
+- Effects are calmer: the front cover with a gold griffin swings open, chapter titles rise on a dark cinematic band with drifting gold dust, notifications arrive as parchment dispatches, and confetti was replaced by gold dust
+- New wax seal emblems: laurel crown for achievements, dragon for the bestiary
+
 ## 1.3.0
 
 - **Field notebook redesign**: the whole window is now a leather-bound spiral notebook with a stitched cover, grid-paper pages, spiral rings, a bookmark ribbon and colorful index tabs; handwritten pen titles, taped-on panels, highlighter selection, pen checkmarks and a polaroid photo for 3D models

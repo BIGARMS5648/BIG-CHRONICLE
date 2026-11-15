@@ -79,35 +79,36 @@ Inspired by the Wrath-era achievements for classic (level 1–60) content, focus
 - **Battlegrounds, Reputation, Trials, Chronicle** — battles joined, exalted factions, your first death and deathless levels, personal notes and exports
 - **Little Joys** — playful achievements based on real-world dates: 7- and 30-day streaks, 100 days together, weekend warrior, night owl, New Year's Day…
 
-Every achievement drops a sticky note stamped with a red wax seal and adds a short line of story to your journal.
+Every achievement arrives as a parchment dispatch sealed with red wax and adds a short line of story to your journal.
 
 ---
 
 ## ✨ Effects
 
-- The **leather cover flips open** every time you open the notebook
-- Reaching a new chapter drops a **torn, taped-on note with a handwritten chapter title**, underlined in red pen
-- Achievement notifications **stamp a red wax seal** with flying wax crumbs and confetti (ink drops for rare creatures, green confetti for new tribes)
-- The first time you open a newly found tribe, a **paw-print wax seal** thuds onto the page
+- The **heavy leather front cover**, stamped with a gold griffin, swings open every time you open the book
+- Reaching a new chapter unfurls a **dark cinematic band with a gilded chapter title**, with drifting gold dust
+- Achievement notifications **press a red wax seal** as gold dust rises (violet embers for rare creatures)
+- The first time you open a newly found tribe, a **dragon wax seal** is pressed onto the page
 - Journal pages sweep across like a turning page
-- Newly earned achievements sparkle for three seconds when you first see them, then keep a quiet NEW tag and a highlighter mark until you leave the tab
+- Newly earned achievements glow gold for three seconds when you first see them, then keep a quiet NEW tag until you leave the tab
 - The **minimap button glows** when something new happened while the window was closed
 - Every effect can be turned off in the settings
 
 ---
 
-## 🎨 Field Notebook UI
+## 🎨 Antique Tome UI
 
-The window looks like an adventurer's **leather-bound, spiral field notebook**.
+The window looks like a scholar's **leather-bound tome**, filled in over a lifetime of adventure.
 
-- A stitched **leather cover**, grid-paper pages, punched holes with **spiral rings** and a red bookmark ribbon
-- Colorful **index tabs** along the top (Journal, Bestiary, Achievements, Stats, Settings)
-- **Handwritten pen titles**, panels taped on with masking tape, **highlighter** for the selected line
-- Monster 3D models appear as a **polaroid photo** held by a paper clip; checkboxes are ticked in pen
-- **Cream notebook (light) and Night notebook (dark)** themes
+- A **tooled leather binding** with gold fillets, **brass corner guards**, a raised-band spine and a silk bookmark
+- **Aged parchment** pages with stained, darkened edges and a visible page block
+- **Serif (Myeongjo) titles**, ink-framed panels with corner ornaments, fleur-de-lys dividers
+- **Leather index tabs** and gold-tooled buttons; the selected line is marked with an ink band and an oxblood rule
+- Monster 3D models appear in a **gilt leather frame** with a gold nameplate
+- **Parchment (light) and Ebony (dark)** themes
 - Lore is revealed with a **typewriter effect** (click or press Space to show it all at once)
 - New journal entries gently fade in
-- Discovering a new tribe or rare creature drops a **taped sticky note** at the top of the screen — click it to jump straight to that creature's bestiary page
+- Discovering a new tribe or rare creature brings a **parchment dispatch** to the top of the screen — click it to jump straight to that creature's bestiary page
 - **Keyboard shortcuts**: `1–5` switch tabs · `←/→` turn journal pages · `↑/↓` browse the bestiary · `Space` skip the typewriter · `Esc` close (disabled automatically in combat)
 
 ---
@@ -164,7 +165,7 @@ Please leave bug reports and ideas in the comments. Typing `/bc debug` shows int
 
 ## Credits for free assets
 
-- Paper and leather textures: [Subtle Patterns](https://github.com/atlemo/SubtlePatterns) — CC BY-SA 3.0
-- Icons and wax seal design: [game-icons.net](https://game-icons.net) (Lorc, Delapouite and contributors) — CC BY 3.0
-- Handwriting font: Nanum Pen Script (NHN) — SIL Open Font License 1.1
+- Parchment and leather textures: [Subtle Patterns](https://github.com/atlemo/SubtlePatterns) — CC BY-SA 3.0
+- Crest, icons and wax seal design: [game-icons.net](https://game-icons.net) (Lorc, Delapouite and contributors) — CC BY 3.0
+- Title font: Nanum Myeongjo ExtraBold (NHN) — SIL Open Font License 1.1
 - Full details are in `Media/LICENSES.txt` inside the addon folder

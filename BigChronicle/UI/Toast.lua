@@ -1,5 +1,5 @@
 -- BIG CHRONICLE :: 알림 팝업
--- 새로운 종족/개체/희귀 개체/업적을 발견하면 화면 위쪽에 테이프 붙은 포스트잇이 툭 떨어진다
+-- 새로운 종족/개체/희귀 개체/업적을 발견하면 화면 위쪽에 양피지 전갈이 내려앉는다
 
 local ADDON, ns = ...
 local UI = ns.UI
@@ -14,27 +14,27 @@ local STYLE = {
 	achievement = { hold = 5.0, sound = { "UI_ALERT_ACHIEVEMENT", "UI_EPICLOOT_TOAST", "LEVELUPSOUND" } },
 }
 
-local OPEN, FADE_OUT = 0.35, 0.7
-local TOP_Y, DROP = -120, 46
+local OPEN, FADE_OUT = 0.45, 0.8
+local TOP_Y, DROP = -120, 22
 
--- 알림 종류별 포스트잇 색
-local NOTE = {
-	species     = { 1.00, 0.93, 0.52 },
-	tribe       = { 0.72, 0.95, 0.68 },
-	rare        = { 0.86, 0.76, 1.00 },
-	rank        = { 1.00, 0.80, 0.60 },
-	achievement = { 1.00, 0.88, 0.55 },
+-- 알림 종류별 제목 잉크와 왼쪽 띠 색
+local INK = {
+	species     = { 0.19, 0.09, 0.04 },
+	tribe       = { 0.16, 0.30, 0.12 },
+	rare        = { 0.38, 0.14, 0.46 },
+	rank        = { 0.52, 0.11, 0.07 },
+	achievement = { 0.52, 0.11, 0.07 },
 }
--- 알림 종류별로 튀는 조각 (색종이 / 잉크 방울)
+-- 알림 종류별로 피어오르는 빛 (금가루 / 보랏빛 불티)
 local BURST = {
-	achievement = { colors = { { 0.93, 0.47, 0.40 }, { 0.97, 0.80, 0.35 }, { 0.50, 0.68, 0.90 }, { 0.52, 0.76, 0.48 } }, count = 30 },
-	rank        = { colors = { { 0.97, 0.80, 0.35 }, { 0.93, 0.47, 0.40 } }, count = 20 },
-	rare        = { colors = { { 0.42, 0.20, 0.62 }, { 0.30, 0.12, 0.48 } }, count = 18, tex = "ink" },
-	tribe       = { colors = { { 0.52, 0.76, 0.48 }, { 0.97, 0.80, 0.35 } }, count = 20 },
-	species     = { colors = { { 0.97, 0.85, 0.40 } }, count = 8 },
+	achievement = { count = 28 },
+	rank        = { count = 18 },
+	rare        = { colors = { { 0.78, 0.55, 1.00 }, { 0.62, 0.40, 0.95 }, { 0.95, 0.85, 1.00 } }, count = 22 },
+	tribe       = { count = 18 },
+	species     = { count = 6 },
 }
 local MAX_QUEUE = 4
-local WIDTH, HEIGHT = 350, 98
+local WIDTH, HEIGHT = 360, 92
 
 function Toast:Init()
 	self.queue = {}
@@ -49,23 +49,37 @@ function Toast:Build()
 	f:SetFrameStrata("DIALOG")
 	f:Hide()
 
-	local note = f:CreateTexture(nil, "BACKGROUND")
-	note:SetPoint("TOPLEFT", -8, 6)
-	note:SetPoint("BOTTOMRIGHT", 14, -16)
-	note:SetTexture(UI.TEX.sticky)
-	f.note = note
-	local tape = UI.Tape(f, 84, 24, -0.07)
-	tape:SetPoint("CENTER", f, "TOP", -6, 2)
+	-- 양피지 한 장 + 그을린 가장자리 + 잉크 이중 테두리
+	local shadow = f:CreateTexture(nil, "BACKGROUND", nil, -8)
+	shadow:SetPoint("TOPLEFT", -1, -1)
+	shadow:SetPoint("BOTTOMRIGHT", 4, -5)
+	shadow:SetColorTexture(0, 0, 0, 0.35)
+	local paper = UI.Tiled(f, "BACKGROUND", -6, UI.TEX.paper, 512, 512)
+	paper:SetVertexColor(0.95, 0.89, 0.76)
+	local vig = f:CreateTexture(nil, "BACKGROUND", nil, -5)
+	vig:SetAllPoints()
+	vig:SetTexture(UI.TEX.vignette)
+	vig:SetVertexColor(0.36, 0.21, 0.09, 0.55)
+	local edge = { 0.30, 0.19, 0.11 }
+	UI.Outline(f, { edge[1], edge[2], edge[3], 0.85 }, 0)
+	UI.Outline(f, { edge[1], edge[2], edge[3], 0.35 }, 4)
+	UI.Corners(f, UI.TEX.ornCorner, 16, 2, { edge[1], edge[2], edge[3], 0.8 }, "BORDER", 2)
+	local stripe = f:CreateTexture(nil, "BORDER", nil, 3)
+	stripe:SetPoint("TOPLEFT", 5, -5)
+	stripe:SetPoint("BOTTOMLEFT", 5, 5)
+	stripe:SetWidth(3)
+	f.stripe = stripe
 
 	local icon = f:CreateTexture(nil, "ARTWORK")
 	icon:SetSize(42, 42)
-	icon:SetPoint("LEFT", 16, -4)
+	icon:SetPoint("LEFT", 18, 0)
 	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	f.icon = icon
 	local frameLine = CreateFrame("Frame", nil, f)
 	frameLine:SetPoint("TOPLEFT", icon, -2, 2)
 	frameLine:SetPoint("BOTTOMRIGHT", icon, 2, -2)
-	UI.Outline(frameLine, { 0.20, 0.14, 0.08, 0.7 })
+	UI.Outline(frameLine, { 0.20, 0.14, 0.08, 0.9 })
+	UI.Outline(frameLine, { 0.86, 0.70, 0.40, 0.8 }, 1)
 
 	local title = UI.Text(f, UI.F.heading)
 	title:SetPoint("TOPLEFT", icon, "TOPRIGHT", 12, 4)
@@ -79,14 +93,14 @@ function Toast:Build()
 	body:SetTextColor(0.16, 0.13, 0.10)
 	f.body = body
 
-	local seal = ns.Effects.MakeSeal(f, 60, "ach")
-	seal:SetPoint("TOPRIGHT", -10, -6)
+	local seal = ns.Effects.MakeSeal(f, 62, "ach")
+	seal:SetPoint("TOPRIGHT", -8, -2)
 	f.seal = seal
 
 	local brand = UI.Text(f, UI.F.tiny)
-	brand:SetPoint("BOTTOMRIGHT", -14, 8)
+	brand:SetPoint("BOTTOMRIGHT", -14, 9)
 	brand:SetJustifyH("RIGHT")
-	brand:SetTextColor(0.35, 0.30, 0.24)
+	brand:SetTextColor(0.40, 0.32, 0.22)
 	f.brand = brand
 
 	f:EnableMouse(true)
@@ -100,25 +114,24 @@ function Toast:Build()
 		f:ClearAllPoints()
 		f:SetPoint("TOP", UIParent, "TOP", 0, TOP_Y + dy)
 	end
-	-- 포스트잇이 툭 떨어져 붙었다가, 잠시 뒤 떼어져 사라진다
+	-- 위에서 천천히 내려앉았다가, 잠시 뒤 조용히 사라진다
 	f:SetScript("OnUpdate", function(self, elapsed)
 		self.t = (self.t or 0) + elapsed
 		local hold = self.hold or 3
 		local E = ns.Effects
 		if self.t < OPEN then
 			local p = self.t / OPEN
-			place(DROP * (1 - E.Ease.outBack(p)))
-			self:SetAlpha(math.min(1, p * 2))
+			place(DROP * (1 - E.Ease.outCubic(p)))
+			self:SetAlpha(math.min(1, p * 1.6))
 		elseif self.pendingFX then
-			-- 붙는 순간: 조각이 튀고, 업적이면 밀랍 인장이 쾅
+			-- 자리 잡는 순간: 금가루가 피어오르고, 업적이면 밀랍 인장이 찍힌다
 			local kind = self.pendingFX
 			self.pendingFX = nil
 			place(0)
 			self:SetAlpha(1)
 			local b = BURST[kind]
 			if b then
-				E.BurstAt(self, { colors = b.colors, count = b.count, speed = 150,
-					tex = b.tex == "ink" and UI.TEX.ink or nil, minSize = b.tex and 4 or nil, maxSize = b.tex and 9 or nil })
+				E.BurstAt(self, { colors = b.colors, count = b.count, speed = 45, spreadW = 150, life = 1.8 })
 			end
 			if kind == "achievement" then E.Stamp(self.seal, "toast-seal") end
 		elseif self.t < OPEN + hold then
@@ -176,18 +189,12 @@ function Toast:Next()
 		return
 	end
 	local style = STYLE[item.kind] or STYLE.species
-	local tint = NOTE[item.kind] or NOTE.species
-	f.note:SetVertexColor(tint[1], tint[2], tint[3])
+	-- 양피지 위의 글씨는 테마와 상관없이 잉크 색
+	local ink = INK[item.kind] or INK.species
+	f.stripe:SetColorTexture(ink[1], ink[2], ink[3], 0.85)
 	f.icon:SetTexture(item.icon or ns.ICON)
-	f.title:SetText(UI.PenText(item.title))
-	-- 포스트잇 위의 글씨는 테마와 상관없이 잉크 색
-	if item.kind == "rare" then
-		f.title:SetTextColor(0.42, 0.16, 0.58)
-	elseif item.kind == "achievement" or item.kind == "rank" then
-		f.title:SetTextColor(0.66, 0.16, 0.10)
-	else
-		f.title:SetTextColor(0.12, 0.21, 0.44)
-	end
+	f.title:SetText(item.title)
+	f.title:SetTextColor(ink[1], ink[2], ink[3])
 	f.body:SetText(item.body)
 	f.link = item.link
 	f.brand:SetText(item.link and (item.link.ach and "눌러서 업적 보기" or "눌러서 도감 보기") or "BIG CHRONICLE")

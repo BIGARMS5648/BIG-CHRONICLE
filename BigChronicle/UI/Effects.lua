@@ -1,6 +1,6 @@
 -- BIG CHRONICLE :: 화면 연출
--- 외부 텍스처 없이 색 텍스처와 OnUpdate만으로 만든 작은 애니메이션들:
---   Tween(움직임) · Burst(반짝이 입자) · Pulse(은은한 깜빡임) · Stamp(도장 찍기)
+-- OnUpdate로 움직이는 작은 연출들:
+--   Tween(움직임) · Burst(금가루) · Pulse(은은한 빛) · Stamp(밀랍 인장)
 --   ChapterCard(화면 가운데 장 제목) · Sweep(책장 넘김)
 
 local ADDON, ns = ...
@@ -147,30 +147,29 @@ pdriver:SetScript("OnUpdate", function(self, dt)
 end)
 
 -- x, y: UIParent 기준 좌표. colors: { {r,g,b}, ... }
+-- 기본은 천천히 떠오르며 사그라드는 금가루 (빛을 더하는 방식으로 그린다)
+local GOLD = { { 1.00, 0.84, 0.48 }, { 0.95, 0.74, 0.36 }, { 1.00, 0.92, 0.70 } }
 function E.Burst(x, y, opts)
 	if not Enabled() or not x or not y then return end
 	opts = opts or {}
-	-- 기본은 수첩에 어울리는 색종이 조각
-	local colors = opts.colors or { { 0.93, 0.47, 0.40 }, { 0.97, 0.80, 0.35 }, { 0.50, 0.68, 0.90 }, { 0.52, 0.76, 0.48 } }
+	local colors = opts.colors or GOLD
 	local n = opts.count or 24
+	local tex = opts.tex or UI.TEX.dust
+	local blend = opts.blend or (opts.tex and "BLEND" or "ADD")
 	Layer()
 	for i = 1, n do
-		local tex = Acquire(opts.tex, opts.blend)
+		local t = Acquire(tex, blend)
 		local c = colors[(i % #colors) + 1]
-		tex:SetVertexColor(c[1], c[2], c[3])
-		local size = math.random(opts.minSize or 4, opts.maxSize or 8)
-		if opts.tex then
-			tex:SetSize(size, size)
-		else
-			tex:SetSize(size, size * (0.45 + math.random() * 0.6)) -- 납작한 종이 조각
-		end
+		t:SetVertexColor(c[1], c[2], c[3])
+		local size = math.random(opts.minSize or 5, opts.maxSize or 12)
+		t:SetSize(size, size)
 		local ang = math.random() * math.pi * 2
-		local speed = (opts.speed or 140) * (0.4 + math.random() * 0.8)
+		local speed = (opts.speed or 60) * (0.3 + math.random() * 0.9)
 		particles[#particles + 1] = {
-			tex = tex, x = x + math.random(-6, 6), y = y + math.random(-4, 4),
-			vx = math.cos(ang) * speed * (opts.spreadX or 1.6), vy = math.sin(ang) * speed + (opts.lift or 60),
-			gravity = opts.gravity or 120, age = 0, life = (opts.life or 1.1) * (0.6 + math.random() * 0.6),
-			rot = math.pi / 4, spin = (math.random() - 0.5) * 8,
+			tex = t, x = x + math.random(-(opts.spreadW or 40), opts.spreadW or 40), y = y + math.random(-8, 8),
+			vx = math.cos(ang) * speed * (opts.spreadX or 1.4), vy = math.sin(ang) * speed * 0.5 + (opts.lift or 30),
+			gravity = opts.gravity or -12, age = 0, life = (opts.life or 1.6) * (0.6 + math.random() * 0.7),
+			rot = 0, spin = opts.tex and (math.random() - 0.5) * 6 or 0,
 		}
 	end
 	pdriver:Show()
@@ -274,8 +273,9 @@ function E.Stamp(frame, key, holdFor)
 	end, function()
 		frame:SetScale(1)
 		-- 찍히는 순간 밀랍 부스러기가 튄다
-		E.BurstAt(frame, { count = 12, speed = 90, life = 0.6, tex = UI.TEX.ink, minSize = 3, maxSize = 6,
-			colors = { { 0.62, 0.10, 0.08 }, { 0.48, 0.06, 0.05 } }, gravity = 160, lift = 40 })
+		E.BurstAt(frame, { count = 10, speed = 80, life = 0.55, tex = UI.TEX.ink, minSize = 3, maxSize = 6, spreadW = 6,
+			colors = { { 0.55, 0.09, 0.07 }, { 0.42, 0.05, 0.04 } }, gravity = 170, lift = 40 })
+		E.BurstAt(frame, { count = 10, speed = 30, life = 1.2, spreadW = 20 })
 		E.Sound("stamp")
 		if holdFor then
 			E.Tween((key or tostring(frame)) .. "-out", 0.6, function(p) frame:SetAlpha(1 - p) end,
@@ -326,9 +326,10 @@ function E.Sweep(band, area, key)
 end
 
 ------------------------------------------------------------------------
--- 장 제목 카드: 화면 가운데 영화 자막처럼 떠오른다
+-- 장 제목 카드: 화면 가운데에 검은 띠가 펼쳐지고 금박 제목이 떠오른다
 ------------------------------------------------------------------------
 local card
+local CARD_W, CARD_H = 820, 170
 local function MakeFont(name, base, size, path, color)
 	local font = _G[name] or (CreateFont and CreateFont(name))
 	if not font then return end
@@ -341,59 +342,69 @@ local function MakeFont(name, base, size, path, color)
 	end
 	if not applied and b and b.GetFont and font.SetFont then
 		local ok, p, _, flags = pcall(b.GetFont, b)
-		if ok and p then pcall(font.SetFont, font, p, path and math.floor(size * 0.72) or size, flags or "") end
+		if ok and p then pcall(font.SetFont, font, p, size, flags or "") end
 	end
-	if font.SetShadowOffset then font:SetShadowOffset(0, 0) end
+	if font.SetShadowOffset then
+		font:SetShadowOffset(1, -1)
+		font:SetShadowColor(0, 0, 0, 0.9)
+	end
 	if color and font.SetTextColor then font:SetTextColor(color[1], color[2], color[3]) end
 end
 
 local function BuildCard()
 	if card then return card end
-	MakeFont("BigChronicleFontCinematic", "QuestTitleFont", 44, UI.PEN_FONT, { 0.12, 0.18, 0.38 })
-	MakeFont("BigChronicleFontCinematicLabel", "GameFontNormal", 22, UI.PEN_FONT, { 0.70, 0.17, 0.12 })
-	MakeFont("BigChronicleFontCinematicSmall", "GameFontNormal", 13, nil, { 0.25, 0.20, 0.15 })
+	MakeFont("BigChronicleFontCinematic", "QuestTitleFont", 38, UI.SERIF_FONT, { 0.96, 0.88, 0.70 })
+	MakeFont("BigChronicleFontCinematicLabel", "GameFontNormal", 14, UI.SERIF_FONT, { 0.86, 0.70, 0.40 })
+	MakeFont("BigChronicleFontCinematicSmall", "GameFontNormal", 13, nil, { 0.78, 0.72, 0.62 })
 	local f = CreateFrame("Frame", "BigChronicleChapterCard", UIParent)
-	f:SetSize(640, 160)
+	f:SetSize(CARD_W, CARD_H)
 	f:SetPoint("CENTER", UIParent, "CENTER", 0, 170)
 	f:SetFrameStrata("FULLSCREEN_DIALOG")
 	f:EnableMouse(false)
 	f:Hide()
 
-	-- 수첩에서 찢어 낸 종이 띠 + 양쪽 끝 테이프
-	local strip = f:CreateTexture(nil, "BACKGROUND")
-	strip:SetAllPoints()
-	strip:SetTexture(UI.TEX.torn)
-	local grid = f:CreateTexture(nil, "BACKGROUND", nil, 1)
-	grid:SetPoint("TOPLEFT", 10, -18)
-	grid:SetPoint("BOTTOMRIGHT", -10, 18)
-	grid:SetTexture(UI.TEX.grid, "REPEAT", "REPEAT")
-	grid:SetTexCoord(0, 620 / 24, 0, 124 / 24)
-	grid:SetVertexColor(0.42, 0.60, 0.82, 0.22)
-	local tl = UI.Tape(f, 90, 24, 0.55)
-	tl:SetPoint("CENTER", f, "LEFT", 18, 30)
-	local tr = UI.Tape(f, 90, 24, -0.5)
-	tr:SetPoint("CENTER", f, "RIGHT", -18, 30)
+	-- 가운데가 짙고 양옆으로 사라지는 검은 띠
+	local band = CreateFrame("Frame", nil, f)
+	band:SetPoint("CENTER")
+	band:SetSize(CARD_W, CARD_H - 30)
+	local half = CARD_W / 2
+	local l = band:CreateTexture(nil, "BACKGROUND")
+	l:SetPoint("TOPLEFT"); l:SetPoint("BOTTOMLEFT"); l:SetWidth(half)
+	UI.Gradient(l, "HORIZONTAL", { 0.03, 0.02, 0.015, 0 }, { 0.03, 0.02, 0.015, 0.82 })
+	local r = band:CreateTexture(nil, "BACKGROUND")
+	r:SetPoint("TOPRIGHT"); r:SetPoint("BOTTOMRIGHT"); r:SetWidth(half)
+	UI.Gradient(r, "HORIZONTAL", { 0.03, 0.02, 0.015, 0.82 }, { 0.03, 0.02, 0.015, 0 })
+	-- 위아래 금박 실선
+	local gold = { 0.86, 0.70, 0.40 }
+	for _, side in ipairs({ "TOP", "BOTTOM" }) do
+		for _, pair in ipairs({ { "LEFT", half, { gold[1], gold[2], gold[3], 0 }, { gold[1], gold[2], gold[3], 0.8 } },
+			{ "RIGHT", half, { gold[1], gold[2], gold[3], 0.8 }, { gold[1], gold[2], gold[3], 0 } } }) do
+			local t = band:CreateTexture(nil, "BORDER")
+			t:SetHeight(1)
+			t:SetWidth(pair[2])
+			t:SetPoint(side .. pair[1], band, side .. pair[1], 0, side == "TOP" and -6 or 6)
+			UI.Gradient(t, "HORIZONTAL", pair[3], pair[4])
+		end
+	end
+	f.band = band
 
 	local label = f:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicLabel")
-	label:SetPoint("TOP", 0, -22)
+	label:SetPoint("TOP", band, "TOP", 0, -22)
 	f.label = label
 
 	local titleHolder = CreateFrame("Frame", nil, f)
-	titleHolder:SetSize(600, 56)
-	titleHolder:SetPoint("TOP", label, "BOTTOM", 0, -2)
+	titleHolder:SetSize(CARD_W - 80, 50)
+	titleHolder:SetPoint("TOP", label, "BOTTOM", 0, -4)
 	local title = titleHolder:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematic")
 	title:SetPoint("CENTER")
 	f.title, f.titleHolder = title, titleHolder
 
-	local under = f:CreateTexture(nil, "ARTWORK")
-	under:SetSize(320, 10)
-	under:SetPoint("TOP", titleHolder, "BOTTOM", 0, 6)
-	under:SetTexture(UI.TEX.underline)
-	under:SetVertexColor(0.70, 0.17, 0.12, 0.85)
-	f.under = under
+	local rule = UI.Divider(f, 300, gold)
+	rule:SetPoint("TOP", titleHolder, "BOTTOM", 0, -2)
+	f.rule = rule
 
 	local sub = f:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicSmall")
-	sub:SetPoint("TOP", under, "BOTTOM", 0, -4)
+	sub:SetPoint("TOP", rule, "BOTTOM", 0, -6)
 	f.sub = sub
 	card = f
 	return f
@@ -403,29 +414,40 @@ end
 function E.ShowCard(label, title, sub)
 	if not Enabled() then return end
 	local f = BuildCard()
-	f.label:SetText(UI.PenText(label or ""))
-	f.title:SetText(UI.PenText(title or ""))
+	f.label:SetText(UI.Spaced(label or "", 1))
+	f.title:SetText(title or "")
 	f.sub:SetText(sub or "")
-	f:SetAlpha(0)
+	f:SetAlpha(1)
 	f:Show()
-	f.under:SetWidth(1)
+	f.band:SetWidth(1)
+	f.label:SetAlpha(0); f.titleHolder:SetAlpha(0); f.rule:SetAlpha(0); f.sub:SetAlpha(0)
+	f.rule:SetWidth(1)
 	E.Sound("chapter")
-	-- 1) 종이 띠가 위에서 툭 떨어져 테이프로 붙는다
-	E.Tween("card-in", 0.5, function(p)
-		local k = E.Ease.outBack(p)
-		f:ClearAllPoints()
-		f:SetPoint("CENTER", UIParent, "CENTER", 0, 170 + 50 * (1 - k))
-		f:SetAlpha(math.min(1, p * 2))
-		f.titleHolder:SetScale(1.08 - 0.08 * math.min(1, p))
+	-- 1) 검은 띠가 가운데에서 좌우로 펼쳐진다
+	E.Tween("card-band", 0.6, function(p)
+		f.band:SetWidth(math.max(1, CARD_W * E.Ease.outCubic(p)))
 	end)
-	-- 2) 빨간 색연필로 밑줄을 쭉
-	E.Tween("card-under", 0.5, function(p) f.under:SetWidth(1 + 320 * E.Ease.outCubic(p)) end, nil, 0.45)
-	-- 3) 잠시 머문 뒤 위로 날아가며 사라진다
-	E.Tween("card-out", 0.8, function(p)
+	-- 2) 머리글과 제목이 천천히 떠오른다
+	E.Tween("card-text", 0.9, function(p)
+		local k = E.Ease.outCubic(p)
+		f.label:SetAlpha(k)
+		f.titleHolder:SetAlpha(k)
+		f.titleHolder:SetScale(1.04 - 0.04 * k)
+	end, function()
+		-- 제목이 자리 잡으면 금가루가 흩날린다
+		E.BurstAt(f.titleHolder, { count = 26, speed = 40, life = 2.2, spreadW = 220, lift = 18 })
+	end, 0.35)
+	-- 3) 장식선이 그어지고 아랫줄이 나타난다
+	E.Tween("card-rule", 0.7, function(p)
+		local k = E.Ease.outCubic(p)
+		f.rule:SetAlpha(1)
+		f.rule:SetWidth(1 + 300 * k)
+		f.sub:SetAlpha(k)
+	end, nil, 0.9)
+	-- 4) 잠시 머문 뒤 조용히 사라진다
+	E.Tween("card-out", 1.0, function(p)
 		f:SetAlpha(1 - p)
-		f:ClearAllPoints()
-		f:SetPoint("CENTER", UIParent, "CENTER", 0, 170 + 30 * p)
-	end, function() f:Hide() end, 4.4)
+	end, function() f:Hide() end, 4.6)
 end
 
 -- 새 장(章)에 들어섰을 때
@@ -435,9 +457,9 @@ function E.ChapterCard(chIdx, isStart)
 	local num, name = ch.title:match("^(.-)%s*·%s*(.+)$")
 	num = num or ch.title
 	if isStart then
-		E.ShowCard("BIG CHRONICLE", ns.PlayerName() .. "의 도감 수첩, 첫 장", ch.title .. "  —  " .. ch.desc)
+		E.ShowCard("BIG CHRONICLE", ns.PlayerName() .. "의 연대기, 첫 장", ch.title .. "  —  " .. ch.desc)
 	else
-		E.ShowCard(num:gsub("(%d+)", " %1 "), name or ch.title, ch.desc)
+		E.ShowCard((num:gsub("%s+", "")), name or ch.title, ch.desc)
 	end
 end
 

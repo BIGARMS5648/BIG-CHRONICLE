@@ -1,19 +1,19 @@
--- BIG CHRONICLE :: 메인 창 (가죽 표지의 도감 수첩)
+-- BIG CHRONICLE :: 메인 창 (가죽 장정의 고서)
 
 local ADDON, ns = ...
 local UI = ns.UI
 
 UI.TABS = {
-	{ id = "journal",      name = "모험 일지",   key = "1", icon = "scroll-quill" },
-	{ id = "bestiary",     name = "몬스터 도감", key = "2", icon = "paw-print" },
-	{ id = "achievements", name = "업적",        key = "3", icon = "laurels-trophy" },
-	{ id = "stats",        name = "연대기 통계", key = "4", icon = "histogram" },
+	{ id = "journal",      name = "모험 일지",   key = "1", icon = "quill-ink" },
+	{ id = "bestiary",     name = "몬스터 도감", key = "2", icon = "dragon-head" },
+	{ id = "achievements", name = "업적",        key = "3", icon = "laurel-crown" },
+	{ id = "stats",        name = "연대기 통계", key = "4", icon = "hourglass" },
 	{ id = "settings",     name = "설정",        key = "5", icon = "cog" },
 }
 
 local WIDTH, HEIGHT = 980, 660
--- 표지 안쪽의 종이 페이지 여백 (왼쪽은 스프링 링 자리)
-local PAGE_L, PAGE_R, PAGE_T, PAGE_B = 44, 24, 16, 16
+-- 장정 안쪽의 양피지 페이지 여백 (왼쪽은 책등 자리)
+local PAGE_L, PAGE_R, PAGE_T, PAGE_B = 46, 26, 18, 20
 
 function UI:TabModule(id)
 	if id == "journal" then return ns.JournalTab end
@@ -29,15 +29,10 @@ local function CloseButton(parent, onClick)
 	b:SetSize(26, 26)
 	local fs = b:CreateFontString(nil, "OVERLAY", UI.F.title)
 	fs:SetPoint("CENTER", 0, 1)
-	fs:SetText("X")
-	fs:SetTextColor(C.accent[1], C.accent[2], C.accent[3])
-	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 2, -4)
-	hl:SetPoint("BOTTOMRIGHT", -2, 4)
-	hl:SetTexture(UI.TEX.tape)
-	UI.Tint(hl, C.hover)
-	b:SetScript("OnEnter", function() fs:SetTextColor(C.title[1], C.title[2], C.title[3]) end)
-	b:SetScript("OnLeave", function() fs:SetTextColor(C.accent[1], C.accent[2], C.accent[3]) end)
+	fs:SetText("×")
+	fs:SetTextColor(C.sub[1], C.sub[2], C.sub[3])
+	b:SetScript("OnEnter", function() fs:SetTextColor(C.accent[1], C.accent[2], C.accent[3]) end)
+	b:SetScript("OnLeave", function() fs:SetTextColor(C.sub[1], C.sub[2], C.sub[3]) end)
 	b:SetScript("OnClick", onClick)
 	return b
 end
@@ -71,146 +66,172 @@ function UI:Build()
 	if UISpecialFrames then table.insert(UISpecialFrames, "BigChronicleFrame") end
 
 	local C2 = UI.COL
-	-- ① 가죽 표지
+	-- ① 가죽 장정
 	local coverShadow = f:CreateTexture(nil, "BACKGROUND", nil, -8)
-	coverShadow:SetPoint("TOPLEFT", 4, -6)
-	coverShadow:SetPoint("BOTTOMRIGHT", 8, -10)
-	coverShadow:SetColorTexture(0, 0, 0, 0.5)
+	coverShadow:SetPoint("TOPLEFT", 3, -5)
+	coverShadow:SetPoint("BOTTOMRIGHT", 9, -11)
+	coverShadow:SetColorTexture(0, 0, 0, 0.6)
 	local cover = UI.Tiled(f, "BACKGROUND", -7, UI.TEX.leather, 256, 256)
 	UI.Tint(cover, C2.cover)
-	UI.Outline(f, { C2.coverDark[1], C2.coverDark[2], C2.coverDark[3], 0.9 }, 0)
-	-- 가장자리를 따라 바느질선
-	local function stitchH(y, point)
-		local t = UI.Tiled(f, "BORDER", 1, UI.TEX.stitch, 32, 8, nil)
-		t:ClearAllPoints()
-		t:SetPoint(point .. "LEFT", 10, y)
-		t:SetPoint(point .. "RIGHT", -10, y)
-		t:SetHeight(6)
-		t:SetTexCoord(0, (WIDTH - 20) / 32, 0, 1)
-		UI.Tint(t, C2.stitch, 0.85)
-	end
-	stitchH(-6, "TOP")
-	stitchH(6, "BOTTOM")
-	for _, side in ipairs({ "LEFT", "RIGHT" }) do
-		local t = UI.TiledVertical(f, "BORDER", 1, UI.TEX.stitch, 32)
-		t:SetPoint("TOP" .. side, side == "LEFT" and 6 or -6, -10)
-		t:SetPoint("BOTTOM" .. side, side == "LEFT" and 6 or -6, 10)
-		t:SetWidth(6)
-		t:SetTexCoord(0, 0, (HEIGHT - 20) / 32, 0, 0, 1, (HEIGHT - 20) / 32, 1)
-		UI.Tint(t, C2.stitch, 0.85)
-	end
-	-- 오른쪽 고무줄 밴드
-	local band = f:CreateTexture(nil, "BORDER", nil, 2)
-	band:SetPoint("TOPRIGHT", -9, 0)
-	band:SetPoint("BOTTOMRIGHT", -9, 0)
-	band:SetWidth(9)
-	UI.Gradient(band, "HORIZONTAL", { C2.coverDark[1] * 0.6, C2.coverDark[2] * 0.6, C2.coverDark[3] * 0.6, 1 },
-		{ C2.coverDark[1] * 1.6, C2.coverDark[2] * 1.6, C2.coverDark[3] * 1.6, 1 })
+	local coverWear = f:CreateTexture(nil, "BACKGROUND", nil, -6)
+	coverWear:SetAllPoints()
+	coverWear:SetTexture(UI.TEX.vignette)
+	coverWear:SetVertexColor(0, 0, 0, 0.55)
+	UI.Outline(f, { C2.coverDark[1], C2.coverDark[2], C2.coverDark[3], 1 }, 0)
+	-- 가장자리를 따라 금박으로 찍은 이중선
+	UI.Outline(f, { C2.gold[1], C2.gold[2], C2.gold[3], 0.55 }, 6, "BORDER", 1)
+	UI.Outline(f, { C2.gold[1], C2.gold[2], C2.gold[3], 0.28 }, 9, "BORDER", 1)
 
-	-- ② 종이 페이지 (모눈)
+	-- 책등: 짙은 가죽 띠에 볼록한 띠 여섯 개, 띠마다 금박 선
+	local spine = f:CreateTexture(nil, "BORDER", nil, 2)
+	spine:SetPoint("TOPLEFT", 0, 0)
+	spine:SetPoint("BOTTOMLEFT", 0, 0)
+	spine:SetWidth(PAGE_L - 6)
+	UI.Gradient(spine, "HORIZONTAL", { 0, 0, 0, 0.55 }, { 0, 0, 0, 0.12 })
+	local spineEdge = f:CreateTexture(nil, "BORDER", nil, 3)
+	spineEdge:SetPoint("TOPLEFT", PAGE_L - 7, 0)
+	spineEdge:SetPoint("BOTTOMLEFT", PAGE_L - 7, 0)
+	spineEdge:SetWidth(1)
+	spineEdge:SetColorTexture(C2.gold[1], C2.gold[2], C2.gold[3], 0.35)
+	local bands = 6
+	for i = 1, bands do
+		local y = -HEIGHT * i / (bands + 1)
+		local band = f:CreateTexture(nil, "BORDER", nil, 4)
+		band:SetSize(PAGE_L - 10, 13)
+		band:SetPoint("CENTER", f, "TOPLEFT", (PAGE_L - 6) / 2, y)
+		band:SetTexture(UI.TEX.band)
+		band:SetVertexColor(C2.cover[1] * 1.5, C2.cover[2] * 1.5, C2.cover[3] * 1.5)
+		for _, dy in ipairs({ 9, -9 }) do
+			local g = f:CreateTexture(nil, "BORDER", nil, 5)
+			g:SetSize(PAGE_L - 16, 1)
+			g:SetPoint("CENTER", f, "TOPLEFT", (PAGE_L - 6) / 2, y + dy)
+			g:SetColorTexture(C2.gold[1], C2.gold[2], C2.gold[3], 0.6)
+		end
+	end
+
+	-- ② 양피지 페이지 (오른쪽·아래로 겹겹이 쌓인 책장 끝이 보인다)
 	local page = CreateFrame("Frame", nil, f)
 	page:SetPoint("TOPLEFT", PAGE_L, -PAGE_T)
 	page:SetPoint("BOTTOMRIGHT", -PAGE_R, PAGE_B)
 	page:SetFrameLevel(f:GetFrameLevel() + 1)
-	UI.Paper(page, { grid = true, shadow = 0.4 })
+	for i = 3, 1, -1 do
+		local leaf = page:CreateTexture(nil, "BACKGROUND", nil, -8)
+		leaf:SetPoint("TOPLEFT", 0, -i)
+		leaf:SetPoint("BOTTOMRIGHT", i * 2, -i * 2)
+		local k = 0.78 - i * 0.06
+		leaf:SetColorTexture(C2.page[1] * k, C2.page[2] * k, C2.page[3] * k, 1)
+	end
+	UI.Paper(page, { shadow = false })
 	f.page = page
 	-- 제본 쪽 그늘
 	local gutter = page:CreateTexture(nil, "BACKGROUND", nil, -4)
-	gutter:SetPoint("TOPLEFT"); gutter:SetPoint("BOTTOMLEFT"); gutter:SetWidth(46)
-	UI.Gradient(gutter, "HORIZONTAL", { 0, 0, 0, 0.22 }, { 0, 0, 0, 0 })
-	-- 펀치 구멍과 스프링 링
-	local rings = CreateFrame("Frame", nil, f)
-	rings:SetAllPoints(f)
-	rings:SetFrameLevel(page:GetFrameLevel() + 30)
-	local count = 12
-	local span = HEIGHT - 70
-	for i = 1, count do
-		local y = -35 - (i - 1) * span / (count - 1)
-		local hole = page:CreateTexture(nil, "BORDER", nil, 2)
-		hole:SetSize(13, 13)
-		hole:SetPoint("CENTER", page, "TOPLEFT", 13, y + PAGE_T)
-		hole:SetTexture(UI.TEX.hole)
-		local ring = rings:CreateTexture(nil, "OVERLAY")
-		ring:SetSize(22, 36)
-		ring:SetPoint("CENTER", page, "TOPLEFT", 3, y + PAGE_T + 2)
-		ring:SetTexture(UI.TEX.ring)
-		if ring.SetRotation then pcall(ring.SetRotation, ring, math.pi / 2) end
-	end
+	gutter:SetPoint("TOPLEFT"); gutter:SetPoint("BOTTOMLEFT"); gutter:SetWidth(56)
+	UI.Gradient(gutter, "HORIZONTAL", { 0, 0, 0, 0.32 }, { 0, 0, 0, 0 })
 
-	-- ③ 위로 삐죽 나온 색인 탭
+	-- ③ 장정 위로 나온 가죽 색인 탭
 	self.tabButtons = {}
-	local x = 70
-	for i, tab in ipairs(UI.TABS) do
-		local b = UI.Tab(f, tab.name, tab.key, function() UI:SelectTab(tab.id) end, C2.tabs[i], UI.ICON[tab.icon])
+	local x = 64
+	for _, tab in ipairs(UI.TABS) do
+		local b = UI.Tab(f, tab.name, tab.key, function() UI:SelectTab(tab.id) end, nil, UI.ICON[tab.icon])
 		b:SetPoint("BOTTOMLEFT", f, "TOPLEFT", x, -3)
 		b:SetFrameLevel(math.max(1, f:GetFrameLevel() - 1))
-		x = x + b:GetWidth() + 6
+		x = x + b:GetWidth() + 4
 		self.tabButtons[tab.id] = b
 	end
 
-	-- ④ 머리말: 손글씨 제목
+	-- ④ 머리말: 문장 + 명조 제목
 	local body = CreateFrame("Frame", nil, page)
 	body:SetAllPoints(page)
 	body:SetFrameLevel(page:GetFrameLevel() + 2)
 	f.body = body
-	local paw = body:CreateTexture(nil, "ARTWORK")
-	paw:SetSize(30, 30)
-	paw:SetPoint("TOPLEFT", 30, -14)
-	paw:SetTexture(UI.ICON["paw-print"])
-	UI.Tint(paw, C2.accent, 0.85)
-	if paw.SetRotation then pcall(paw.SetRotation, paw, -0.2) end
+	local crest = body:CreateTexture(nil, "ARTWORK")
+	crest:SetSize(38, 38)
+	crest:SetPoint("TOPLEFT", 26, -14)
+	crest:SetTexture(UI.ICON["griffin-symbol"])
+	UI.Tint(crest, C2.accent, 0.9)
 	local title = body:CreateFontString(nil, "OVERLAY", UI.F.title)
-	title:SetPoint("LEFT", paw, "RIGHT", 8, -2)
+	title:SetPoint("TOPLEFT", crest, "TOPRIGHT", 10, -2)
 	title:SetJustifyH("LEFT")
 	f.title = title
 	local sub = body:CreateFontString(nil, "OVERLAY", UI.F.small)
-	sub:SetPoint("TOPLEFT", paw, "BOTTOMLEFT", 2, -8)
+	sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 1, -6)
 	sub:SetJustifyH("LEFT")
 	f.subtitle = sub
-	local brand = body:CreateFontString(nil, "OVERLAY", UI.F.tiny)
-	brand:SetPoint("TOPRIGHT", -54, -18)
-	brand:SetText("B I G   C H R O N I C L E")
+	local brand = body:CreateFontString(nil, "OVERLAY", UI.F.label)
+	brand:SetPoint("TOPRIGHT", -54, -20)
+	brand:SetText(UI.Spaced("BIG CHRONICLE", 1))
 	brand:SetTextColor(C2.muted[1], C2.muted[2], C2.muted[3])
 	local divider = UI.Divider(body, 400)
-	divider:SetPoint("TOPLEFT", 26, -78)
-	divider:SetPoint("TOPRIGHT", -26, -78)
-	-- 책갈피 리본 (머리말 오른쪽으로 늘어진다)
+	divider:SetPoint("TOPLEFT", 24, -72)
+	divider:SetPoint("TOPRIGHT", -24, -72)
+	-- 책갈피 끈 (머리말 오른쪽으로 늘어진다)
 	local ribbon = body:CreateTexture(nil, "OVERLAY", nil, 3)
-	ribbon:SetSize(16, 70)
-	ribbon:SetPoint("TOP", page, "TOPRIGHT", -232, 6)
+	ribbon:SetSize(14, 74)
+	ribbon:SetPoint("TOP", page, "TOPRIGHT", -232, 4)
 	ribbon:SetTexture(UI.TEX.ribbon)
-	UI.Tint(ribbon, C2.accent)
+	ribbon:SetVertexColor(0.42, 0.07, 0.06)
 
 	local close = CloseButton(body, function() f:Hide() end)
 	close:SetPoint("TOPRIGHT", page, "TOPRIGHT", -12, -10)
 
 	local content = CreateFrame("Frame", nil, body)
-	content:SetPoint("TOPLEFT", 30, -92)
+	content:SetPoint("TOPLEFT", 28, -90)
 	content:SetPoint("BOTTOMRIGHT", -18, 30)
 	self.content = content
 	self.panels = {}
 
 	-- 아래쪽 단축키 안내
 	local hints = body:CreateFontString(nil, "OVERLAY", UI.F.tiny)
-	hints:SetPoint("BOTTOM", 0, 10)
+	hints:SetPoint("BOTTOM", 0, 12)
+	hints:SetTextColor(UI.COL.sub[1], UI.COL.sub[2], UI.COL.sub[3])
 	f.hints = hints
 
-	-- ⑤ 창을 열 때 표지가 넘어가는 연출용 덮개
+	-- 놋쇠 모서리 (페이지 위로 살짝 걸친다)
+	local metal = CreateFrame("Frame", nil, f)
+	metal:SetAllPoints(f)
+	metal:SetFrameLevel(page:GetFrameLevel() + 40)
+	UI.Corners(metal, UI.TEX.corner, 50, -3)
+
+	-- ⑤ 창을 열 때 넘어가는 앞표지
 	local flap = CreateFrame("Frame", nil, f)
 	flap:SetPoint("TOPLEFT", f, "TOPLEFT")
 	flap:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT")
 	flap:SetWidth(WIDTH)
 	flap:SetFrameLevel(page:GetFrameLevel() + 60)
-	local flapTex = UI.Tiled(flap, "ARTWORK", 0, UI.TEX.leather, 256, 256)
+	pcall(flap.SetClipsChildren, flap, true)
+	local face = CreateFrame("Frame", nil, flap)
+	face:SetPoint("TOPLEFT")
+	face:SetSize(WIDTH, HEIGHT)
+	local flapTex = UI.Tiled(face, "BACKGROUND", 0, UI.TEX.leather, 256, 256)
 	UI.Tint(flapTex, C2.cover)
-	local flapEdge = flap:CreateTexture(nil, "OVERLAY")
-	flapEdge:SetPoint("TOPRIGHT"); flapEdge:SetPoint("BOTTOMRIGHT"); flapEdge:SetWidth(40)
-	UI.Gradient(flapEdge, "HORIZONTAL", { 0, 0, 0, 0 }, { 0, 0, 0, 0.55 })
-	local flapTitle = flap:CreateFontString(nil, "OVERLAY", UI.F.title)
-	flapTitle:SetPoint("CENTER")
-	flapTitle:SetTextColor(C2.stitch[1], C2.stitch[2], C2.stitch[3])
-	flapTitle:SetText("BIG CHRONICLE")
-	f.flap, f.flapTitle = flap, flapTitle
+	local flapWear = face:CreateTexture(nil, "BACKGROUND", nil, 1)
+	flapWear:SetAllPoints()
+	flapWear:SetTexture(UI.TEX.vignette)
+	flapWear:SetVertexColor(0, 0, 0, 0.6)
+	UI.Outline(face, { C2.coverDark[1], C2.coverDark[2], C2.coverDark[3], 1 }, 0)
+	UI.Outline(face, { C2.gold[1], C2.gold[2], C2.gold[3], 0.7 }, 22, "BORDER")
+	UI.Outline(face, { C2.gold[1], C2.gold[2], C2.gold[3], 0.4 }, 27, "BORDER")
+	UI.Corners(face, UI.TEX.ornCorner, 34, 30, { C2.gold[1], C2.gold[2], C2.gold[3], 0.85 }, "BORDER", 2)
+	UI.Corners(face, UI.TEX.corner, 50, -3)
+	local emblem = face:CreateTexture(nil, "ARTWORK")
+	emblem:SetSize(170, 170)
+	emblem:SetPoint("CENTER", 0, 50)
+	emblem:SetTexture(UI.TEX.emblem)
+	emblem:SetVertexColor(C2.gold[1], C2.gold[2], C2.gold[3], 0.9)
+	local flapTitle = face:CreateFontString(nil, "OVERLAY", UI.F.title)
+	flapTitle:SetPoint("TOP", emblem, "BOTTOM", 0, -16)
+	flapTitle:SetTextColor(C2.gold[1], C2.gold[2], C2.gold[3])
+	flapTitle:SetText(UI.Spaced("BIG CHRONICLE", 1))
+	local flapRule = UI.Divider(face, 260, C2.gold)
+	flapRule:SetPoint("TOP", flapTitle, "BOTTOM", 0, -8)
+	local flapShade = flap:CreateTexture(nil, "OVERLAY", nil, 7)
+	flapShade:SetAllPoints()
+	flapShade:SetColorTexture(0, 0, 0, 0)
+	local flapEdge = flap:CreateTexture(nil, "OVERLAY", nil, 6)
+	flapEdge:SetPoint("TOPRIGHT"); flapEdge:SetPoint("BOTTOMRIGHT"); flapEdge:SetWidth(46)
+	UI.Gradient(flapEdge, "HORIZONTAL", { 0, 0, 0, 0 }, { 0, 0, 0, 0.6 })
+	f.flap, f.flapTitle, f.flapShade = flap, flapTitle, flapShade
+	f.flapFace = face
 	flap:Hide()
 
 	f:SetScript("OnShow", function(self)
@@ -241,7 +262,7 @@ end
 ------------------------------------------------------------------------
 -- 단축키 (전투 중에는 꺼진다)
 ------------------------------------------------------------------------
--- 창을 열 때 가죽 표지가 왼쪽으로 넘어가며 수첩이 펼쳐진다
+-- 창을 열 때 무거운 앞표지가 왼쪽으로 넘어가며 책이 펼쳐진다
 function UI:Unroll()
 	local f = self.frame
 	if not f then return end
@@ -254,12 +275,15 @@ function UI:Unroll()
 	f:SetAlpha(1)
 	f.flap:Show()
 	f.flap:SetWidth(WIDTH)
-	f.flapTitle:SetAlpha(1)
-	E.Tween("main-open", 0.55, function(p)
+	f.flapFace:SetAlpha(1)
+	f.flapShade:SetColorTexture(0, 0, 0, 0)
+	-- 잠깐 표지를 보여 준 뒤, 묵직하게 넘긴다
+	E.Tween("main-open", 0.75, function(p)
 		local k = E.Ease.inOut(p)
 		f.flap:SetWidth(math.max(1, WIDTH * (1 - k)))
-		f.flapTitle:SetAlpha(1 - math.min(1, p * 2.5))
-	end, function() f.flap:Hide() end)
+		f.flapFace:SetAlpha(1 - math.max(0, (p - 0.35) / 0.65))
+		f.flapShade:SetColorTexture(0, 0, 0, 0.65 * k)
+	end, function() f.flap:Hide() end, 0.25)
 	E.Sound("open")
 end
 
@@ -301,7 +325,7 @@ function UI:RefreshHeader()
 	local name = ns.PlayerName()
 	local race = ns.Call(UnitRace, "player") or meta.race or ""
 	local class = ns.Call(UnitClass, "player") or meta.class or ""
-	f.title:SetText(UI.PenText(name .. "의 도감 수첩"))
+	f.title:SetText(name .. "의 연대기")
 	local found, total, species = ns.Bestiary:Completion()
 	local aDone, aTotal, aPts = ns.Achievements:Summary()
 	f.subtitle:SetText(string.format("%s  ·  %d레벨  ·  기록 %s개  ·  도감 %d/%d 종족, %s종  ·  업적 %d/%d (%s점)",
@@ -395,8 +419,7 @@ function UI:ShowExport()
 		f:SetScript("OnDragStop", f.StopMovingOrSizing)
 		f:SetClampedToScreen(true)
 		UI.Paper(f)
-		UI.Roller(f, "TOP", 14)
-		UI.Roller(f, "BOTTOM", 14)
+		UI.Corners(f, UI.TEX.ornCorner, 20, 5, { C.edge[1], C.edge[2], C.edge[3], 0.7 })
 		if UISpecialFrames then table.insert(UISpecialFrames, "BigChronicleExport") end
 
 		local title = f:CreateFontString(nil, "OVERLAY", UI.F.header)

@@ -51,7 +51,7 @@ function D:Create(parent)
 	self.panel = p
 
 	-- 왼쪽: 완성도 + 검색 + 목록
-	local left = UI.Section(p, { tape = true, tapeX = -40 })
+	local left = UI.Section(p)
 	left:SetPoint("TOPLEFT", 0, 0)
 	left:SetPoint("BOTTOMLEFT", 0, 0)
 	left:SetWidth(LIST_W)
@@ -92,8 +92,8 @@ function D:Create(parent)
 	self.listScroll = listScroll
 	self.listPool = UI.Pool(function() return D:CreateListRow(listScroll.child) end)
 
-	-- 오른쪽 카드: 테이프로 붙인 폴라로이드 사진 + 개체 메모
-	local card = UI.Section(p, { tint = col.page })
+	-- 오른쪽 카드: 가죽 액자에 넣은 초상 + 금박 명판 + 개체 기록
+	local card = UI.Section(p)
 	card:SetPoint("TOPRIGHT", 0, 0)
 	card:SetPoint("BOTTOMRIGHT", 0, 0)
 	card:SetWidth(CARD_W)
@@ -103,22 +103,28 @@ function D:Create(parent)
 	polaroid:SetPoint("TOPLEFT", 12, -14)
 	polaroid:SetPoint("TOPRIGHT", -12, -14)
 	polaroid:SetHeight(222)
-	UI.Paper(polaroid, { tint = { 1, 1, 0.98 }, shadow = 0.35 })
+	local frameShadow = polaroid:CreateTexture(nil, "BACKGROUND", nil, -8)
+	frameShadow:SetPoint("TOPLEFT", 2, -3)
+	frameShadow:SetPoint("BOTTOMRIGHT", 4, -5)
+	frameShadow:SetColorTexture(0, 0, 0, 0.45)
+	local frameTex = UI.Tiled(polaroid, "BACKGROUND", -6, UI.TEX.leather, 128, 128)
+	UI.Tint(frameTex, col.cover)
+	local frameGloss = polaroid:CreateTexture(nil, "BACKGROUND", nil, -5)
+	frameGloss:SetAllPoints()
+	UI.Gradient(frameGloss, "VERTICAL", { 0, 0, 0, 0.35 }, { 1, 0.9, 0.7, 0.08 })
+	UI.Outline(polaroid, { col.coverDark[1], col.coverDark[2], col.coverDark[3], 1 })
+	UI.Outline(polaroid, { col.gold[1], col.gold[2], col.gold[3], 0.5 }, 4)
+	UI.Corners(polaroid, UI.TEX.ornCorner, 16, 6, { col.gold[1], col.gold[2], col.gold[3], 0.8 }, "BORDER", 3)
 	self.polaroid = polaroid
-	local tape = UI.Tape(polaroid, 86, 22, 0.06)
-	tape:SetPoint("CENTER", polaroid, "TOP", 0, 2)
-	local clipTex = card:CreateTexture(nil, "OVERLAY", nil, 7)
-	clipTex:SetSize(18, 72)
-	clipTex:SetPoint("TOPRIGHT", card, "TOPRIGHT", -18, 20)
-	clipTex:SetTexture(UI.TEX.clip)
 
 	local stage = CreateFrame("Frame", nil, polaroid)
-	stage:SetPoint("TOPLEFT", 10, -10)
-	stage:SetPoint("TOPRIGHT", -10, -10)
-	stage:SetHeight(172)
+	stage:SetPoint("TOPLEFT", 12, -12)
+	stage:SetPoint("TOPRIGHT", -12, -12)
+	stage:SetHeight(168)
 	local stageBg = stage:CreateTexture(nil, "BACKGROUND")
 	stageBg:SetAllPoints()
-	UI.Gradient(stageBg, "VERTICAL", { 0.10, 0.09, 0.08, 1 }, { 0.26, 0.23, 0.20, 1 })
+	UI.Gradient(stageBg, "VERTICAL", { 0.06, 0.05, 0.04, 1 }, { 0.22, 0.19, 0.15, 1 })
+	UI.Outline(stage, { col.gold[1], col.gold[2], col.gold[3], 0.7 }, -1)
 	stage.bg = stageBg
 	self.stage = stage
 
@@ -160,10 +166,10 @@ function D:Create(parent)
 	rotateHint:SetTextColor(0.85, 0.82, 0.76)
 	self.rotateHint = rotateHint
 
-	-- 사진 아래 여백에 손글씨로 이름
+	-- 초상 아래 금박 명판
 	local cardName = polaroid:CreateFontString(nil, "OVERLAY", UI.F.header)
-	cardName:SetPoint("TOPLEFT", stage, "BOTTOMLEFT", 2, -6)
-	cardName:SetPoint("TOPRIGHT", stage, "BOTTOMRIGHT", -2, -6)
+	cardName:SetPoint("TOPLEFT", stage, "BOTTOMLEFT", 2, -12)
+	cardName:SetPoint("TOPRIGHT", stage, "BOTTOMRIGHT", -2, -12)
 	cardName:SetJustifyH("CENTER")
 	cardName:SetWordWrap(false)
 	self.cardName = cardName
@@ -550,7 +556,7 @@ function D:DrawTribe(id)
 	elseif not found or firstView then
 		self.stamp:Hide()
 	end
-	-- 손글씨 제목은 줄 높이가 커서, 실제 글자 높이로 다음 줄 위치를 잡는다
+	-- 명조 제목은 줄 높이가 커서, 실제 글자 높이로 다음 줄 위치를 잡는다
 	local headH = (no:GetStringHeight() or 12) + 3 + (head:GetStringHeight() or 30) + 4 + (sub:GetStringHeight() or 14)
 	self.y = self.y + math.max(56, headH) + 12
 
@@ -731,8 +737,8 @@ function D:RefreshCard()
 		self.bigIcon:SetDesaturated(not found)
 		self.modelHint:Show()
 		self.modelHint:SetText(found and "개체를 선택하면\n그 모습이 이곳에 나타납니다." or "")
-		self.cardName:SetText(UI.PenText(found and def.name or (def and "???" or "도감")))
-		self.cardName:SetTextColor(0.12, 0.21, 0.44) -- 폴라로이드는 늘 흰 종이라 잉크 색 고정
+		self.cardName:SetText(found and def.name or (def and "???" or "도감"))
+		self.cardName:SetTextColor(col.gold[1], col.gold[2], col.gold[3]) -- 가죽 명판 위의 금박
 		local info = ""
 		if found then
 			local s = B:CollectAll()[def.id]
@@ -767,11 +773,11 @@ function D:RefreshCard()
 	self.modelHint:SetShown(not showedModel)
 	self.modelHint:SetText(showedModel and "" or "모습을 불러올 수 없습니다.")
 
-	self.cardName:SetText(UI.PenText(name))
+	self.cardName:SetText(name)
 	if B.IsRare(c.cls) then
-		self.cardName:SetTextColor(0.42, 0.16, 0.58)
+		self.cardName:SetTextColor(0.80, 0.64, 0.98)
 	else
-		self.cardName:SetTextColor(0.05, 0.33, 0.40)
+		self.cardName:SetTextColor(col.gold[1], col.gold[2], col.gold[3])
 	end
 
 	local lines = {}
@@ -811,9 +817,8 @@ function D:ShowReassign(name)
 		f:SetFrameStrata("DIALOG")
 		f:EnableMouse(true)
 		f:SetClampedToScreen(true)
-		UI.Paper(f, { vignette = 18 })
-		UI.Roller(f, "TOP", 10)
-		UI.Roller(f, "BOTTOM", 10)
+		UI.Paper(f)
+		UI.Corners(f, UI.TEX.ornCorner, 18, 4, { col.edge[1], col.edge[2], col.edge[3], 0.7 })
 		if UISpecialFrames then table.insert(UISpecialFrames, "BigChronicleReassign") end
 		local title = f:CreateFontString(nil, "OVERLAY", UI.F.heading)
 		title:SetPoint("TOP", 0, -18)
