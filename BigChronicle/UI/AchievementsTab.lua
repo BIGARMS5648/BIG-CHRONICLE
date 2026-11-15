@@ -25,6 +25,11 @@ function T:Create(parent)
 	local p = CreateFrame("Frame", nil, parent)
 	p:SetAllPoints()
 	self.panel = p
+	-- 업적 탭을 떠나면 '새로 이룬' 표시를 지운다
+	p:SetScript("OnHide", function()
+		if ns.char and ns.char.ach.unseen then wipe(ns.char.ach.unseen) end
+		if self.pool then for _, r in ipairs(self.pool.items) do ns.Effects.Pulse(r.glow, false) end end
+	end)
 
 	-- 왼쪽: 점수와 분류
 	local nav = UI.Section(p)
@@ -110,6 +115,12 @@ function T:CreateRow(parent)
 	local bg = r:CreateTexture(nil, "BACKGROUND")
 	bg:SetAllPoints()
 	r.bg = bg
+	local glow = r:CreateTexture(nil, "BORDER")
+	glow:SetAllPoints()
+	glow:SetTexture(UI.WHITE)
+	glow:SetVertexColor(col.accent[1], col.accent[2], col.accent[3], 0.18)
+	glow:Hide()
+	r.glow = glow
 	local hl = r:CreateTexture(nil, "HIGHLIGHT")
 	hl:SetAllPoints()
 	UI.Color(hl, col.hover)
@@ -126,8 +137,13 @@ function T:CreateRow(parent)
 	desc:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -4)
 	desc:SetWordWrap(false)
 	r.desc = desc
+	local newTag = r:CreateFontString(nil, "OVERLAY", UI.F.key)
+	newTag:SetText("NEW")
+	newTag:SetTextColor(0.25, 0.65, 0.25)
+	r.newTag = newTag
 	local pts = r:CreateFontString(nil, "OVERLAY", UI.F.heading)
 	pts:SetPoint("TOPRIGHT", -10, -6)
+	newTag:SetPoint("RIGHT", pts, "LEFT", -8, 0)
 	pts:SetJustifyH("RIGHT")
 	r.pts = pts
 	local when = UI.Text(r, UI.F.tiny)
@@ -209,6 +225,9 @@ function T:Refresh(resetScroll)
 			r:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 0, -y)
 			r:SetWidth(width)
 			r.def, r.done = def, isDone
+			local unseen = ach.unseen and ach.unseen[def.id]
+			r.newTag:SetShown(unseen and true or false)
+			ns.Effects.Pulse(r.glow, unseen and true or false, { min = 0.1, max = 1, speed = 4 })
 			if self.focusId == def.id then
 				self.focusRowY = y
 				UI.FadeIn(r, 0.6)

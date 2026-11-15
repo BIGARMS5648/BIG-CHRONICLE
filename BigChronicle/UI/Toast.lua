@@ -15,6 +15,15 @@ local STYLE = {
 }
 
 local OPEN, FADE_OUT = 0.3, 0.8
+
+-- 알림 종류별 반짝이 색
+local BURST = {
+	achievement = { { 1, 0.85, 0.35 }, { 1, 0.95, 0.65 }, { 0.95, 0.6, 0.2 } },
+	rank        = { { 1, 0.85, 0.35 }, { 1, 0.95, 0.65 } },
+	rare        = { { 0.8, 0.55, 1 }, { 0.95, 0.8, 1 }, { 0.6, 0.4, 1 } },
+	tribe       = { { 0.55, 1, 0.45 }, { 0.85, 1, 0.7 }, { 1, 0.9, 0.5 } },
+	species     = { { 1, 0.9, 0.6 } },
+}
 local MAX_QUEUE = 4
 local HEIGHT = 66
 
@@ -63,6 +72,10 @@ function Toast:Build()
 	body:SetWordWrap(false)
 	f.body = body
 
+	local seal = ns.Effects.MakeSeal(f, 42, "업적")
+	seal:SetPoint("RIGHT", -12, 2)
+	f.seal = seal
+
 	local brand = UI.Text(f, UI.F.tiny)
 	brand:SetPoint("BOTTOMRIGHT", -12, 7)
 	brand:SetJustifyH("RIGHT")
@@ -86,6 +99,14 @@ function Toast:Build()
 			self:SetHeight(math.max(4, HEIGHT * k))
 			self:SetAlpha(1)
 			self.holder:SetAlpha(1)
+		elseif self.pendingFX then
+			-- 다 펼쳐진 순간: 반짝이가 튀고, 업적이면 도장이 쾅
+			local kind = self.pendingFX
+			self.pendingFX = nil
+			self:SetHeight(HEIGHT)
+			local colors = BURST[kind]
+			if colors then ns.Effects.BurstAt(self, { colors = colors, count = kind == "species" and 10 or 26, speed = 150 }) end
+			if kind == "achievement" then ns.Effects.Stamp(self.seal, "toast-seal") end
 		elseif self.t < OPEN + hold then
 			self:SetHeight(HEIGHT)
 			self:SetAlpha(1)
@@ -154,6 +175,10 @@ function Toast:Next()
 	f.brand:SetText(item.link and (item.link.ach and "눌러서 업적 보기" or "눌러서 도감 보기") or "BIG CHRONICLE")
 	f.hold = style.hold
 	f.t = 0
+	f.pendingFX = item.kind
+	f.seal:Hide()
+	f.body:SetPoint("RIGHT", item.kind == "achievement" and -62 or -14, 0)
+	f.title:SetPoint("RIGHT", item.kind == "achievement" and -62 or -14, 0)
 	f:SetHeight(4)
 	f:Show()
 	PlayStyleSound(style)

@@ -1,3 +1,11 @@
+## 1.2.0
+
+- **386 achievements** in 12 categories (up from 124): first meeting, Researcher rank and 100 kills for every one of the 34 tribes; a "Storyteller" achievement for quests in each of the 40 classic zones, plus Eastern Kingdoms, Kalimdor and Azeroth metas; tours of both continents; a "regular" achievement for every classic dungeon and raid; more level, gold, quest, kill and bestiary tiers; and a new "Little Joys" category based on real-world dates (7- and 30-day streaks, 100 days, weekend warrior, night owl, New Year's Day and more)
+- Achievements that were already completed when a new version adds them are gathered into a single journal line instead of a flood of notifications
+- **Effects**: the window unrolls like a scroll when opened; a cinematic chapter title appears in the middle of the screen when you reach a new chapter (and when your chronicle begins); achievement notifications stamp a wax seal and burst with gold sparkles (purple for rares, green for new tribes); a "new record" seal stamps the bestiary page the first time you open a newly found tribe, and the list marks unopened tribes; journal pages sweep like a turning page; newly earned achievements glow; the minimap button glows when something new happened while the window was closed
+- New "Effects" option to turn the animations off
+- Special thanks to 루마, 절미, 판초네 콘체타, KLEROS
+
 ## 1.1.0
 
 - **Achievements**: a new Achievements tab with 10 categories and over a hundred achievements (levels, gold, quests, each classic dungeon and raid, bestiary, battlegrounds, reputation, trials, chronicle), with scroll notifications and a story line in the journal

@@ -5,7 +5,7 @@ local ADDON, ns = ...
 
 ns.TITLE = "BIG CHRONICLE"
 ns.ICON = "Interface\\AddOns\\" .. ADDON .. "\\Media\\Icon"  -- 글자 없는 두루마리 아이콘 (64×64 TGA)
-ns.VERSION = "1.1.0"
+ns.VERSION = "1.2.0"
 _G.BigChronicle = ns
 
 do
@@ -390,6 +390,7 @@ ns.DEFAULTS = {
 	theme = "light",      -- 두루마리 테마: light(양피지) / dark(어둠)
 	typewriter = true,    -- 배경 이야기가 한 자씩 써지는 연출
 	hotkeys = true,       -- 창이 열려 있을 때 키보드 단축키
+	effects = true,       -- 화면 연출 (두루마리 펼침, 장 제목, 반짝이, 도장)
 	debug = false,
 	minimap = { hide = false, angle = 215 },
 	window = {},
@@ -403,7 +404,7 @@ local function CharDefaults()
 		subzones = {},
 		levels = {},
 		levelTracked = {},  -- 레벨에 도달했을 때까지 접속해 있던 누적 시간(초)
-		quests = { count = 0, ids = {}, zones = {} },
+		quests = { count = 0, ids = {}, zones = {}, maps = {} },
 		dungeons = {},
 		bosses = {},
 		pvp = {},
@@ -508,6 +509,7 @@ local function ShowHelp()
 	P("  |cffffd100/bc 기록 <내용>|r : 나만의 기록을 일지에 남기기  (|cffffd100/일지 <내용>|r 도 가능)")
 	P("  |cffffd100/bc 내보내기|r : 일지 전체를 복사 가능한 글로 보기")
 	P("  |cffffd100/bc 미니맵|r : 미니맵 버튼 보이기/숨기기")
+	P("  Special thanks to 루마 · 절미 · 판초네 콘체타 · KLEROS")
 end
 
 function ns:HandleSlash(msg)

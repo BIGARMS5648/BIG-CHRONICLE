@@ -66,32 +66,43 @@ function UI:Build()
 	f:Hide()
 	if UISpecialFrames then table.insert(UISpecialFrames, "BigChronicleFrame") end
 
-	UI.Paper(f)
-	UI.Roller(f, "TOP", 18)
-	UI.Roller(f, "BOTTOM", 18)
+	-- 두루마리가 위아래로 펼쳐지도록: clip(높이가 변함) 안에 종이(body)를 넣고, 나무 축은 clip 가장자리에 붙인다
+	local clip = CreateFrame("Frame", nil, f)
+	clip:SetPoint("LEFT", f, "LEFT", -10, 0)
+	clip:SetPoint("RIGHT", f, "RIGHT", 10, 0)
+	clip:SetHeight(HEIGHT + 14)
+	clip:SetClipsChildren(true)
+	f.clip = clip
+	local body = CreateFrame("Frame", nil, clip)
+	body:SetPoint("TOPLEFT", f, "TOPLEFT")
+	body:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT")
+	f.body = body
+	UI.Paper(body)
+	UI.Roller(f, "TOP", 8, clip)
+	UI.Roller(f, "BOTTOM", 8, clip)
 
 	-- 머리말 (대화창의 NPC 이름처럼 가운데 정렬)
-	local brand = f:CreateFontString(nil, "OVERLAY", UI.F.tiny)
+	local brand = body:CreateFontString(nil, "OVERLAY", UI.F.tiny)
 	brand:SetPoint("TOP", 0, -20)
 	brand:SetText("B I G   C H R O N I C L E")
 	brand:SetTextColor(C.accent[1], C.accent[2], C.accent[3])
 
-	local title = f:CreateFontString(nil, "OVERLAY", UI.F.title)
+	local title = body:CreateFontString(nil, "OVERLAY", UI.F.title)
 	title:SetPoint("TOP", brand, "BOTTOM", 0, -6)
 	f.title = title
 
-	local sub = f:CreateFontString(nil, "OVERLAY", UI.F.small)
+	local sub = body:CreateFontString(nil, "OVERLAY", UI.F.small)
 	sub:SetPoint("TOP", title, "BOTTOM", 0, -6)
 	f.subtitle = sub
 
-	local divider = UI.Divider(f, 560)
+	local divider = UI.Divider(body, 560)
 	divider:SetPoint("TOP", sub, "BOTTOM", 0, -8)
 
-	local close = CloseButton(f, function() f:Hide() end)
-	close:SetPoint("TOPRIGHT", -12, -12)
+	local close = CloseButton(body, function() f:Hide() end)
+	close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -12, -12)
 
 	-- 탭 (가운데 정렬)
-	local tabRow = CreateFrame("Frame", nil, f)
+	local tabRow = CreateFrame("Frame", nil, body)
 	tabRow:SetHeight(28)
 	tabRow:SetPoint("TOP", divider, "BOTTOM", 0, -8)
 	self.tabButtons = {}
@@ -105,23 +116,24 @@ function UI:Build()
 	end
 	tabRow:SetWidth(total)
 
-	local rule = UI.Rule(f, 0.35)
+	local rule = UI.Rule(body, 0.35)
 	rule:SetPoint("TOPLEFT", 24, -146)
 	rule:SetPoint("TOPRIGHT", -24, -146)
 
-	local content = CreateFrame("Frame", nil, f)
+	local content = CreateFrame("Frame", nil, body)
 	content:SetPoint("TOPLEFT", 24, -154)
 	content:SetPoint("BOTTOMRIGHT", -24, 38)
 	self.content = content
 	self.panels = {}
 
 	-- 아래쪽 단축키 안내
-	local hints = f:CreateFontString(nil, "OVERLAY", UI.F.tiny)
+	local hints = body:CreateFontString(nil, "OVERLAY", UI.F.tiny)
 	hints:SetPoint("BOTTOM", 0, 16)
 	f.hints = hints
 
 	f:SetScript("OnShow", function(self)
-		UI.FadeIn(self, 0.22)
+		UI:Unroll()
+		if ns.Minimap and ns.Minimap.ClearNews then ns.Minimap:ClearNews() end
 		UI:RefreshHeader()
 		UI:RefreshCurrent()
 		UI:UpdateKeyboard()
@@ -147,6 +159,24 @@ end
 ------------------------------------------------------------------------
 -- 단축키 (전투 중에는 꺼진다)
 ------------------------------------------------------------------------
+-- 창을 열 때 두루마리가 가운데에서 위아래로 펼쳐진다
+function UI:Unroll()
+	local f = self.frame
+	if not f then return end
+	local full = HEIGHT + 14
+	if not (ns.db and ns.db.effects) or not ns.Effects then
+		f.clip:SetHeight(full)
+		UI.FadeIn(f, 0.2)
+		return
+	end
+	f:SetAlpha(1)
+	f.clip:SetHeight(26)
+	ns.Effects.Tween("main-unroll", 0.5, function(p)
+		f.clip:SetHeight(26 + (full - 26) * ns.Effects.Ease.outCubic(p))
+	end)
+	ns.Effects.Sound("open")
+end
+
 function UI:UpdateKeyboard(entering)
 	local f = self.frame
 	if not f then return end

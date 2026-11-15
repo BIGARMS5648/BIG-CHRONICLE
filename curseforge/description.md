@@ -65,7 +65,7 @@ On top of that, **beast families** such as wolves, spiders and raptors each get 
 
 ---
 
-## 🏆 Achievements
+## 🏆 Achievements — 386 of them
 
 Inspired by the Wrath-era achievements for classic (level 1–60) content, focusing on what **Forever's official achievements don't already cover**, plus achievements unique to this addon:
 
@@ -74,9 +74,25 @@ Inspired by the Wrath-era achievements for classic (level 1–60) content, focus
 - **Quests** — 10 to 1,000 quests, quests across many zones or within one zone
 - **Dungeons & Raids** — conquer each of the 19 classic dungeons and 7 classic raids, dungeon-count metas, run counts, boss kills, coming back from a wipe, flawless runs
 - **Bestiary** — tribes, species, rare creatures, kill counts, research ranks, beast families, 100 kills of iconic tribes
+- **Tribe research** — a first meeting, a Researcher rank and 100 kills for every one of the 34 tribes
+- **Storytellers** — complete quests in each of the 40 classic zones, then earn the Eastern Kingdoms, Kalimdor and Azeroth titles
 - **Battlegrounds, Reputation, Trials, Chronicle** — battles joined, exalted factions, your first death and deathless levels, personal notes and exports
+- **Little Joys** — playful achievements based on real-world dates: 7- and 30-day streaks, 100 days together, weekend warrior, night owl, New Year's Day…
 
 Every achievement unrolls a scroll notification and adds a short line of story to your journal.
+
+---
+
+## ✨ Effects
+
+- The window **unrolls like a scroll** every time you open it
+- Reaching a new chapter shows a **cinematic chapter title** in the middle of the screen
+- Achievement notifications **stamp a wax seal** and burst with gold sparkles — purple for rare creatures, green for new tribes
+- The first time you open a newly found tribe, a **"new record" seal** thuds onto the page
+- Journal pages sweep across like a turning page
+- Newly earned achievements glow until you've seen them
+- The **minimap button glows** when something new happened while the window was closed
+- Every effect can be turned off in the settings
 
 ---
 
@@ -133,3 +149,9 @@ A patch has changed the interface number. Enable "Load out of date AddOns" in th
 - No library dependencies
 
 Please leave bug reports and ideas in the comments. Typing `/bc debug` shows internal errors in the chat window — including them in your report helps a lot.
+
+---
+
+## Special thanks
+
+루마 · 절미 · 판초네 콘체타 · KLEROS

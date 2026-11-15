@@ -339,6 +339,58 @@ print("---- export excerpt ----")
 local n = 0
 for line in exportText:gmatch("[^\n]+") do n = n + 1; if n <= 40 then print(line) end end
 
+-- 연출
+print("== effects")
+local okFx, errFx = pcall(function()
+	local function run(sec) for _ = 1, math.floor(sec / 0.05) do M.runOnUpdate(0.05) end end
+	local f = ns.UI.frame
+	f:Hide(); ns.db.effects = true
+	-- 창이 닫혀 있을 때 생긴 소식 → 미니맵 버튼이 빛난다
+	ns.Chronicle:Add("rare", "테스트 희귀 소식")
+	assert((ns.Minimap.news or 0) >= 1 and ns.Minimap.button.glow:IsShown(), "minimap glows for news")
+	ns.UI:Open("journal")
+	assert((ns.Minimap.news or 0) == 0 and not ns.Minimap.button.glow:IsShown(), "opening clears news")
+	assert(f.clip:GetHeight() < 100, "scroll starts rolled up")
+	run(1)
+	assert(f.clip:GetHeight() > 640, "scroll unrolls fully")
+	-- 장 제목 카드
+	ns:Fire("CHAPTER_STARTED", 2)
+	local card = _G.BigChronicleChapterCard
+	assert(card and card:IsShown(), "chapter card shown")
+	assert(card.title:GetText() == "모험가의 길", "chapter card title: " .. tostring(card.title:GetText()))
+	run(7)
+	assert(not card:IsShown(), "chapter card hides")
+	-- 업적 알림: 도장 + 반짝이
+	ns.Toast.queue = {}; ns.Toast.frame:Hide()
+	ns.Toast:Show("업적 달성!", "「테스트」", nil, "achievement", { ach = "level10" })
+	run(0.5)
+	assert(ns.Toast.frame.seal:IsShown(), "achievement toast stamps a seal")
+	assert(_G.BigChronicleFX ~= nil, "particles burst")
+	run(8)
+	-- 도감: 처음 펼치는 종족 페이지에 도장
+	local B = ns.Bestiary
+	B.dex.tribes.centaur.viewed = nil
+	ns.UI:SelectTab("bestiary")
+	ns.BestiaryTab:SelectTribe("centaur")
+	assert(ns.BestiaryTab.stamp:IsShown() and B.dex.tribes.centaur.viewed, "first view stamps the page")
+	run(3)
+	assert(not ns.BestiaryTab.stamp:IsShown(), "stamp fades")
+	-- 일지: 책장 넘김
+	ns.UI:SelectTab("journal")
+	ns.JournalTab.chapter = 0; ns.JournalTab:Refresh()
+	ns.Effects.Sweep(ns.JournalTab.sweep, ns.JournalTab.scroll, "journal-sweep")
+	assert(ns.JournalTab.sweep:IsShown(), "page sweep runs")
+	run(1)
+	assert(not ns.JournalTab.sweep:IsShown(), "page sweep ends")
+	-- 연출을 끄면 바로 펼쳐진다
+	ns.db.effects = false
+	f:Hide(); ns.UI:Open("journal")
+	assert(f.clip:GetHeight() > 640, "no animation when effects are off")
+	ns:Fire("CHAPTER_STARTED", 3)
+	ns.db.effects = true
+end)
+check(okFx, "effects run without error " .. tostring(errFx))
+
 print("== theme: " .. tostring(ns.UI.themeId))
 local themed = ns.UI:Themed("|cffe6c27a잊혀진 땅|r")
 print("    themed: " .. themed)

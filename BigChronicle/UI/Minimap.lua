@@ -31,6 +31,15 @@ function M:Init()
 	border:SetSize(53, 53)
 	border:SetPoint("TOPLEFT")
 	border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
+	-- 새 소식이 있으면 은은하게 빛난다
+	local glow = b:CreateTexture(nil, "OVERLAY", nil, 2)
+	glow:SetSize(34, 34)
+	glow:SetPoint("CENTER", icon, "CENTER", 0, 0)
+	glow:SetTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
+	glow:SetBlendMode("ADD")
+	glow:SetVertexColor(1, 0.85, 0.4)
+	glow:Hide()
+	b.glow = glow
 
 	b:SetScript("OnClick", function(_, btn)
 		if not ns.UI then return end
@@ -54,6 +63,9 @@ function M:Init()
 		if ns.char then
 			local found, total, species = ns.Bestiary:Completion()
 			GameTooltip:AddLine(string.format("기록 %s개 · 도감 %d/%d 종족 · %s종", ns.Comma(#ns.char.log), found, total, ns.Comma(species)), 1, 1, 1)
+		end
+		if (M.news or 0) > 0 then
+			GameTooltip:AddLine(string.format("새 소식 %d개 — 눌러서 확인하세요", M.news), 0.4, 1, 0.4)
 		end
 		GameTooltip:AddLine("왼쪽 클릭: 모험 일지", 0.8, 0.8, 0.8)
 		GameTooltip:AddLine("오른쪽 클릭: 몬스터 도감", 0.8, 0.8, 0.8)
@@ -83,4 +95,19 @@ function M:Toggle()
 	ns.db.minimap.hide = not ns.db.minimap.hide
 	self:Update()
 	ns.Print("미니맵 버튼: " .. (ns.db.minimap.hide and "숨김" or "보임"))
+end
+
+-- 창이 닫혀 있는 동안 생긴 중요한 기록 수 (도감·희귀·업적·연구 등급)
+local NEWS = { dex = true, rare = true, achievement = true, milestone = true }
+ns:Listen("LOG_ADDED", function(e)
+	if not e or not NEWS[e.cat] then return end
+	local UI = ns.UI
+	if UI and UI.frame and UI.frame:IsShown() then return end
+	M.news = (M.news or 0) + 1
+	if M.button then ns.Effects.Pulse(M.button.glow, true, { min = 0.15, max = 0.95, speed = 3.2 }) end
+end)
+
+function M:ClearNews()
+	self.news = 0
+	if self.button then ns.Effects.Pulse(self.button.glow, false) end
 end

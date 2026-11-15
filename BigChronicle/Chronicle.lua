@@ -242,6 +242,7 @@ function C:Start()
 			if money >= g * 10000 then db.money[g] = 0 end
 		end
 		self:Add("start", Format(T.start, { lvl = lvl, zone = zone ~= "" and zone or "어딘가", hero = hero }))
+		ns:Fire("CHRONICLE_BEGUN", self:ChapterIndex(lvl))
 	end
 
 	db.meta = db.meta or {}
@@ -267,6 +268,13 @@ end
 ------------------------------------------------------------------------
 -- 지역
 ------------------------------------------------------------------------
+local function CurrentMapID()
+	if C_Map and C_Map.GetBestMapForUnit then
+		local id = ns.Call(C_Map.GetBestMapForUnit, "player")
+		if type(id) == "number" then return id end
+	end
+end
+
 local function InWorldInstance()
 	local inInst, itype = ns.Call(IsInInstance)
 	if inInst and itype and itype ~= "none" then return true, itype end
@@ -289,10 +297,12 @@ function C:OnZoneChanged()
 	local z = db.zones[zone]
 	if not z then
 		local lvl = ns.PlayerLevel()
-		db.zones[zone] = { first = now, lvl = lvl, time = 0, visits = 1 }
+		db.zones[zone] = { first = now, lvl = lvl, time = 0, visits = 1, map = CurrentMapID() }
 		self:Add("zone", Format(Pick(T.zone), { lvl = lvl, zone = zone }))
+		ns:Fire("ZONE_DISCOVERED", zone)
 	elseif self.currentZone ~= zone then
 		z.visits = (z.visits or 0) + 1
+		if not z.map then z.map = CurrentMapID() end
 	end
 	self.currentZone = zone
 	self:OnSubZoneChanged()
@@ -467,6 +477,9 @@ function C:EndExpedition()
 	local k = #exp.bosses
 	if dur < 60 and k == 0 then return end -- 입구만 들렀다 나온 경우
 
+	if k > (db.stats.maxBossesRun or 0) then db.stats.maxBossesRun = k end
+	if k >= 3 and dur > 0 and (not db.stats.fastRun or dur < db.stats.fastRun) then db.stats.fastRun = dur end
+
 	local d = db.dungeons[exp.name]
 	if d then
 		d.time = (d.time or 0) + dur
@@ -524,8 +537,10 @@ function C:OnEncounterEnd(_, encounterID, encounterName, _, _, success)
 	if success == 1 or success == true then
 		self:RecordBoss(encounterID, encounterName)
 	else
-		local exp = ns.char and ns.char.expedition
+		local db = ns.char
+		local exp = db and db.expedition
 		if exp then exp.wipes = exp.wipes + 1 end
+		if db then db.stats.wipes = (db.stats.wipes or 0) + 1 end
 	end
 end
 
@@ -556,6 +571,9 @@ function C:OnLevelUp(_, newLevel)
 	end
 	-- 레벨업 순간에는 UnitLevel이 아직 이전 값일 수 있으므로 새 레벨로 기록한다
 	self:Add("level", text, { lvl = lvl })
+	ns:Fire("LEVEL_UP", lvl)
+	local ch = self:ChapterIndex(lvl)
+	if self.CHAPTERS[ch].min == lvl then ns:Fire("CHAPTER_STARTED", ch) end
 end
 
 ------------------------------------------------------------------------
@@ -595,6 +613,8 @@ function C:OnQuestTurnedIn(_, questID, xpReward, moneyReward)
 
 	local zone = ns.Zone()
 	if zone ~= "" then db.quests.zones[zone] = (db.quests.zones[zone] or 0) + 1 end
+	local map = CurrentMapID()
+	if map then db.quests.maps[map] = (db.quests.maps[map] or 0) + 1 end
 	local lvl = ns.PlayerLevel()
 	local text = Format(Pick(T.quest), { lvl = lvl, zone = zone ~= "" and zone or "어딘가", quest = Q(title) })
 
@@ -616,7 +636,10 @@ function C:OnPlayerDead()
 	local db = ns.char
 	if not db then return end
 	db.deaths = (db.deaths or 0) + 1
-	if db.expedition then db.expedition.deaths = db.expedition.deaths + 1 end
+	if db.expedition then
+		db.expedition.deaths = db.expedition.deaths + 1
+		db.stats.dungeonDeaths = (db.stats.dungeonDeaths or 0) + 1
+	end
 
 	local zone = ns.Zone()
 	local text = Format(Pick(T.death), { lvl = ns.PlayerLevel(), zone = zone ~= "" and zone or "어딘가" })

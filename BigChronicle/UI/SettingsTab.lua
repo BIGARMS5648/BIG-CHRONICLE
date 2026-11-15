@@ -14,6 +14,7 @@ local OPTIONS = {
 	{ key = "nameplates",   label = "이름표로도 몬스터 발견",      desc = "적 이름표가 보이는 거리의 몬스터도 도감에 등록합니다." },
 	{ key = "tooltip",      label = "툴팁에 도감 정보 표시",       desc = "몬스터 툴팁에 도감 번호, 종족, 처치 수를 붙입니다." },
 	{ key = "typewriter",   label = "한 글자씩 써지는 연출",       desc = "배경 이야기가 차례로 써집니다. 클릭·Space로 건너뜁니다." },
+	{ key = "effects",      label = "화면 연출",                   desc = "두루마리 펼침, 새 장 제목, 반짝이, 도장, 책장 넘김 효과를 보여 줍니다." },
 	{ key = "hotkeys",      label = "키보드 단축키",               desc = "창이 열려 있을 때 1~4, 방향키, Space를 씁니다. (전투 중 꺼짐)" },
 }
 
@@ -62,7 +63,7 @@ function O:Create(parent)
 			end,
 			opt.desc)
 		if prev then
-			cb:SetPoint("TOPLEFT", prev.desc, "BOTTOMLEFT", -26, -9)
+			cb:SetPoint("TOPLEFT", prev.desc, "BOTTOMLEFT", -26, -6)
 		else
 			cb:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 2, -14)
 		end
@@ -74,7 +75,7 @@ function O:Create(parent)
 		function() return not ns.db.minimap.hide end,
 		function(v) ns.db.minimap.hide = not v; if ns.Minimap then ns.Minimap:Update() end end,
 		"왼쪽 클릭: 창 열기 · 오른쪽 클릭: 도감 · 드래그: 위치 옮기기")
-	mm:SetPoint("TOPLEFT", prev.desc, "BOTTOMLEFT", -26, -9)
+	mm:SetPoint("TOPLEFT", prev.desc, "BOTTOMLEFT", -26, -6)
 	mm.desc:SetWidth(430)
 	self.checks[#self.checks + 1] = mm
 
@@ -101,7 +102,7 @@ function O:Create(parent)
 	self.themeButtons.light, self.themeButtons.dark = tb1, tb2
 
 	local div = UI.Divider(right, 290)
-	div:SetPoint("TOP", themeNote, "BOTTOM", 0, -50)
+	div:SetPoint("TOP", themeNote, "BOTTOM", 0, -44)
 
 	local h = right:CreateFontString(nil, "OVERLAY", UI.F.header)
 	h:SetPoint("TOP", div, "BOTTOM", 0, -8)
@@ -137,12 +138,13 @@ function O:Create(parent)
 	info:SetPoint("TOP", div2, "BOTTOM", 0, -8)
 	info:SetWidth(290)
 	info:SetJustifyH("CENTER")
-	info:SetSpacing(3)
+	info:SetSpacing(2)
 	info:SetText(UI:Themed("|cffd4af37BIG CHRONICLE|r  v" .. ns.VERSION .. "\n" ..
 		"|cffffd100/bc|r 창 열기   ·   |cffffd100/도감|r 도감 열기\n" ..
 		"|cffffd100/bc 업적|r 업적 보기\n" ..
 		"|cffffd100/일지 <내용>|r 나만의 기록 남기기\n" ..
-		"|cffffd100/bc 내보내기|r 일지 전체 복사"))
+		"|cffffd100/bc 내보내기|r 일지 전체 복사\n\n" ..
+		"|cffd4af37Special thanks to|r\n루마  ·  절미  ·  판초네 콘체타  ·  KLEROS"))
 	return p
 end
 

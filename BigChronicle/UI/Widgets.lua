@@ -204,18 +204,20 @@ function UI.Paper(frame, opts)
 end
 
 -- 두루마리 나무 축 (위/아래)
-function UI.Roller(frame, where, overhang)
+-- anchor를 주면 그 프레임의 위/아래 가장자리에 붙는다 (펼쳐지는 애니메이션용)
+function UI.Roller(frame, where, overhang, anchor)
 	local C = UI.COL
 	overhang = overhang or 16
+	anchor = anchor or frame
 	local h = 16
 	local holder = CreateFrame("Frame", nil, frame)
 	holder:SetHeight(h)
 	if where == "TOP" then
-		holder:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", -overhang, -6)
-		holder:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", overhang, -6)
+		holder:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", -overhang, -6)
+		holder:SetPoint("BOTTOMRIGHT", anchor, "TOPRIGHT", overhang, -6)
 	else
-		holder:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", -overhang, 6)
-		holder:SetPoint("TOPRIGHT", frame, "BOTTOMRIGHT", overhang, 6)
+		holder:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", -overhang, 6)
+		holder:SetPoint("TOPRIGHT", anchor, "BOTTOMRIGHT", overhang, 6)
 	end
 	holder:SetFrameLevel(frame:GetFrameLevel() + 6)
 	local upper = holder:CreateTexture(nil, "ARTWORK")

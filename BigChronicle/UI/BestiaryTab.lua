@@ -171,6 +171,10 @@ function D:Create(parent)
 	mid:EnableMouse(true)
 	mid:SetScript("OnMouseDown", function() UI.FinishTyping() end) -- 클릭하면 글을 바로 끝까지 보여 준다
 	self.mid = mid
+	local stamp = ns.Effects.MakeSeal(mid, 58, "새 기록")
+	stamp:SetPoint("TOPRIGHT", -18, -6)
+	stamp:SetFrameLevel(mid:GetFrameLevel() + 30)
+	self.stamp = stamp
 	local scroll = UI.Scroll(mid)
 	scroll:SetPoint("TOPLEFT", 2, -4)
 	scroll:SetPoint("BOTTOMRIGHT", -12, 4)
@@ -294,7 +298,8 @@ function D:RefreshList()
 				if found then
 					r.icon:SetTexture(t.icon)
 					r.label:SetText(t.name)
-					r.right:SetText(string.rep("★", s.rankDef.stars))
+					local isNew = not B.dex.tribes[t.id].viewed
+					r.right:SetText((isNew and "|cff3fa83f새|r  " or "") .. string.rep("★", s.rankDef.stars))
 				else
 					r.icon:SetTexture(QUESTION)
 					r.icon:SetDesaturated(true)
@@ -517,6 +522,13 @@ function D:DrawTribe(id)
 	if firstView then
 		UI.FadeIn(head, 0.3)
 		UI.FadeIn(sub, 0.3, 0.1)
+	end
+	-- 발견한 뒤 처음 펼쳐 보는 페이지라면 도장을 쾅
+	if found and not tribeData.viewed then
+		tribeData.viewed = time()
+		ns.Effects.Stamp(self.stamp, "dex-stamp", 1.4)
+	elseif not found or firstView then
+		self.stamp:Hide()
 	end
 	self.y = self.y + 66
 

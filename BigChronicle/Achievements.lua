@@ -96,11 +96,59 @@ local function count(t)
 	return n
 end
 
+-- 일지(로그)에서 뽑는 값은 기록 수가 바뀔 때만 다시 계산한다
+local function LogStats(db)
+	local log = db.log
+	local key = #log .. ":" .. tostring(log[1] and log[1].t)
+	if A.logCache and A.logCache.key == key then return A.logCache end
+	local st = { key = key, notes = 0, binds = 0, nightEntries = 0, morningEntries = 0, midnightNotes = 0, newYear = 0,
+		weekendLevels = 0, levelsMaxDay = 0, questMaxDay = 0, days = 0, streak = 0, deathZones = 0 }
+	local dayLevels, dayQuests, daySet, deathZoneSet = {}, {}, {}, {}
+	for _, e in ipairs(log) do
+		local d = date("*t", e.t)
+		local dayIdx = math.floor(time({ year = d.year, month = d.month, day = d.day, hour = 12 }) / 86400)
+		daySet[dayIdx] = true
+		if e.cat == "death" then
+			if not st.firstDeathLvl then st.firstDeathLvl = e.lvl end
+			if e.zone and e.zone ~= "" then deathZoneSet[e.zone] = true end
+		elseif e.cat == "note" then
+			st.notes = st.notes + 1
+			if d.hour < 4 then st.midnightNotes = st.midnightNotes + 1 end
+		elseif e.cat == "bind" then
+			st.binds = st.binds + 1
+		elseif e.cat == "level" then
+			dayLevels[dayIdx] = (dayLevels[dayIdx] or 0) + 1
+			if dayLevels[dayIdx] > st.levelsMaxDay then st.levelsMaxDay = dayLevels[dayIdx] end
+			if d.wday == 1 or d.wday == 7 then st.weekendLevels = st.weekendLevels + 1 end
+		elseif e.cat == "quest" then
+			dayQuests[dayIdx] = (dayQuests[dayIdx] or 0) + 1
+			if dayQuests[dayIdx] > st.questMaxDay then st.questMaxDay = dayQuests[dayIdx] end
+		end
+		if d.hour < 4 then st.nightEntries = st.nightEntries + 1 end
+		if d.hour >= 6 and d.hour < 9 then st.morningEntries = st.morningEntries + 1 end
+		if d.month == 1 and d.day == 1 then st.newYear = 1 end
+	end
+	for _ in pairs(deathZoneSet) do st.deathZones = st.deathZones + 1 end
+	-- 기록이 남은 날 수와 가장 긴 연속 기록
+	local days = {}
+	for idx in pairs(daySet) do days[#days + 1] = idx end
+	table.sort(days)
+	st.days = #days
+	local run = 0
+	for i, idx in ipairs(days) do
+		if i > 1 and idx == days[i - 1] + 1 then run = run + 1 else run = 1 end
+		if run > st.streak then st.streak = run end
+	end
+	A.logCache = st
+	return st
+end
+
 function A:Context()
 	local db = ns.char
 	local B = ns.Bestiary
 	local ach = db.ach
-	local ctx = { cleared = {}, clearedName = {}, tribeKills = {}, bgMaps = {}, bgNames = {}, deathless = {} }
+	local ctx = { clearCount = {}, clearCountName = {}, tribeKills = {}, tribeFound = {}, tribeRank = {}, bgMaps = {}, bgNames = {},
+		deathless = {}, questZone = db.quests.zones or {}, questMap = db.quests.maps or {}, todSpecies = {} }
 
 	ctx.level = ns.PlayerLevel()
 	local money = ns.Call(GetMoney) or 0
@@ -108,12 +156,33 @@ function A:Context()
 	ctx.goldBest = ach.goldBest
 	ctx.tracked = db.stats.tracked or 0
 
-	ctx.zones = count(db.zones)
-	ctx.subzones = count(db.subzones)
+	-- 탐험
+	ctx.zones, ctx.subzones, ctx.maxZoneTime = 0, count(db.subzones), 0
+	local zoneMaps = {}
+	for _, z in pairs(db.zones) do
+		ctx.zones = ctx.zones + 1
+		if (z.time or 0) > ctx.maxZoneTime then ctx.maxZoneTime = z.time end
+		if z.map then zoneMaps[z.map] = true end
+	end
+	ctx.ekVisited, ctx.kalVisited = 0, 0
+	local loreEK, loreKal = 0, 0
+	for _, z in ipairs(ns.CLASSIC_ZONES) do
+		if db.zones[z.name] or zoneMaps[z.map] then
+			if z.ek then ctx.ekVisited = ctx.ekVisited + 1 else ctx.kalVisited = ctx.kalVisited + 1 end
+		end
+		local q = math.max(ctx.questZone[z.name] or 0, ctx.questMap[z.map] or 0)
+		if q >= (z.fewQuests and 3 or 10) then
+			if z.ek then loreEK = loreEK + 1 else loreKal = loreKal + 1 end
+		end
+	end
+	ctx.allVisited = ctx.ekVisited + ctx.kalVisited
+	ctx.loreEK, ctx.loreKal = loreEK, loreKal
+	ctx.loreBoth = (loreEK >= 15 and 1 or 0) + (loreKal >= 12 and 1 or 0)
 
+	-- 퀘스트
 	ctx.quests = db.quests.count or 0
 	ctx.questZones, ctx.questMaxZone = 0, 0
-	for _, n in pairs(db.quests.zones or {}) do
+	for _, n in pairs(ctx.questZone) do
 		ctx.questZones = ctx.questZones + 1
 		if n > ctx.questMaxZone then ctx.questMaxZone = n end
 	end
@@ -122,36 +191,46 @@ function A:Context()
 	ctx.runs, ctx.raidClears = 0, 0
 	for name, d in pairs(db.dungeons) do
 		ctx.runs = ctx.runs + (d.runs or 0)
-		if (d.cleared or 0) > 0 then
-			ctx.clearedName[name] = 1
-			if d.mapID then ctx.cleared[d.mapID] = 1 end
-			if d.kind == "raid" then ctx.raidClears = ctx.raidClears + 1 end
+		local cleared = d.cleared or 0
+		if cleared > 0 then
+			ctx.clearCountName[name] = cleared
+			if d.mapID then ctx.clearCount[d.mapID] = math.max(ctx.clearCount[d.mapID] or 0, cleared) end
+			if d.kind == "raid" then ctx.raidClears = ctx.raidClears + cleared end
 		end
 	end
 	ctx.dungeonsCleared = 0
 	for _, d in ipairs(ns.CLASSIC_DUNGEONS) do
-		if ctx.cleared[d.map] or ctx.clearedName[d.name] then ctx.dungeonsCleared = ctx.dungeonsCleared + 1 end
+		if (ctx.clearCount[d.map] or 0) > 0 or (ctx.clearCountName[d.name] or 0) > 0 then ctx.dungeonsCleared = ctx.dungeonsCleared + 1 end
 	end
 	ctx.bossKills = 0
 	for _, b in pairs(db.bosses) do ctx.bossKills = ctx.bossKills + (b.kills or 0) end
 	ctx.comeback = ach.flags.comeback or 0
 	ctx.flawless = ach.flags.flawless or 0
+	ctx.maxBossesRun = db.stats.maxBossesRun or 0
+	ctx.fastRun = (db.stats.fastRun and db.stats.fastRun <= 1800) and 1 or 0
+	ctx.wipes = db.stats.wipes or 0
+	ctx.dungeonDeaths = db.stats.dungeonDeaths or 0
 
 	-- 도감
 	local found, _, species, rares, kills, families = B:Completion()
 	ctx.tribes, ctx.species, ctx.rares, ctx.kills, ctx.families = found, species, rares, kills, families
-	ctx.rareKills, ctx.worldBossKills, ctx.critters = 0, 0, 0
+	ctx.rareKills, ctx.worldBossKills, ctx.critters, ctx.elites = 0, 0, 0, 0
 	for _, c in pairs(B.dex.creatures) do
 		if c.rareKilled then ctx.rareKills = ctx.rareKills + 1 end
 		if c.bossKilled then ctx.worldBossKills = ctx.worldBossKills + 1 end
 		if c.tribe == "critter" then ctx.critters = ctx.critters + 1 end
+		if c.cls == "elite" or c.cls == "rareelite" then ctx.elites = ctx.elites + 1 end
+		if c.tod then ctx.todSpecies[c.tod] = (ctx.todSpecies[c.tod] or 0) + 1 end
 	end
-	ctx.maxRank, ctx.rank4Count = 0, 0
+	ctx.maxRank, ctx.rank4Count, ctx.rank6Count = 0, 0, 0
 	for id, s in pairs(B:CollectAll()) do
 		ctx.tribeKills[id] = s.kills
 		if s.discovered then
+			ctx.tribeFound[id] = 1
+			ctx.tribeRank[id] = s.rank
 			if s.rank > ctx.maxRank then ctx.maxRank = s.rank end
 			if s.rank >= 4 then ctx.rank4Count = ctx.rank4Count + 1 end
+			if s.rank >= 6 then ctx.rank6Count = ctx.rank6Count + 1 end
 		end
 	end
 
@@ -164,21 +243,17 @@ function A:Context()
 	for map, n in pairs(db.pvpMaps or {}) do ctx.bgMaps[map] = n end
 	ctx.exalted = ach.exaltedBest or 0
 
-	-- 시련 / 연대기
+	-- 시련 / 연대기 / 소소한 재미
 	ctx.deaths = db.deaths or 0
-	local firstDeathLvl
-	ctx.notes, ctx.binds = 0, 0
-	for _, e in ipairs(db.log) do
-		if e.cat == "death" and not firstDeathLvl then firstDeathLvl = e.lvl end
-		if e.cat == "note" then ctx.notes = ctx.notes + 1 end
-		if e.cat == "bind" then ctx.binds = ctx.binds + 1 end
-	end
+	local st = LogStats(db)
+	for k, v in pairs(st) do if k ~= "key" and ctx[k] == nil then ctx[k] = v end end
 	local startLvl = (db.meta and db.meta.startLevel) or ctx.level
 	for _, lv in ipairs({ 10, 20, 30, 40, 50, 60 }) do
-		ctx.deathless[lv] = startLvl < lv and ctx.level >= lv and (not firstDeathLvl or firstDeathLvl >= lv)
+		ctx.deathless[lv] = startLvl < lv and ctx.level >= lv and (not st.firstDeathLvl or st.firstDeathLvl >= lv)
 	end
 	ctx.logCount = #db.log
 	ctx.exported = db.stats.exported or 0
+	ctx.daysSinceStart = db.started and math.floor((time() - db.started) / 86400) or 0
 	return ctx
 end
 
@@ -203,36 +278,44 @@ function A:Evaluate()
 	local ach = db.ach
 	local ctx = self:Context()
 	self.ctx = ctx
-	local newly = {}
+	ach.seen = ach.seen or {}
+	local newly, retro = {}, {}
 	for _, def in ipairs(ns.ACHIEVEMENTS) do
 		if not ach.done[def.id] then
 			local cur = self:Progress(def, ctx)
 			if cur >= def.goal then
 				ach.done[def.id] = time()
-				newly[#newly + 1] = def
+				-- 처음 켰을 때, 또는 업데이트로 새로 생긴 업적을 처음 판정할 때 이미 만족한 것은 '이전에 이룬 업적'
+				if not ach.initialized or not ach.seen[def.id] then
+					retro[#retro + 1] = def
+				else
+					newly[#newly + 1] = def
+				end
 			end
 		end
 	end
+	for _, def in ipairs(ns.ACHIEVEMENTS) do ach.seen[def.id] = true end
 
-	if not ach.initialized then
-		-- 애드온을 처음 켠 시점에 이미 이룬 업적은 한 줄로만 정리한다
-		ach.initialized = true
-		if #newly > 0 then
-			local pts = 0
-			for _, def in ipairs(newly) do
-				ach.retro[def.id] = true
-				pts = pts + def.points
-			end
-			ns.Chronicle:Add("achievement", Format("지난 여정의 발자취를 되짚어 보니, 이미 이룬 업적이 {n}개나 되었다. 그 이름들이 전기의 첫머리에 조용히 새겨졌다.", { n = #newly })
-				.. ns.Hex("  — 업적 " .. #newly .. "개 · +" .. pts .. "점", ns.COLOR.dim), { retro = #newly })
+	if #retro > 0 then
+		local pts = 0
+		for _, def in ipairs(retro) do
+			ach.retro[def.id] = true
+			pts = pts + def.points
 		end
-	else
-		for _, def in ipairs(newly) do self:Announce(def) end
+		local tpl = ach.initialized
+			and "새로 펼친 업적의 페이지를 넘겨 보니, 이미 이룬 것이 {n}개나 있었다. 그 이름들이 조용히 전기에 새겨졌다."
+			or "지난 여정의 발자취를 되짚어 보니, 이미 이룬 업적이 {n}개나 되었다. 그 이름들이 전기의 첫머리에 조용히 새겨졌다."
+		ns.Chronicle:Add("achievement", Format(tpl, { n = #retro }) .. ns.Hex("  — 업적 " .. #retro .. "개 · +" .. pts .. "점", ns.COLOR.dim),
+			{ retro = #retro })
 	end
-	if #newly > 0 then ns:Fire("ACH_UPDATED") end
+	ach.initialized = true
+	for _, def in ipairs(newly) do self:Announce(def) end
+	if #newly > 0 or #retro > 0 then ns:Fire("ACH_UPDATED", newly) end
 end
 
 function A:Announce(def)
+	ns.char.ach.unseen = ns.char.ach.unseen or {}
+	ns.char.ach.unseen[def.id] = true
 	local flavor = def.flavor or "또 하나의 이야기가 완성되었다."
 	local data = { ach = def.id }
 	-- 던전·공격대 업적은 원정이 끝난 시각에 맞춰 적는다 (원정 정리는 던전을 나온 뒤 늦게 이루어질 수 있다)

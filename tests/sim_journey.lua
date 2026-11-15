@@ -425,7 +425,7 @@ for _, lv in ipairs({ 10, 20, 30, 40, 50, 60 }) do
 	end
 end
 local achEntries = 0
-for _, e in ipairs(db.log) do if e.cat == "achievement" then achEntries = achEntries + 1 end end
+for _, e in ipairs(db.log) do if e.cat == "achievement" then achEntries = achEntries + (e.retro or 1) end end
 local doneCount = 0
 for _ in pairs(db.ach.done) do doneCount = doneCount + 1 end
 if achEntries ~= doneCount then issue(string.format("업적 기록 %d줄 / 달성 %d개 불일치", achEntries, doneCount)) end

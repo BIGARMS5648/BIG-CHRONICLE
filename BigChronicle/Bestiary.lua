@@ -316,7 +316,7 @@ function B:Record(name, info)
 		d.order = d.order + 1
 		c = {
 			tribe = self:Classify(name, info.typeKey, info.family),
-			first = now, zone = zone, sub = ns.SubZone(), plvl = ns.PlayerLevel(), order = d.order,
+			first = now, zone = zone, sub = ns.SubZone(), plvl = ns.PlayerLevel(), order = d.order, tod = ns.TimeOfDay(),
 			ctype = info.typeKey, tname = info.typeName, family = info.family,
 			cls = info.cls or "normal", kills = 0, seen = 0, zones = {}, ids = {},
 		}

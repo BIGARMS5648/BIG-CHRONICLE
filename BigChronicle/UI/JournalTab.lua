@@ -89,10 +89,12 @@ function J:Create(parent)
 		b:SetPoint("TOPLEFT", nav, "TOPLEFT", 0, -32 - i * 24)
 		b:SetPoint("RIGHT", nav, "RIGHT", 0, 0)
 		b.onClick = function()
+			local changed = J.chapter ~= i
 			J.chapter = i
 			J.page = nil
 			J.scrollPending = true
 			J:Refresh()
+			if changed then ns.Effects.Sweep(J.sweep, J.scroll, "journal-sweep") end
 		end
 		if i > 0 then
 			UI.Tooltip(b, C.CHAPTERS[i].title, function()
@@ -151,6 +153,7 @@ function J:Create(parent)
 	scroll:SetPoint("TOPLEFT", 4, -54)
 	scroll:SetPoint("BOTTOMRIGHT", -14, 72)
 	self.scroll = scroll
+	self.sweep = ns.Effects.MakeSweep(main)
 	self.pool = UI.Pool(function()
 		local fs = scroll.child:CreateFontString(nil, "OVERLAY", UI.F.body)
 		fs:SetJustifyH("LEFT")
@@ -208,6 +211,7 @@ function J:TurnPage(dir)
 	if page == self.curPage then return false end
 	self.page = page
 	self:Refresh(true)
+	ns.Effects.Sweep(self.sweep, self.scroll, "journal-sweep")
 	return true
 end
 
