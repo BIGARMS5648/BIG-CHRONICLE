@@ -43,16 +43,14 @@ function O:Create(parent)
 	p:SetAllPoints()
 	self.panel = p
 
-	-- 왼쪽: 양피지 칸에 설정 항목
-	local leftPanel = UI.Section(p)
-	leftPanel:SetPoint("TOPLEFT", 0, 0)
-	leftPanel:SetPoint("BOTTOMRIGHT", -366, 0)
-	local left = CreateFrame("Frame", nil, leftPanel)
-	left:SetPoint("TOPLEFT", 30, -14)
-	left:SetPoint("BOTTOMRIGHT", -20, 14)
+	local RIGHT_W = 320
+	-- 왼쪽: 설정 항목
+	local left = CreateFrame("Frame", nil, p)
+	left:SetPoint("TOPLEFT", 0, 0)
+	left:SetPoint("BOTTOMRIGHT", -(RIGHT_W + 52), 0)
 
-	local title = left:CreateFontString(nil, "OVERLAY", UI.F.header)
-	title:SetPoint("TOPLEFT", 0, -4)
+	local title = left:CreateFontString(nil, "OVERLAY", UI.F.title)
+	title:SetPoint("TOPLEFT", 0, -2)
 	title:SetText("기록과 알림")
 
 	self.checks = {}
@@ -66,9 +64,9 @@ function O:Create(parent)
 			end,
 			opt.desc)
 		if prev then
-			cb:SetPoint("TOPLEFT", prev.desc, "BOTTOMLEFT", -24, -6)
+			cb:SetPoint("TOPLEFT", prev.desc, "BOTTOMLEFT", -22, -9)
 		else
-			cb:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 2, -14)
+			cb:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 1, -18)
 		end
 		cb.desc:SetWidth(430)
 		self.checks[#self.checks + 1] = cb
@@ -78,78 +76,77 @@ function O:Create(parent)
 		function() return not ns.db.minimap.hide end,
 		function(v) ns.db.minimap.hide = not v; if ns.Minimap then ns.Minimap:Update() end end,
 		"왼쪽 클릭: 창 열기 · 오른쪽 클릭: 도감 · 드래그: 위치 옮기기")
-	mm:SetPoint("TOPLEFT", prev.desc, "BOTTOMLEFT", -24, -6)
+	mm:SetPoint("TOPLEFT", prev.desc, "BOTTOMLEFT", -22, -9)
 	mm.desc:SetWidth(430)
 	self.checks[#self.checks + 1] = mm
 
 	-- 오른쪽: 테마 / 데이터 관리 / 정보
-	local right = UI.Section(p, { sketch = UI.TEX.sketchCamp, sketchW = 300 })
+	local right = CreateFrame("Frame", nil, p)
 	right:SetPoint("TOPRIGHT", 0, 0)
 	right:SetPoint("BOTTOMRIGHT", 0, 0)
-	right:SetWidth(354)
-	right.sketch:ClearAllPoints()
-	right.sketch:SetPoint("BOTTOM", 0, 10)
+	right:SetWidth(RIGHT_W)
+	local sep = UI.VRule(p)
+	sep:SetPoint("TOPRIGHT", right, "TOPLEFT", -26, 0)
+	sep:SetPoint("BOTTOMRIGHT", right, "BOTTOMLEFT", -26, 0)
 
-	local h0 = right:CreateFontString(nil, "OVERLAY", UI.F.header)
-	h0:SetPoint("TOP", 0, -18)
-	h0:SetText("속지 테마")
-	local themeNote = UI.Text(right, UI.F.small)
-	themeNote:SetPoint("TOP", h0, "BOTTOM", 0, -6)
-	themeNote:SetWidth(290)
-	themeNote:SetJustifyH("CENTER")
+	local h0 = UI.Label(right, "속지 테마")
+	h0:SetPoint("TOPLEFT", 0, -8)
+	self.themeButtons = {}
+	local half = math.floor((RIGHT_W - 2) / 2)
+	local tb1 = UI.Button(right, "밝은 속지", half, 28, function() O:SetTheme("light") end)
+	tb1:SetPoint("TOPLEFT", h0, "BOTTOMLEFT", 0, -10)
+	local tb2 = UI.Button(right, "어두운 속지", half, 28, function() O:SetTheme("dark") end)
+	tb2:SetPoint("LEFT", tb1, "RIGHT", 2, 0)
+	self.themeButtons.light, self.themeButtons.dark = tb1, tb2
+	local themeNote = UI.Text(right, UI.F.tiny)
+	themeNote:SetPoint("TOPLEFT", tb1, "BOTTOMLEFT", 0, -8)
 	themeNote:SetText("테마를 바꾸면 UI를 다시 불러옵니다.")
 
-	self.themeButtons = {}
-	local tb1 = UI.Button(right, "밝은 속지", 138, 28, function() O:SetTheme("light") end)
-	tb1:SetPoint("TOPRIGHT", themeNote, "BOTTOM", -4, -10)
-	local tb2 = UI.Button(right, "어두운 속지", 138, 28, function() O:SetTheme("dark") end)
-	tb2:SetPoint("TOPLEFT", themeNote, "BOTTOM", 4, -10)
-	self.themeButtons.light, self.themeButtons.dark = tb1, tb2
+	local h = UI.Label(right, "데이터 관리")
+	h:SetPoint("TOPLEFT", themeNote, "BOTTOMLEFT", 0, -30)
+	local note = UI.Text(right, UI.F.tiny)
+	note:SetPoint("TOPLEFT", h, "BOTTOMLEFT", 0, -8)
+	note:SetWidth(RIGHT_W)
+	note:SetSpacing(2)
+	note:SetText("기록은 캐릭터마다 따로 저장됩니다. 초기화한 기록은 되돌릴 수 없습니다.")
 
-	local div = UI.Divider(right, 290)
-	div:SetPoint("TOP", themeNote, "BOTTOM", 0, -48)
-
-	local h = right:CreateFontString(nil, "OVERLAY", UI.F.header)
-	h:SetPoint("TOP", div, "BOTTOM", 0, -8)
-	h:SetText("데이터 관리")
-	local note = UI.Text(right, UI.F.small)
-	note:SetPoint("TOP", h, "BOTTOM", 0, -6)
-	note:SetWidth(290)
-	note:SetJustifyH("CENTER")
-	note:SetText("기록은 캐릭터마다 따로 저장됩니다.\n초기화한 기록은 되돌릴 수 없습니다.")
-
-	local b1 = UI.Button(right, "모험 일지 초기화", 290, 26, function()
+	local b1 = UI.Button(right, "모험 일지 초기화", RIGHT_W, 28, function()
 		Confirm("BIGCHRONICLE_RESET_JOURNAL", "BIG CHRONICLE\n\n이 캐릭터의 모험 일지와 통계를 모두 지울까요?", function() ns:ResetData("journal") end)
 	end)
-	b1:SetPoint("TOP", note, "BOTTOM", 0, -12)
-	local b2 = UI.Button(right, "몬스터 도감 초기화", 290, 26, function()
+	b1:SetPoint("TOPLEFT", note, "BOTTOMLEFT", 0, -12)
+	local b2 = UI.Button(right, "몬스터 도감 초기화", RIGHT_W, 28, function()
 		Confirm("BIGCHRONICLE_RESET_DEX", "BIG CHRONICLE\n\n이 캐릭터의 몬스터 도감을 모두 지울까요?", function() ns:ResetData("dex") end)
 	end)
-	b2:SetPoint("TOP", b1, "BOTTOM", 0, -6)
-	local b3 = UI.Button(right, "모든 기록 초기화", 290, 26, function()
+	b2:SetPoint("TOPLEFT", b1, "BOTTOMLEFT", 0, -4)
+	local b3 = UI.Button(right, "모든 기록 초기화", RIGHT_W, 28, function()
 		Confirm("BIGCHRONICLE_RESET_ALL", "BIG CHRONICLE\n\n이 캐릭터의 일지와 도감을 모두 지우고 처음부터 다시 기록할까요?", function() ns:ResetData("all") end)
 	end)
-	b3:SetPoint("TOP", b2, "BOTTOM", 0, -6)
-	local b4 = UI.Button(right, "미니맵 버튼 위치 초기화", 290, 26, function()
+	b3:SetPoint("TOPLEFT", b2, "BOTTOMLEFT", 0, -4)
+	local b4 = UI.Button(right, "미니맵 버튼 위치 초기화", RIGHT_W, 28, function()
 		ns.db.minimap.angle = ns.DEFAULTS.minimap.angle
 		if ns.Minimap then ns.Minimap:Update() end
 	end)
-	b4:SetPoint("TOP", b3, "BOTTOM", 0, -6)
+	b4:SetPoint("TOPLEFT", b3, "BOTTOMLEFT", 0, -4)
 
-	local div2 = UI.Divider(right, 290)
-	div2:SetPoint("TOP", b4, "BOTTOM", 0, -12)
+	local h3 = UI.Label(right, "명령어")
+	h3:SetPoint("TOPLEFT", b4, "BOTTOMLEFT", 0, -30)
 
 	local info = UI.Text(right, UI.F.small, col.text)
-	info:SetPoint("TOP", div2, "BOTTOM", 0, -8)
-	info:SetWidth(290)
-	info:SetJustifyH("CENTER")
-	info:SetSpacing(2)
-	info:SetText(UI:Themed("|cffd4af37BIG CHRONICLE|r  v" .. ns.VERSION .. "\n" ..
-		"|cffffd100/bc|r 창 열기   ·   |cffffd100/도감|r 도감 열기\n" ..
-		"|cffffd100/bc 업적|r 업적 보기\n" ..
-		"|cffffd100/일지 <내용>|r 나만의 기록 남기기\n" ..
-		"|cffffd100/bc 내보내기|r 일지 전체 복사\n\n" ..
-		"|cffd4af37Special thanks to|r\n루마  ·  절미  ·  판초네 콘체타  ·  KLEROS"))
+	info:SetPoint("TOPLEFT", h3, "BOTTOMLEFT", 0, -10)
+	info:SetWidth(RIGHT_W)
+	info:SetJustifyH("LEFT")
+	info:SetSpacing(5)
+	info:SetText(UI:Themed("|cffffd100/bc|r   창 열기\n" ..
+		"|cffffd100/도감|r   도감 열기\n" ..
+		"|cffffd100/bc 업적|r   업적 보기\n" ..
+		"|cffffd100/일지 <내용>|r   나만의 기록 남기기\n" ..
+		"|cffffd100/bc 내보내기|r   일지 전체 복사"))
+
+	local credit = UI.Text(right, UI.F.tiny)
+	credit:SetPoint("BOTTOMLEFT", 0, 0)
+	credit:SetWidth(RIGHT_W)
+	credit:SetSpacing(3)
+	credit:SetText("BIG CHRONICLE  v" .. ns.VERSION .. "\nSpecial thanks to  루마 · 절미 · 판초네 콘체타 · KLEROS")
 	return p
 end
 

@@ -453,7 +453,7 @@ for _, e in ipairs(ns.errors) do issue("런타임 오류(UI): " .. e) end
 local pdir = os.getenv("PREVIEW_DIR")
 if pdir then
 	local function step(n) for _ = 1, n do M.runOnUpdate(0.05) end end
-	local function settle() step(80); M.runTimers(); ns.UI.FinishTyping() end
+	local function settle() step(80); M.runTimers(); ns.UI.FinishTyping(); ns.UI.FinishFades() end
 	-- 앞선 재접속 시험에서 남은 프레임까지 모두 숨기고, 지금 창만 남긴다
 	local function clean()
 		if ns.Toast.frame then ns.Toast.queue = {} end

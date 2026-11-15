@@ -1,3 +1,11 @@
+## 1.8.0
+
+- **New layout**: a left navigation rail (character, tabs, summary) and one wide page. Boxes and outlines are gone; sections are separated by whitespace and hairlines
+- **Journal timeline**: entries are grouped by day with a time column and category icons; sort and export moved to the header
+- **Bestiary** in three clean columns (list, details, portrait), **achievements** with larger rows and thin progress bars, **stats** as cards, **settings** in two columns
+- Flat buttons, a single copper accent color, a slim scrollbar and a lighter paper texture for better readability
+- Pop-ups (export, reassign tribe) use the same page style
+
 ## 1.7.0
 
 - **Sound effects**: opening and closing the notebook, turning pages and stamping a seal now play book sounds (Kenney RPG Audio, CC0). They follow the existing "notification sound" option

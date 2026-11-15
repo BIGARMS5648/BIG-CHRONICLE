@@ -6,9 +6,9 @@ BIG CHRONICLE - third-party assets
    Source  : https://polyhaven.com/a/brown_leather
    License : CC0 1.0 (public domain)
 
-2) Paper pages: "Paper 005" from ambientCG
+2) Paper pages: "Paper 001" from ambientCG
    File    : Paper.tga (photo texture, resized to 512x512)
-   Source  : https://ambientcg.com/view?id=Paper005
+   Source  : https://ambientcg.com/view?id=Paper001
    License : CC0 1.0 (public domain)
 
 3) Tab icons and wax seal design: game-icons.net

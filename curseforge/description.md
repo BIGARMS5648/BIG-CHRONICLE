@@ -96,13 +96,16 @@ Every achievement arrives as a parchment dispatch sealed with red wax and adds a
 
 ---
 
-## 🎨 Leather Notebook UI
+## 🎨 Layout
 
-A plain, heavy **leather notebook**. No ornaments.
+A flat, roomy layout in the style of modern game journals and codexes.
 
-- The cover is a **real leather photo texture** and the pages a **real paper photo texture** (both CC0)
-- Flat leather tabs and buttons, thin border lines, clean lists on paper
-- Uses the **game's own fonts**
+- **Left navigation rail** on leather: character name and level, five tabs, and a summary of records, bestiary and achievements
+- **One wide page**: sections are separated by whitespace and hairlines instead of boxes
+- The **journal** is a day-by-day **timeline** (time · icon · text) with chapters and filters on the left
+- The **bestiary** is list · details · portrait; **achievements** use large rows with thin progress bars; **stats** are shown as cards
+- A single copper accent color, flat buttons and a slim scrollbar
+- Real leather and paper photo textures (CC0) and the **game's own fonts**
 - **Light and dark page** themes
 - Lore is revealed with a **typewriter effect** (click or press Space to show it all at once)
 - New journal entries gently fade in
@@ -164,6 +167,6 @@ Please leave bug reports and ideas in the comments. Typing `/bc debug` shows int
 ## Credits for free assets
 
 - Leather cover: [Poly Haven "Brown Leather"](https://polyhaven.com/a/brown_leather) — CC0
-- Paper pages: [ambientCG "Paper 005"](https://ambientcg.com/view?id=Paper005) — CC0
+- Paper pages: [ambientCG "Paper 001"](https://ambientcg.com/view?id=Paper001) — CC0
 - Effect particles and sounds: [Kenney](https://kenney.nl) Particle Pack and RPG Audio — CC0
 - Tab icons and wax seal design: [game-icons.net](https://game-icons.net) (Lorc, Delapouite and contributors) — CC BY 3.0

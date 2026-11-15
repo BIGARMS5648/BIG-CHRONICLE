@@ -19,11 +19,11 @@ local TOP_Y, DROP = -120, 22
 
 -- 알림 종류별 제목 잉크와 왼쪽 띠 색
 local INK = {
-	species     = { 0.19, 0.09, 0.04 },
+	species     = { 0.10, 0.085, 0.07 },
 	tribe       = { 0.16, 0.30, 0.12 },
 	rare        = { 0.38, 0.14, 0.46 },
-	rank        = { 0.52, 0.11, 0.07 },
-	achievement = { 0.52, 0.11, 0.07 },
+	rank        = { 0.66, 0.30, 0.10 },
+	achievement = { 0.66, 0.30, 0.10 },
 }
 -- 알림 종류별로 피어오르는 빛 (금가루 / 보랏빛 불티)
 local BURST = {
@@ -50,10 +50,10 @@ function Toast:Build()
 	f:Hide()
 
 	-- 가장자리가 그을린 양피지 한 장
-	UI.Paper(f, { tint = { 1, 1, 1 } })
+	UI.Paper(f, { tint = UI.THEMES.light.page })   -- 알림은 테마와 상관없이 밝은 종이
 	local stripe = f:CreateTexture(nil, "BORDER", nil, 3)
-	stripe:SetPoint("TOPLEFT", 1, -1)
-	stripe:SetPoint("BOTTOMLEFT", 1, 1)
+	stripe:SetPoint("TOPLEFT", 0, 0)
+	stripe:SetPoint("BOTTOMLEFT", 0, 0)
 	stripe:SetWidth(3)
 	f.stripe = stripe
 

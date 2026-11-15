@@ -9,14 +9,9 @@ function S:Create(parent)
 	local p = CreateFrame("Frame", nil, parent)
 	p:SetAllPoints()
 	self.panel = p
-	-- 양피지 한 장 가득 (오른쪽 아래에 희미한 잉크 삽화)
-	local sheet = UI.Section(p, { sketch = UI.TEX.sketchCastle, sketchW = 380 })
-	sheet:SetAllPoints()
-	sheet.sketch:ClearAllPoints()
-	sheet.sketch:SetPoint("BOTTOMRIGHT", -30, 14)
-	local scroll = UI.Scroll(sheet)
-	scroll:SetPoint("TOPLEFT", 56, -18)
-	scroll:SetPoint("BOTTOMRIGHT", -64, 16)
+	local scroll = UI.Scroll(p)
+	scroll:SetPoint("TOPLEFT", 0, 0)
+	scroll:SetPoint("BOTTOMRIGHT", -12, 0)
 	self.scroll = scroll
 	self.pool = UI.Pool(function()
 		local fs = scroll.child:CreateFontString(nil, "OVERLAY", UI.F.body)
@@ -58,38 +53,37 @@ function S:Line(text, font, color, indent, justify)
 	self.y = self.y + (fs:GetStringHeight() or 14) + 6
 end
 
+-- 소제목: 왼쪽 정렬 강조색 글씨 + 아래 가는 선
 function S:Heading(text)
-	self.y = self.y + 14
+	self.y = self.y + 22
+	self:Line(text, UI.F.heading, UI.COL.accent, 0)
 	local div = self.dividerPool:Acquire()
 	div:ClearAllPoints()
 	div:SetWidth(self.width)
 	div:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 0, -self.y)
-	self.y = self.y + 16
-	self:Line(text, UI.F.heading, UI.COL.accent, 0, "CENTER")
-	self.y = self.y + 4
+	self.y = self.y + 12
 end
 
--- 두 칸짜리 항목 표 (짝수 줄은 살짝 어둡게)
-function S:Grid(items)
-	local colW = math.floor(self.width / 2)
-	local rowH = 24
-	local rows = math.ceil(#items / 2)
-	for row = 0, rows - 1 do
-		if row % 2 == 0 then
-			local t = self.shadePool:Acquire()
-			t:ClearAllPoints()
-			t:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 0, -(self.y + row * rowH - 4))
-			t:SetSize(self.width, rowH)
-		end
-	end
+-- 수치 카드: 옅은 바탕 위에 작은 이름과 큰 값. 한 줄에 cols 개씩 놓는다.
+function S:Grid(items, cols)
+	cols = cols or 4
+	local gap = 8
+	local tileW = math.floor((self.width - gap * (cols - 1)) / cols)
+	local tileH = 56
+	local rows = math.ceil(#items / cols)
 	for i, it in ipairs(items) do
-		local col = (i - 1) % 2
-		local row = math.floor((i - 1) / 2)
-		local y = self.y + row * rowH
-		Put(self, it[1], UI.F.small, UI.COL.sub, col * colW + 12, y + 1, 150)
-		Put(self, it[2], UI.F.body, UI.COL.text, col * colW + 160, y, colW - 172)
+		local c = (i - 1) % cols
+		local r = math.floor((i - 1) / cols)
+		local x = c * (tileW + gap)
+		local y = self.y + r * (tileH + gap)
+		local t = self.shadePool:Acquire()
+		t:ClearAllPoints()
+		t:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", x, -y)
+		t:SetSize(tileW, tileH)
+		Put(self, it[1], UI.F.label, UI.COL.muted, x + 14, y + 10, tileW - 24)
+		Put(self, it[2], UI.F.header, UI.COL.title, x + 14, y + 28, tileW - 24)
 	end
-	self.y = self.y + rows * rowH + 4
+	self.y = self.y + rows * (tileH + gap) + 2
 end
 
 function S:Refresh()
@@ -100,15 +94,15 @@ function S:Refresh()
 	self.pool:ReleaseAll()
 	self.dividerPool:ReleaseAll()
 	self.shadePool:ReleaseAll()
-	self.y = 4
+	self.y = 2
 	self.width = math.max(300, (self.scroll:GetWidth() or 800) - 6)
 	self.scroll.child:SetWidth(self.width)
 
 	local meta = db.meta or {}
-	self:Line((meta.name or ns.PlayerName()) .. "의 연대기", UI.F.title, col.title, 0, "CENTER")
+	self:Line((meta.name or ns.PlayerName()) .. "의 연대기", UI.F.title, col.title, 0)
 	if db.started then
 		self:Line(string.format("%s, %s레벨에 %s에서 기록이 시작되었습니다.", ns.FormatDate(db.started), meta.startLevel or "?",
-			meta.startZone or "어딘가"), UI.F.small, col.sub, 0, "CENTER")
+			meta.startZone or "어딘가"), UI.F.small, col.sub, 0)
 	end
 
 	-- 모으기
@@ -148,12 +142,12 @@ function S:Refresh()
 		{ "쓰러뜨린 보스", string.format("%d회 (%d명)", bossKills, bossKinds) },
 		{ "전장 참전", pvp .. "회" },
 		{ "나의 기록", notes .. "개" },
-	})
+	}, 4)
 	if db.stats.played then
 		self:Line(string.format("총 플레이 시간 %s   (마지막 /played 확인: %s)", ns.FormatDuration(db.stats.played), ns.FormatDateTime(db.stats.playedAt)),
-			UI.F.small, col.sub, 12)
+			UI.F.small, col.sub, 0)
 	else
-		self:Line("채팅창에 /played 를 입력하면 총 플레이 시간도 함께 기록됩니다.", UI.F.tiny, col.muted, 12)
+		self:Line("채팅창에 /played 를 입력하면 총 플레이 시간도 함께 기록됩니다.", UI.F.tiny, col.muted, 0)
 	end
 
 	self:Heading("몬스터 도감")
@@ -163,15 +157,15 @@ function S:Refresh()
 		{ "희귀 개체", rares .. "종" },
 		{ "야수 계통", dynCount .. "종" },
 		{ "총 처치", ns.Comma(kills) },
-		{ "업적", (function() local d, t, p = ns.Achievements:Summary() return string.format("%d / %d (%s점)", d, t, ns.Comma(p)) end)() },
-	})
+		{ "업적", (function() local d, t, p = ns.Achievements:Summary() return string.format("%d / %d", d, t) end)() },
+	}, 3)
 
 	-- 레벨 연대기
 	self:Heading("레벨 연대기")
 	local lvls = {}
 	for l in pairs(db.levels) do lvls[#lvls + 1] = l end
 	table.sort(lvls)
-	if #lvls == 0 then self:Line("아직 기록이 없습니다.", UI.F.body, col.muted, 12) end
+	if #lvls == 0 then self:Line("아직 기록이 없습니다.", UI.F.body, col.muted, 0) end
 	for i, l in ipairs(lvls) do
 		local t = db.levels[l]
 		local extra = ""
@@ -182,7 +176,7 @@ function S:Refresh()
 		elseif i == 1 then
 			extra = ns.Hex("     기록 시작", ns.COLOR.dim)
 		end
-		self:Line(string.format("|cffd4af37%d레벨|r     %s%s", l, ns.FormatDateTime(t), extra), UI.F.body, col.text, 12)
+		self:Line(string.format("|cffd4af37%d레벨|r     %s%s", l, ns.FormatDateTime(t), extra), UI.F.body, col.text, 0)
 	end
 
 	-- 가장 오래 머문 지역
@@ -190,11 +184,11 @@ function S:Refresh()
 	local zl = {}
 	for z, info in pairs(db.zones) do zl[#zl + 1] = { z = z, t = info.time or 0, first = info.first, lvl = info.lvl } end
 	table.sort(zl, function(a, b) return a.t > b.t end)
-	if #zl == 0 then self:Line("아직 기록이 없습니다.", UI.F.body, col.muted, 12) end
+	if #zl == 0 then self:Line("아직 기록이 없습니다.", UI.F.body, col.muted, 0) end
 	for i = 1, math.min(8, #zl) do
 		local z = zl[i]
 		self:Line(string.format("%d.   |cffe6c27a%s|r     %s     %s", i, z.z, ns.FormatDuration(z.t),
-			ns.Hex("첫 방문 " .. ns.FormatShortDate(z.first or 0) .. ", " .. (z.lvl or "?") .. "레벨", ns.COLOR.dim)), UI.F.body, col.text, 12)
+			ns.Hex("첫 방문 " .. ns.FormatShortDate(z.first or 0) .. ", " .. (z.lvl or "?") .. "레벨", ns.COLOR.dim)), UI.F.body, col.text, 0)
 	end
 
 	-- 가장 많이 쓰러뜨린 몬스터
@@ -204,12 +198,12 @@ function S:Refresh()
 		if (c.kills or 0) > 0 then kl[#kl + 1] = { name = name, k = c.kills, tribe = c.tribe } end
 	end
 	table.sort(kl, function(a, b) return a.k > b.k end)
-	if #kl == 0 then self:Line("아직 기록이 없습니다.", UI.F.body, col.muted, 12) end
+	if #kl == 0 then self:Line("아직 기록이 없습니다.", UI.F.body, col.muted, 0) end
 	for i = 1, math.min(8, #kl) do
 		local k = kl[i]
 		local def = ns.GetTribe(k.tribe)
 		self:Line(string.format("%d.   |cff7fd4ff%s|r     %s회     %s", i, k.name, ns.Comma(k.k), ns.Hex(def and def.name or "", ns.COLOR.dim)),
-			UI.F.body, col.text, 12)
+			UI.F.body, col.text, 0)
 	end
 
 	-- 던전 원정 기록
@@ -217,7 +211,7 @@ function S:Refresh()
 	local dl = {}
 	for name, d in pairs(db.dungeons) do dl[#dl + 1] = { name = name, d = d } end
 	table.sort(dl, function(a, b) return (a.d.first or 0) < (b.d.first or 0) end)
-	if #dl == 0 then self:Line("아직 원정 기록이 없습니다.", UI.F.body, col.muted, 12) end
+	if #dl == 0 then self:Line("아직 원정 기록이 없습니다.", UI.F.body, col.muted, 0) end
 	for _, it in ipairs(dl) do
 		local d = it.d
 		local bossNames = {}
@@ -225,9 +219,9 @@ function S:Refresh()
 		table.sort(bossNames)
 		local best = d.best and ("   ·   최단 " .. ns.FormatDuration(d.best)) or ""
 		self:Line(string.format("|cffff9940%s|r     %d회%s     %s", it.name, d.runs or 0, best,
-			ns.Hex("첫 원정 " .. ns.FormatShortDate(d.first or 0), ns.COLOR.dim)), UI.F.body, col.text, 12)
+			ns.Hex("첫 원정 " .. ns.FormatShortDate(d.first or 0), ns.COLOR.dim)), UI.F.body, col.text, 0)
 		if #bossNames > 0 then
-			self:Line("보스: " .. table.concat(bossNames, ", "), UI.F.small, col.sub, 28)
+			self:Line("보스: " .. table.concat(bossNames, ", "), UI.F.small, col.sub, 16)
 		end
 	end
 

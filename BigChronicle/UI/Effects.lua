@@ -309,35 +309,34 @@ end
 function E.MakePageTurn(page)
 	local C = UI.COL
 	local sheet = CreateFrame("Frame", nil, page)
-	sheet:SetPoint("TOPLEFT", page, "TOPLEFT", -3, 3)
-	sheet:SetPoint("BOTTOMLEFT", page, "BOTTOMLEFT", -3, -3)
+	sheet:SetPoint("TOPLEFT", page, "TOPLEFT")
+	sheet:SetPoint("BOTTOMLEFT", page, "BOTTOMLEFT")
 	sheet:SetWidth(1)
 	sheet:SetFrameLevel(page:GetFrameLevel() + 35)
 	sheet:EnableMouse(false)
-	-- 속지 한 장: 폭이 줄면 통째로 눌려 원근처럼 보인다
+	-- 종이 한 장: 폭이 줄면 통째로 눌려 원근처럼 보인다
 	local paper = sheet:CreateTexture(nil, "BACKGROUND", nil, 0)
 	paper:SetAllPoints()
 	paper:SetTexture(UI.TEX.paper)
 	UI.Tint(paper, C.page)
 	-- 들릴수록 바깥쪽이 그늘진다
 	local shade = sheet:CreateTexture(nil, "ARTWORK")
-	shade:SetPoint("TOPLEFT", 3, -4)
-	shade:SetPoint("BOTTOMRIGHT", -3, 4)
-	UI.Gradient(shade, "HORIZONTAL", { 0, 0, 0, 0 }, { 0, 0, 0, 0.55 })
+	shade:SetAllPoints()
+	UI.Gradient(shade, "HORIZONTAL", { 0, 0, 0, 0 }, { 0, 0, 0, 0.45 })
 	-- 말려 올라가는 끝자락이 빛을 받는다
 	local curl = sheet:CreateTexture(nil, "ARTWORK", nil, 2)
-	curl:SetPoint("TOPRIGHT", -4, -4); curl:SetPoint("BOTTOMRIGHT", -4, 4); curl:SetWidth(40)
-	UI.Gradient(curl, "HORIZONTAL", { 1, 0.97, 0.9, 0 }, { 1, 0.97, 0.9, 0.3 })
-	-- 책장 끝의 밝은 모서리
+	curl:SetPoint("TOPRIGHT", -2, 0); curl:SetPoint("BOTTOMRIGHT", -2, 0); curl:SetWidth(40)
+	UI.Gradient(curl, "HORIZONTAL", { 1, 1, 1, 0 }, { 1, 1, 1, 0.22 })
+	-- 책장 끝의 모서리 선
 	local rim = sheet:CreateTexture(nil, "OVERLAY")
-	rim:SetPoint("TOPRIGHT", -3, -4); rim:SetPoint("BOTTOMRIGHT", -3, 4); rim:SetWidth(2)
-	rim:SetColorTexture(1, 0.95, 0.85, 0.4)
+	rim:SetPoint("TOPRIGHT"); rim:SetPoint("BOTTOMRIGHT"); rim:SetWidth(1)
+	rim:SetColorTexture(0, 0, 0, 0.35)
 	-- 아래 쪽에 드리우는 그림자
 	local cast = sheet:CreateTexture(nil, "BACKGROUND", nil, -2)
-	cast:SetPoint("TOPLEFT", sheet, "TOPRIGHT", -3, -6)
-	cast:SetPoint("BOTTOMLEFT", sheet, "BOTTOMRIGHT", -3, 6)
+	cast:SetPoint("TOPLEFT", sheet, "TOPRIGHT", 0, 0)
+	cast:SetPoint("BOTTOMLEFT", sheet, "BOTTOMRIGHT", 0, 0)
 	cast:SetWidth(1)
-	UI.Gradient(cast, "HORIZONTAL", { 0, 0, 0, 0.5 }, { 0, 0, 0, 0 })
+	UI.Gradient(cast, "HORIZONTAL", { 0, 0, 0, 0.35 }, { 0, 0, 0, 0 })
 	sheet.paper, sheet.shade, sheet.rim, sheet.cast, sheet.page, sheet.curl = paper, shade, rim, cast, page, curl
 	sheet:Hide()
 	return sheet
@@ -378,7 +377,7 @@ function E.TurnPage(sheet, dir, apply)
 		return
 	end
 	local page = sheet.page
-	local W = (page:GetWidth() or 640) + 6
+	local W = page:GetWidth() or 640
 	sheet:SetAlpha(1)
 	sheet:Show()
 	sheet.busy = true

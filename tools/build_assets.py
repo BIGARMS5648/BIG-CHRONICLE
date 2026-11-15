@@ -384,7 +384,7 @@ def mask_icon(mask, size):
 ICONS = ["quill-ink", "dragon-head", "laurel-crown", "hourglass", "cog"]
 KEEP = {"Leather", "Paper", "Seal", "SealDex", "SealAch", "Icon"}
 POLYHAVEN = "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_leather/brown_leather_albedo_1k.jpg"
-AMBIENTCG = "https://ambientcg.com/get?file=Paper005_1K-JPG.zip"
+AMBIENTCG = "https://ambientcg.com/get?file=Paper001_1K-JPG.zip"
 
 
 def main():
@@ -392,7 +392,7 @@ def main():
     import zipfile
     leather = Image.open(fetch(POLYHAVEN, "brown_leather_albedo_1k.jpg")).convert("RGB")
     save_tga(leather.resize((512, 512), Image.LANCZOS), "Leather.tga")
-    z = zipfile.ZipFile(fetch(AMBIENTCG, "Paper005_1K-JPG.zip"))
+    z = zipfile.ZipFile(fetch(AMBIENTCG, "Paper001_1K-JPG.zip"))
     name = next(n for n in z.namelist() if "Color" in n)
     paper = Image.open(z.open(name)).convert("RGB")
     save_tga(paper.resize((512, 512), Image.LANCZOS), "Paper.tga")
