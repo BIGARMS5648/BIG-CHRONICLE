@@ -418,9 +418,9 @@ function B:OnNewCreature(name, c)
 
 	if ns.Toast and not IsRare(c.cls) then
 		if newTribe then
-			ns.Toast:Show("새로운 종족 발견!", no .. "  " .. def.name .. "  —  " .. name, def.icon, "tribe")
+			ns.Toast:Show("새로운 종족 발견!", no .. "  " .. def.name .. "  —  " .. name, def.icon, "tribe", { creature = name })
 		else
-			ns.Toast:Show("도감 등록", def.name .. "  ·  " .. name, def.icon, "species")
+			ns.Toast:Show("도감 등록", def.name .. "  ·  " .. name, def.icon, "species", { creature = name })
 		end
 	end
 	if ns.db.chat and not ns.db.toast and not newTribe and not IsRare(c.cls) then -- 팝업을 끈 경우에만 채팅으로 알림
@@ -435,7 +435,7 @@ function B:OnRare(name, c, isNew)
 		{ creature = name })
 	local def = ns.GetTribe(c.tribe)
 	if ns.Toast then
-		ns.Toast:Show("희귀 개체 발견!", name .. "  (" .. def.name .. ")", def.icon, "rare")
+		ns.Toast:Show("희귀 개체 발견!", name .. "  (" .. def.name .. ")", def.icon, "rare", { creature = name })
 	end
 	self:CheckRank(c.tribe)
 end
@@ -640,7 +640,7 @@ function B:CheckRank(id)
 		if s.rank == 3 or s.rank == 4 then text = text .. " " .. N.loreUnlocked end
 		ns.Chronicle:Add("milestone", ns.Trim(text), { tribe = id })
 		if ns.Toast then
-			ns.Toast:Show("연구 등급 상승!", def.name .. "  " .. B.Stars(s.rankDef.stars) .. "  " .. s.rankDef.name, def.icon, "rank")
+			ns.Toast:Show("연구 등급 상승!", def.name .. "  " .. B.Stars(s.rankDef.stars) .. "  " .. s.rankDef.name, def.icon, "rank", { tribe = id })
 		end
 	end
 end

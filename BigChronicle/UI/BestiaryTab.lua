@@ -319,6 +319,32 @@ function D:RefreshList()
 	self.compSub:SetText(string.format("개체 %s종  ·  희귀 %d  ·  처치 %s\n야수 계통 %d종 발견", ns.Comma(species), rares, ns.Comma(kills), dynCount))
 end
 
+-- 알림·검색에서 특정 개체로 바로 이동: 종족을 고르고, 개체를 선택하고, 목록에서 그 줄이 보이게 한다
+function D:FocusCreature(name)
+	local c = ns.Bestiary.dex.creatures[name]
+	if not c then return end
+	if self.searchBox and self.search ~= "" then
+		self.search = ""
+		self.searchBox:SetText("")
+	end
+	self.sel = { kind = "tribe", id = c.tribe }
+	self.species = name
+	self.focusY = nil
+	self:Refresh()
+	if self.focusY then
+		self.scroll:ScrollTo(self.focusY - 60)
+	end
+	-- 왼쪽 종족 목록도 해당 종족이 보이도록
+	if self.navOrder then
+		for i, id in ipairs(self.navOrder) do
+			if id == c.tribe then
+				self.listScroll:ScrollTo((i + 2) * ROW_H - 120)
+				break
+			end
+		end
+	end
+end
+
 function D:SelectTribe(id)
 	self.sel = { kind = "tribe", id = id }
 	self.species = nil
@@ -406,6 +432,7 @@ function D:SpeciesRow(name, leftText, rightText, leftColor)
 	r:SetWidth(self.width)
 	r.creature = name
 	r:SetSelected(self.species == name)
+	if self.species == name and not self.focusY then self.focusY = self.y end
 	r.label:SetText(leftText)
 	if self.species ~= name then
 		local c = leftColor or UI.COL.creature
@@ -421,6 +448,7 @@ end
 ------------------------------------------------------------------------
 function D:RefreshDetail(keep)
 	self:Begin()
+	self.focusY = nil
 	local kind = self.sel.kind
 	if kind == "rares" then
 		self:DrawRares()

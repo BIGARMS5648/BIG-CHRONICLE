@@ -209,6 +209,10 @@ function T:Refresh(resetScroll)
 			r:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 0, -y)
 			r:SetWidth(width)
 			r.def, r.done = def, isDone
+			if self.focusId == def.id then
+				self.focusRowY = y
+				UI.FadeIn(r, 0.6)
+			end
 			r.icon:SetTexture(def.icon)
 			r.icon:SetDesaturated(not isDone)
 			r.icon:SetAlpha(isDone and 1 or 0.55)
@@ -242,10 +246,24 @@ function T:Refresh(resetScroll)
 	end
 	self.scroll:SetContentHeight(y)
 	if resetScroll then self.scroll:ScrollToTop() end
+	if self.focusId and self.focusRowY then
+		self.scroll:ScrollTo(self.focusRowY - 60)
+	end
+	self.focusId, self.focusRowY = nil, nil
 	if shown == 0 then
 		self.empty:SetText(self.filter == "done" and "아직 달성한 업적이 없습니다." or "모든 업적을 달성했습니다!")
 		self.empty:Show()
 	else
 		self.empty:Hide()
 	end
+end
+
+-- 알림에서 특정 업적으로 바로 이동
+function T:Focus(id)
+	local def = ns.ACH_BY_ID[id]
+	if not def or not self.panel then return end
+	self.cat = def.cat
+	self.filter = "all"
+	self.focusId = id
+	self:Refresh(true)
 end

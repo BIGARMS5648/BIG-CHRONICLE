@@ -511,6 +511,12 @@ function UI.Scroll(parent)
 		local _, hi = bar:GetMinMaxValues()
 		bar:SetValue(hi or 0)
 	end
+	function sf:ScrollTo(y)
+		local lo, hi = bar:GetMinMaxValues()
+		local v = y or 0
+		if v < lo then v = lo elseif v > hi then v = hi end
+		bar:SetValue(v)
+	end
 	function sf:ScrollBy(dy)
 		local lo, hi = bar:GetMinMaxValues()
 		local v = (bar:GetValue() or 0) + dy

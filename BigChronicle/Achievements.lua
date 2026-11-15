@@ -243,7 +243,7 @@ function A:Announce(def)
 	end
 	ns.Chronicle:Add("achievement", flavor .. ns.Hex("  — 업적 「" .. def.name .. "」 달성 · +" .. def.points .. "점", ns.COLOR.dim), data)
 	if ns.Toast then
-		ns.Toast:Show("업적 달성!", "「" .. def.name .. "」   +" .. def.points .. "점", def.icon, "achievement")
+		ns.Toast:Show("업적 달성!", "「" .. def.name .. "」   +" .. def.points .. "점", def.icon, "achievement", { ach = def.id })
 	end
 end
 

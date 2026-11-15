@@ -290,6 +290,19 @@ local ok, err = pcall(function()
 	for _, cb in ipairs(ns.SettingsTab.checks) do cb:SetChecked(not cb:GetChecked()); cb:Fire("OnClick") end
 	for _, cb in ipairs(ns.SettingsTab.checks) do cb:SetChecked(not cb:GetChecked()); cb:Fire("OnClick") end
 	BigChronicle_OnAddonCompartmentClick("BigChronicle", "LeftButton")
+	-- 알림을 누르면 그 몬스터 / 업적 페이지로 간다
+	ns.db.toast = true
+	ns.Toast.queue = {}
+	if ns.Toast.frame then ns.Toast.frame:Hide() end
+	ns.Toast:Show("도감 등록", "켄타우로스 · 마그람 약탈자", nil, "species", { creature = "마그람 약탈자" })
+	ns.Toast.frame:Fire("OnMouseUp", "LeftButton")
+	assert(ns.UI.current == "bestiary", "toast click opens bestiary")
+	assert(ns.BestiaryTab.sel.kind == "tribe" and ns.BestiaryTab.sel.id == "centaur", "toast click selects the creature's tribe")
+	assert(ns.BestiaryTab.species == "마그람 약탈자", "toast click selects the creature")
+	ns.Toast.frame:Hide()
+	ns.Toast:Show("업적 달성!", "「모험의 첫 장」", nil, "achievement", { ach = "level10" })
+	ns.Toast.frame:Fire("OnMouseUp", "LeftButton")
+	assert(ns.UI.current == "achievements" and ns.AchievementsTab.cat == "growth", "toast click opens the achievement's category")
 	-- hotkeys / typewriter
 	ns.UI:Open("bestiary")
 	local f = ns.UI.frame

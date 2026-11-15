@@ -87,7 +87,7 @@ A **parchment scroll** window with wooden rollers at the top and bottom, inspire
 - **Parchment (light) and Dark** themes
 - Lore is revealed with a **typewriter effect** (click or press Space to show it all at once)
 - New journal entries gently fade in
-- Discovering a new tribe or rare creature unrolls a **small scroll notification** at the top of the screen
+- Discovering a new tribe or rare creature unrolls a **small scroll notification** at the top of the screen — click it to jump straight to that creature's bestiary page
 - **Keyboard shortcuts**: `1–5` switch tabs · `←/→` turn journal pages · `↑/↓` browse the bestiary · `Space` skip the typewriter · `Esc` close (disabled automatically in combat)
 
 ---

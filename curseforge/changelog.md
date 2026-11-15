@@ -9,6 +9,7 @@
 - Tribe completion and "first encounter" now follow creatures moved to another tribe
 - Layout fixes on the bestiary card, creature list and settings tab
 - Minimap button and notifications use the new scroll icon
+- Clicking a notification opens that creature's bestiary page (tribe, creature and 3D model) or the achievement it announced
 
 ## 1.0.0 — First release
 

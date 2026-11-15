@@ -67,10 +67,12 @@ function Toast:Build()
 	brand:SetPoint("BOTTOMRIGHT", -12, 7)
 	brand:SetJustifyH("RIGHT")
 	brand:SetText("BIG CHRONICLE")
+	f.brand = brand
 
 	f:EnableMouse(true)
-	f:SetScript("OnMouseUp", function(_, btn)
-		if btn == "LeftButton" and ns.UI and ns.UI.Open then ns.UI:Open("bestiary") end
+	-- 누르면 알림에 나온 몬스터(또는 업적)의 페이지로 바로 간다
+	f:SetScript("OnMouseUp", function(self, btn)
+		if btn == "LeftButton" then Toast:OpenLink(self.link) end
 		Toast:Next()
 	end)
 
@@ -111,7 +113,8 @@ local function PlayStyleSound(style)
 	end
 end
 
-function Toast:Show(title, body, icon, kind)
+-- link: { creature = 이름 } / { tribe = 종족 id } / { ach = 업적 id }
+function Toast:Show(title, body, icon, kind, link)
 	if not (ns.db and ns.db.toast) then return end
 	self.queue = self.queue or {}
 	if #self.queue >= MAX_QUEUE then
@@ -127,7 +130,7 @@ function Toast:Show(title, body, icon, kind)
 			table.remove(self.queue, 1)
 		end
 	end
-	table.insert(self.queue, { title = title, body = body, icon = icon, kind = kind or "species" })
+	table.insert(self.queue, { title = title, body = body, icon = icon, kind = kind or "species", link = link })
 	self:Build()
 	if not self.frame:IsShown() then self:Next() end
 end
@@ -147,9 +150,28 @@ function Toast:Next()
 	local tc = (item.kind == "rare" and col.rare) or (item.kind == "tribe" and col.good) or (item.kind == "achievement" and col.title) or col.accent
 	f.title:SetTextColor(tc[1], tc[2], tc[3])
 	f.body:SetText(item.body)
+	f.link = item.link
+	f.brand:SetText(item.link and (item.link.ach and "눌러서 업적 보기" or "눌러서 도감 보기") or "BIG CHRONICLE")
 	f.hold = style.hold
 	f.t = 0
 	f:SetHeight(4)
 	f:Show()
 	PlayStyleSound(style)
+end
+
+function Toast:OpenLink(link)
+	local UI = ns.UI
+	if not UI or not UI.Open then return end
+	if link and link.ach then
+		UI:Open("achievements")
+		if ns.AchievementsTab.Focus then ns.AchievementsTab:Focus(link.ach) end
+	elseif link and link.creature then
+		UI:Open("bestiary")
+		ns.BestiaryTab:FocusCreature(link.creature)
+	elseif link and link.tribe then
+		UI:Open("bestiary")
+		ns.BestiaryTab:SelectTribe(link.tribe)
+	else
+		UI:Open("bestiary")
+	end
 end
