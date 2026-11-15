@@ -28,6 +28,7 @@ Moments recorded automatically:
 - **Dungeon expeditions** — expedition start (party size), first and repeat boss kills, and an end-of-run summary (duration, bosses, deaths, wipes)
 - **Battlegrounds** — every battle you join
 - **Trials** — where you fell, and the last enemy you were fighting
+- **Bestiary moments** — your first meeting with each tribe is written as a short scene from a novel, shaped by the tribe and the time of day
 - **Wealth** — your first 1 · 10 · 50 · 100 · 250 · 500 · 1,000 · 5,000 gold
 - **Hearthstone** — whenever you set a new home
 - **Your own notes** — write a line yourself with `/bc note Rode a gryphon for the first time today`
@@ -64,6 +65,21 @@ On top of that, **beast families** such as wolves, spiders and raptors each get 
 
 ---
 
+## 🏆 Achievements
+
+Inspired by the Wrath-era achievements for classic (level 1–60) content, focusing on what **Forever's official achievements don't already cover**, plus achievements unique to this addon:
+
+- **Growth** — levels 10–60, 10 to 5,000 gold, time adventured
+- **Exploration** — number of zones and subzones visited, hearthstone changes (per-zone exploration is left to Forever's own achievements)
+- **Quests** — 10 to 1,000 quests, quests across many zones or within one zone
+- **Dungeons & Raids** — conquer each of the 19 classic dungeons and 7 classic raids, dungeon-count metas, run counts, boss kills, coming back from a wipe, flawless runs
+- **Bestiary** — tribes, species, rare creatures, kill counts, research ranks, beast families, 100 kills of iconic tribes
+- **Battlegrounds, Reputation, Trials, Chronicle** — battles joined, exalted factions, your first death and deathless levels, personal notes and exports
+
+Every achievement unrolls a scroll notification and adds a short line of story to your journal.
+
+---
+
 ## 🎨 Scroll UI
 
 A **parchment scroll** window with wooden rollers at the top and bottom, inspired by immersive dialogue addons.
@@ -72,14 +88,14 @@ A **parchment scroll** window with wooden rollers at the top and bottom, inspire
 - Lore is revealed with a **typewriter effect** (click or press Space to show it all at once)
 - New journal entries gently fade in
 - Discovering a new tribe or rare creature unrolls a **small scroll notification** at the top of the screen
-- **Keyboard shortcuts**: `1–4` switch tabs · `←/→` turn journal pages · `↑/↓` browse the bestiary · `Space` skip the typewriter · `Esc` close (disabled automatically in combat)
+- **Keyboard shortcuts**: `1–5` switch tabs · `←/→` turn journal pages · `↑/↓` browse the bestiary · `Space` skip the typewriter · `Esc` close (disabled automatically in combat)
 
 ---
 
 ## ⌨️ Commands
 
 - `/bc` or `/chronicle` — open or close the window
-- `/bc journal` · `/bc dex` · `/bc stats` · `/bc config` — open a specific tab
+- `/bc journal` · `/bc dex` · `/bc achievements` · `/bc stats` · `/bc config` — open a specific tab
 - `/bc note <text>` — add your own entry to the journal
 - `/bc export` — show the whole chronicle as copyable text
 - `/bc minimap` — show or hide the minimap button

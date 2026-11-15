@@ -259,6 +259,7 @@ function B:ScanUnit(unit)
 
 	local gtype, _, _, _, _, npcID = strsplit("-", guid)
 	if gtype ~= "Creature" and gtype ~= "Vehicle" then return end
+	if ns.Chronicle.NoteInstanceGUID then ns.Chronicle:NoteInstanceGUID(guid) end
 	if not Call(UnitCanAttack, "player", unit) then return end
 	local faction = Call(UnitFactionGroup, unit)
 	if faction == "Alliance" or faction == "Horde" then return end -- 경비병 등 진영 NPC 제외
@@ -376,6 +377,24 @@ function B:FormatNo(id)
 	return string.format("No.%03d", self:TribeNo(id))
 end
 
+-- 서술 문장에 쓰는 변수 (시간대·지역·종족)
+local function Scene(extra)
+	local zone = ns.Zone()
+	local v = { time = ns.TimeOfDay(), zone = zone ~= "" and zone or "이름 모를 땅", lvl = ns.PlayerLevel() }
+	for k, x in pairs(extra or {}) do v[k] = x end
+	return v
+end
+
+-- 문장 끝에 붙는 작은 꼬리말: — 도감 No.008 켄타우로스 · 36레벨
+local function Tail(self, tribeId, extra)
+	local def = ns.GetTribe(tribeId)
+	local parts = { "도감 " .. self:FormatNo(tribeId) .. " " .. (def and def.name or "?") }
+	if extra then parts[#parts + 1] = extra end
+	parts[#parts + 1] = ns.PlayerLevel() .. "레벨"
+	return ns.Hex("  — " .. table.concat(parts, " · "), ns.COLOR.dim)
+end
+B.Tail = Tail
+
 function B:OnNewCreature(name, c)
 	local def = ns.GetTribe(c.tribe)
 	local tribeData, newTribe = self:EnsureTribe(c.tribe, name, c)
@@ -383,18 +402,18 @@ function B:OnNewCreature(name, c)
 	local lvl, zone = ns.PlayerLevel(), ns.Zone()
 	local no = self:FormatNo(c.tribe)
 
+	local N = ns.NARRATIVE
 	if newTribe then
-		ns.Chronicle:Add("dex", Format(ns.Pick({
-			"{lvl}레벨, {zone:에서} 처음으로 {tribe:과} 마주쳤다. 첫 기록은 {creature}. (도감 {no})",
-			"{lvl}레벨, {zone:에서} {creature:을} 목격하고 {tribe} 항목을 도감에 새로 펼쳤다. (도감 {no})",
-		}), { lvl = lvl, zone = zone ~= "" and zone or "어딘가", tribe = def.name, creature = Q(name), no = no }), { tribe = c.tribe, creature = name })
+		local tpl = N.FirstEncounter(c.tribe, def)
+		local text = Format(tpl, Scene({ tribe = def.phrase or def.name, creature = Q(name) }))
+		ns.Chronicle:Add("dex", text .. Tail(self, c.tribe, "새 항목"), { tribe = c.tribe, creature = name })
 	end
 
 	if IsRare(c.cls) then
 		self:OnRare(name, c, true)
 	elseif c.cls == "worldboss" then
-		ns.Chronicle:Add("rare", Format("{lvl}레벨, {zone:에서} 우두머리급 존재 {creature:을} 목격했다. 땅이 떨리는 듯하다.",
-			{ lvl = lvl, zone = zone, creature = Q(name) }), { creature = name })
+		ns.Chronicle:Add("rare", Format(ns.Pick(N.bossSeen), Scene({ creature = Q(name) })) .. Tail(self, c.tribe, "우두머리"),
+			{ creature = name })
 	end
 
 	if ns.Toast and not IsRare(c.cls) then
@@ -412,9 +431,8 @@ function B:OnNewCreature(name, c)
 end
 
 function B:OnRare(name, c, isNew)
-	local zone = ns.Zone()
-	ns.Chronicle:Add("rare", Format("{lvl}레벨, {zone:에서} 희귀 개체 {rare:을} 발견했다! 심장이 두근거린다.",
-		{ lvl = ns.PlayerLevel(), zone = zone ~= "" and zone or "어딘가", rare = Q(name) }), { creature = name })
+	ns.Chronicle:Add("rare", Format(ns.Pick(ns.NARRATIVE.rareSeen), Scene({ rare = Q(name) })) .. Tail(self, c.tribe, "희귀 개체"),
+		{ creature = name })
 	local def = ns.GetTribe(c.tribe)
 	if ns.Toast then
 		ns.Toast:Show("희귀 개체 발견!", name .. "  (" .. def.name .. ")", def.icon, "rare")
@@ -454,12 +472,12 @@ function B:CountKill(name, src)
 
 	if IsRare(c.cls) and not c.rareKilled then
 		c.rareKilled = time()
-		ns.Chronicle:Add("rare", Format("{lvl}레벨, 희귀 개체 {rare:을} 쓰러뜨렸다! 도감의 귀한 한 페이지가 채워졌다.",
-			{ lvl = ns.PlayerLevel(), rare = Q(name) }), { creature = name })
+		ns.Chronicle:Add("rare", Format(ns.Pick(ns.NARRATIVE.rareKilled), Scene({ rare = Q(name) })) .. Tail(self, c.tribe, "희귀 개체 처치"),
+			{ creature = name })
 	elseif c.cls == "worldboss" and not c.bossKilled then
 		c.bossKilled = time()
-		ns.Chronicle:Add("rare", Format("{lvl}레벨, 우두머리급 존재 {creature:을} 쓰러뜨렸다! 이 이야기는 오래도록 회자될 것이다.",
-			{ lvl = ns.PlayerLevel(), creature = Q(name) }), { creature = name })
+		ns.Chronicle:Add("rare", Format(ns.Pick(ns.NARRATIVE.bossKilled), Scene({ creature = Q(name) })) .. Tail(self, c.tribe, "우두머리 처치"),
+			{ creature = name })
 	end
 	self:CheckMilestones(c.tribe)
 	self:CheckRank(c.tribe)
@@ -556,6 +574,9 @@ end
 
 local function AddToStats(s, name, c)
 	s.species = s.species + 1
+	if not s.first or (c.first or 0) < s.first then
+		s.first, s.firstName, s.firstZone, s.firstLvl = c.first, name, c.zone, c.plvl
+	end
 	s.kills = s.kills + (c.kills or 0)
 	if IsRare(c.cls) then
 		s.rares = s.rares + 1
@@ -612,10 +633,12 @@ function B:CheckRank(id)
 	if s.rank > old then
 		t.rank = s.rank
 		local def = ns.GetTribe(id)
-		local unlock = (s.rank == 3 or s.rank == 4) and " 새로운 배경 이야기가 해금되었다." or ""
-		ns.Chronicle:Add("milestone", Format("{tribe} 연구 등급이 {stars} {title:으로} 올랐다.{unlock}", {
-			tribe = def.name, stars = B.Stars(s.rankDef.stars), title = s.rankDef.name, unlock = unlock,
-		}), { tribe = id })
+		local N = ns.NARRATIVE
+		local stars = B.Stars(s.rankDef.stars)
+		local prose = N.rankUp[s.rank] and Format(ns.Pick(N.rankUp[s.rank]), { tribe = def.phrase or def.name }) or ""
+		local text = prose .. " " .. Format(N.rankUpTail, { tribe = def.name, stars = stars, rank = s.rankDef.name })
+		if s.rank == 3 or s.rank == 4 then text = text .. " " .. N.loreUnlocked end
+		ns.Chronicle:Add("milestone", ns.Trim(text), { tribe = id })
 		if ns.Toast then
 			ns.Toast:Show("연구 등급 상승!", def.name .. "  " .. B.Stars(s.rankDef.stars) .. "  " .. s.rankDef.name, def.icon, "rank")
 		end
@@ -632,10 +655,12 @@ function B:CheckMilestones(id)
 		local step = KILL_STEPS[i]
 		if s.kills >= step.n then
 			t.km = i
-			local title = step.title:gsub("{tribe}", def.name)
-			ns.Chronicle:Add("milestone", Format("{tribe:을} {n}{unit}째 쓰러뜨렸다! 이제 {title:이라고} 불려도 손색없다.", {
-				tribe = def.name, n = ns.Comma(step.n), unit = def.unit or "마리", title = Q(title),
-			}), { tribe = id })
+			local short = def.short or def.name
+			local title = step.title:gsub("{tribe}", short)
+			local tpl = ns.NARRATIVE.killStep[i] or ns.NARRATIVE.killStep[1]
+			ns.Chronicle:Add("milestone", Format(tpl, {
+				tribe = short, n = ns.Comma(step.n), unit = def.unit or "마리", title = Q(title),
+			}) .. Tail(self, id, "처치 " .. ns.Comma(step.n)), { tribe = id, killStep = step.n })
 		else
 			break
 		end
@@ -661,8 +686,9 @@ end
 
 function B:Completion()
 	local found = 0
+	local all = self:CollectAll()
 	for _, t in ipairs(ns.TRIBES) do
-		if self.dex.tribes[t.id] then found = found + 1 end
+		if self.dex.tribes[t.id] and all[t.id] then found = found + 1 end
 	end
 	local species, rares = 0, 0
 	for _, c in pairs(self.dex.creatures) do

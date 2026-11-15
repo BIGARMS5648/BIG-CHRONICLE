@@ -332,7 +332,7 @@ function J:Refresh(keepScroll, reason)
 			timeHex, ns.FormatClock(e.t), cat.icon, UI:Themed(e.text)))
 		if fadeFrom and item.idx > fadeFrom then
 			UI.FadeIn(fs, 0.45, stagger)
-			stagger = stagger + 0.12
+			stagger = math.min(stagger + 0.1, 0.6)
 		end
 		y = y + (fs:GetStringHeight() or 14) + 9
 	end

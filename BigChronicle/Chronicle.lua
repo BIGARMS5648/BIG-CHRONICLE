@@ -29,6 +29,7 @@ C.CATS = {
 	money     = { name = "재물",        group = "growth",  icon = I .. "INV_Misc_Coin_01" },
 	bind      = { name = "귀환석",      group = "growth",  icon = I .. "INV_Misc_Rune_01" },
 	note      = { name = "나의 기록",   group = "note",    icon = I .. "INV_Scroll_03" },
+	achievement = { name = "업적",      group = "achieve", icon = I .. "INV_Misc_Ribbon_01" },
 }
 
 C.GROUPS = {
@@ -38,6 +39,7 @@ C.GROUPS = {
 	{ id = "dungeon", name = "던전·전장" },
 	{ id = "dex",     name = "도감" },
 	{ id = "trial",   name = "시련" },
+	{ id = "achieve", name = "업적" },
 	{ id = "note",    name = "나의 기록" },
 }
 
@@ -71,7 +73,7 @@ T.zone = {
 	"{lvl}레벨, 처음으로 {zone:에} 발을 들였다.",
 	"{lvl}레벨, 낯선 땅 {zone:에} 도착했다. 새로운 이야기가 기다리고 있을 것만 같다.",
 	"{lvl}레벨, 지도 위의 빈칸이던 {zone:을} 마침내 밟았다.",
-	"{lvl}레벨, {zone:으로} 향하는 길에 올랐다. 이곳에서는 어떤 모험이 펼쳐질까.",
+	"{lvl}레벨, {zone:으로} 발걸음을 옮겼다. 이곳에서는 어떤 모험이 펼쳐질까.",
 }
 
 T.subzone = {
@@ -107,6 +109,7 @@ T.dungeonAgain = "{lvl}레벨, {party} {dungeon:에} 다시 발을 들였다. ({
 T.raidFirst    = "{lvl}레벨, {n}명의 공격대와 함께 {dungeon} 공략에 처음으로 나섰다."
 T.raidAgain    = "{lvl}레벨, {n}명의 공격대와 함께 다시 {dungeon:에} 도전했다. ({runs}번째 도전)"
 T.dungeonEnd   = "{dungeon} 원정을 마쳤다. — 소요 시간 {dur}, 쓰러뜨린 보스 {k}명{extra}"
+T.dungeonEndNoBoss = "{dungeon}에서 물러났다. 이번에는 보스와 맞서지 못했다. — 소요 시간 {dur}{extra}"
 T.bossFirst    = "{boss:을} 처음으로 쓰러뜨렸다! ({dungeon})"
 T.bossAgain    = "{boss:을} 다시 쓰러뜨렸다. (통산 {n}회)"
 T.pvp          = "{lvl}레벨, 전장 {bg:에} 참전했다."
@@ -127,7 +130,8 @@ T.money = {
 	[1000] = "{lvl}레벨, 처음으로 {gold}골드를 모았다! 전설적인 부호의 반열에 올랐다.",
 	[5000] = "{lvl}레벨, 처음으로 {gold}골드를 모았다. 고블린 재벌도 고개를 숙일 재산이다.",
 }
-C.MONEY_STEPS = { 1, 10, 50, 100, 250, 500, 1000, 5000 }
+-- 10·100·1,000·5,000골드는 업적(두둑한 주머니 등)이 따로 기록하므로 여기서는 나머지만 남긴다
+C.MONEY_STEPS = { 1, 50, 250, 500 }
 
 T.bind = "{lvl}레벨, 귀환석의 귀환 장소를 {place:으로} 정했다."
 T.note = "“{text}”"
@@ -144,7 +148,11 @@ function C:Add(cat, text, data)
 	if data then
 		for k, v in pairs(data) do e[k] = v end
 	end
-	db.log[#db.log + 1] = e
+	-- 지난 일을 나중에 적는 경우(예: 던전을 나온 뒤에 정리되는 원정 기록)에도 시간 순서를 지킨다
+	local log = db.log
+	local pos = #log + 1
+	while pos > 1 and (log[pos - 1].t or 0) > e.t do pos = pos - 1 end
+	table.insert(log, pos, e)
 	if ns.db and ns.db.chat and not CHAT_SKIP[cat] then
 		ns.Print(text)
 	end
@@ -227,6 +235,7 @@ function C:Start()
 			if sub ~= "" and sub ~= zone then db.subzones[zone .. "|" .. sub] = now end
 		end
 		db.levels[lvl] = now
+		db.levelTracked[lvl] = db.stats.tracked or 0
 		-- 이미 가진 돈은 '처음 모은 것'이 아니므로 조용히 표시만 해 둔다
 		local money = ns.Call(GetMoney) or 0
 		for _, g in ipairs(self.MONEY_STEPS) do
@@ -328,6 +337,36 @@ end
 ------------------------------------------------------------------------
 local LEAVE_GRACE = 15 * 60 -- 던전 밖으로 나가도 15분 안에 돌아오면 같은 원정
 
+-- 새 원정을 연다. when을 주면 그 시각에 시작한 것으로 기록한다.
+function C:StartExpedition(name, itype, maxPlayers, mapID, when)
+	local db = ns.char
+	local now = when or time()
+	local d = db.dungeons[name]
+	if not d then
+		d = { runs = 0, first = now, bosses = {}, kind = itype }
+		db.dungeons[name] = d
+	end
+	d.runs = d.runs + 1
+	d.last = now
+	d.mapID = d.mapID or mapID
+
+	local lvl = ns.PlayerLevel()
+	local group = ns.Call(GetNumGroupMembers) or 0
+	db.expedition = { name = name, kind = itype, start = now, lastSeen = time(), bosses = {}, deaths = 0, wipes = 0,
+		lvl = lvl, group = group, mapID = mapID }
+
+	local text
+	if itype == "raid" then
+		local n = group > 0 and group or (maxPlayers or 40)
+		text = Format(d.runs == 1 and T.raidFirst or T.raidAgain, { lvl = lvl, n = n, dungeon = Q(name), runs = d.runs })
+	else
+		local party = group > 1 and (group .. "인 일행과 함께") or "홀로"
+		text = Format(d.runs == 1 and T.dungeonFirst or T.dungeonAgain, { lvl = lvl, party = party, dungeon = Q(name), n = d.runs })
+	end
+	self:Add("dungeon", text, { dungeon = name, t = now, mapID = mapID })
+	ns:Fire("DUNGEON_ENTERED", name, mapID)
+end
+
 function C:CheckInstance()
 	local db = ns.char
 	if not db then return end
@@ -336,7 +375,7 @@ function C:CheckInstance()
 	local exp = db.expedition
 
 	if inInst and (itype == "party" or itype == "raid") then
-		local name, _, _, _, maxPlayers = ns.Call(GetInstanceInfo)
+		local name, _, _, _, maxPlayers, _, _, mapID = ns.Call(GetInstanceInfo)
 		if not name or name == "" then return end
 		if exp and exp.name == name then
 			local away = exp.left or exp.lastSeen
@@ -348,41 +387,28 @@ function C:CheckInstance()
 				self:EndExpedition()
 				exp = nil
 			else
-				exp.left = nil
+				if exp.left and not exp.leftGhost then
+					-- 살아서 나갔다가 돌아왔다: 같은 인스턴스인지(정비하러 나갔던 것인지)
+					-- 새로 초기화한 인스턴스인지는 처음 마주치는 몬스터의 GUID로 판단한다
+					exp.recheck = now
+					exp.prevLeft, exp.prevLeftLvl = exp.left, exp.leftLvl
+				end
+				exp.left, exp.leftGhost, exp.leftLvl = nil, nil, nil
 				exp.lastSeen = now
 				return
 			end
 		end
 		if exp then self:EndExpedition() end
-
-		local d = db.dungeons[name]
-		if not d then
-			d = { runs = 0, first = now, bosses = {}, kind = itype }
-			db.dungeons[name] = d
-		end
-		d.runs = d.runs + 1
-		d.last = now
-
-		local lvl = ns.PlayerLevel()
-		local group = ns.Call(GetNumGroupMembers) or 0
-		db.expedition = { name = name, kind = itype, start = now, lastSeen = now, bosses = {}, deaths = 0, wipes = 0, lvl = lvl, group = group }
-
-		local text
-		if itype == "raid" then
-			local n = group > 0 and group or (maxPlayers or 40)
-			text = Format(d.runs == 1 and T.raidFirst or T.raidAgain, { lvl = lvl, n = n, dungeon = Q(name), runs = d.runs })
-		else
-			local party = group > 1 and (group .. "인 일행과 함께") or "홀로"
-			text = Format(d.runs == 1 and T.dungeonFirst or T.dungeonAgain, { lvl = lvl, party = party, dungeon = Q(name), n = d.runs })
-		end
-		self:Add("dungeon", text, { dungeon = name })
+		self:StartExpedition(name, itype, maxPlayers, mapID)
 
 	elseif inInst and (itype == "pvp" or itype == "arena") then
 		if exp then self:EndExpedition() end
-		local name = ns.Call(GetInstanceInfo)
+		local name, _, _, _, _, _, _, mapID = ns.Call(GetInstanceInfo)
 		if name and name ~= "" and (self.lastBG ~= name or now - (self.lastBGTime or 0) > 600) then
 			db.pvp[name] = (db.pvp[name] or 0) + 1
+			if mapID then db.pvpMaps[mapID] = (db.pvpMaps[mapID] or 0) + 1 end
 			self:Add("pvp", Format(T.pvp, { lvl = ns.PlayerLevel(), bg = Q(name) }), { bg = name })
+			ns:Fire("BATTLEGROUND_ENTERED", name)
 		end
 		self.lastBG, self.lastBGTime = name, now
 
@@ -393,10 +419,40 @@ function C:CheckInstance()
 				exp.left = exp.lastSeen
 			else
 				exp.left = now
+				exp.leftGhost = ns.Call(UnitIsDeadOrGhost, "player") and true or nil
 			end
+			exp.leftLvl = ns.PlayerLevel()
 		end
 		if now - exp.left > LEAVE_GRACE then
 			self:EndExpedition()
+		end
+	end
+end
+
+-- 던전 안에서 본 몬스터의 GUID로 인스턴스 사본을 구분한다
+-- (GUID: Creature-0-서버-인스턴스-구역UID-NPC-생성번호)
+function C:NoteInstanceGUID(guid)
+	local exp = ns.char and ns.char.expedition
+	if not exp or exp.left or type(guid) ~= "string" then return end
+	local _, _, _, inst, zoneUID = strsplit("-", guid)
+	if not inst or not zoneUID then return end
+	local key = inst .. "-" .. zoneUID
+	if not exp.uid then
+		exp.uid = key
+		exp.recheck = nil
+		return
+	end
+	if exp.recheck then
+		local reentered = exp.recheck
+		exp.recheck = nil
+		if key ~= exp.uid then
+			-- 새로 초기화한 인스턴스: 앞선 원정은 밖으로 나간 시각에 끝난 것으로 정리하고 새 원정을 연다
+			exp.left, exp.leftLvl = exp.prevLeft or reentered, exp.prevLeftLvl
+			local name, kind, mapID = exp.name, exp.kind, exp.mapID
+			self:EndExpedition()
+			local _, _, _, _, maxPlayers = ns.Call(GetInstanceInfo)
+			self:StartExpedition(name, kind, maxPlayers, mapID, reentered)
+			ns.char.expedition.uid = key
 		end
 	end
 end
@@ -414,6 +470,7 @@ function C:EndExpedition()
 	local d = db.dungeons[exp.name]
 	if d then
 		d.time = (d.time or 0) + dur
+		if k > 0 then d.cleared = (d.cleared or 0) + 1 end
 		if k > 0 and (not d.best or dur < d.best) and k >= (d.bestBosses or 0) then
 			d.best, d.bestBosses = dur, k
 		end
@@ -423,8 +480,11 @@ function C:EndExpedition()
 	if exp.deaths > 0 then extra[#extra + 1] = "쓰러짐 " .. exp.deaths .. "회" end
 	if exp.wipes > 0 then extra[#extra + 1] = "전멸 " .. exp.wipes .. "회" end
 	local extraText = #extra > 0 and (", " .. table.concat(extra, ", ")) or ""
-	self:Add("dungeon", Format(T.dungeonEnd, { dungeon = Q(exp.name), dur = ns.FormatDuration(dur), k = k, extra = extraText }),
-		{ dungeon = exp.name, ended = true })
+	local tpl = k > 0 and T.dungeonEnd or T.dungeonEndNoBoss
+	-- 던전을 나온 시각에, 그때의 레벨로 기록한다
+	self:Add("dungeon", Format(tpl, { dungeon = Q(exp.name), dur = ns.FormatDuration(dur), k = k, extra = extraText }),
+		{ dungeon = exp.name, ended = true, t = stop, lvl = exp.leftLvl or ns.PlayerLevel(), bosses = k, mapID = exp.mapID })
+	ns:Fire("EXPEDITION_ENDED", exp.name, k, exp.mapID, exp.wipes, exp.deaths, stop)
 end
 
 function C:RecordBoss(encounterID, bossName)
@@ -481,15 +541,18 @@ function C:OnLevelUp(_, newLevel)
 	if not db then return end
 	local lvl = tonumber(newLevel) or (ns.PlayerLevel() + 1)
 	local now = time()
-	local prev = db.levels[lvl - 1]
 	db.levels[lvl] = now
+	local tracked = db.stats.tracked or 0
+	local prevTracked = db.levelTracked[lvl - 1]
+	db.levelTracked[lvl] = tracked
 	if db.meta then db.meta.level = lvl end
 
 	local zone = ns.Zone()
 	local tpl = T.levelMilestone[lvl] or Pick(T.level)
 	local text = Format(tpl, { lvl = lvl, zone = zone ~= "" and zone or "이곳" })
-	if prev and now - prev > 0 then
-		text = text .. ns.Hex(" (지난 레벨 이후 " .. ns.FormatDuration(now - prev) .. ")", ns.COLOR.dim)
+	-- 접속해 있던 시간만 센다 (게임을 꺼 둔 시간은 빼고)
+	if prevTracked and tracked - prevTracked >= 60 then
+		text = text .. ns.Hex(" (지난 레벨 이후 " .. ns.FormatDuration(tracked - prevTracked) .. " 모험)", ns.COLOR.dim)
 	end
 	-- 레벨업 순간에는 UnitLevel이 아직 이전 값일 수 있으므로 새 레벨로 기록한다
 	self:Add("level", text, { lvl = lvl })
@@ -531,6 +594,7 @@ function C:OnQuestTurnedIn(_, questID, xpReward, moneyReward)
 	if questID then db.quests.ids[questID] = time() end
 
 	local zone = ns.Zone()
+	if zone ~= "" then db.quests.zones[zone] = (db.quests.zones[zone] or 0) + 1 end
 	local lvl = ns.PlayerLevel()
 	local text = Format(Pick(T.quest), { lvl = lvl, zone = zone ~= "" and zone or "어딘가", quest = Q(title) })
 
@@ -558,7 +622,8 @@ function C:OnPlayerDead()
 	local text = Format(Pick(T.death), { lvl = ns.PlayerLevel(), zone = zone ~= "" and zone or "어딘가" })
 	-- 마지막으로 맞서던 상대
 	local Call = ns.Call
-	if Call(UnitExists, "target") and not Call(UnitIsPlayer, "target") and Call(UnitCanAttack, "player", "target") then
+	if Call(UnitExists, "target") and not Call(UnitIsPlayer, "target") and not Call(UnitIsDead, "target")
+		and Call(UnitCanAttack, "player", "target") then
 		local foe = Call(UnitName, "target")
 		if foe and foe ~= "" then
 			text = text .. ns.Format(" — 마지막 상대: {creature}", { creature = Q(foe) })

@@ -102,7 +102,7 @@ function D:Create(parent)
 	local stage = UI.Section(card)
 	stage:SetPoint("TOPLEFT", 8, -8)
 	stage:SetPoint("TOPRIGHT", -8, -8)
-	stage:SetHeight(214)
+	stage:SetHeight(178)
 	UI.Color(stage.bg, col.shade, (col.shade[4] or 0.07) * 2.2)
 	UI.Outline(stage, { col.edge[1], col.edge[2], col.edge[3], 0.45 })
 	self.stage = stage
@@ -151,16 +151,16 @@ function D:Create(parent)
 	local cardRule = UI.Rule(card, 0.4)
 	cardRule:SetPoint("TOPLEFT", cardName, "BOTTOMLEFT", 0, -6)
 	cardRule:SetWidth(CARD_W - 24)
-	local cardInfo = UI.Text(card, UI.F.small, col.text)
-	cardInfo:SetPoint("TOPLEFT", cardName, "BOTTOMLEFT", 0, -13)
-	cardInfo:SetWidth(CARD_W - 24)
-	cardInfo:SetSpacing(4)
-	self.cardInfo = cardInfo
-
 	local reassign = UI.Button(card, "종족 다시 분류", CARD_W - 20, 24, function()
 		if D.species then D:ShowReassign(D.species) end
 	end)
 	reassign:SetPoint("BOTTOM", 0, 10)
+
+	local cardInfo = UI.Text(card, UI.F.small, col.text)
+	cardInfo:SetPoint("TOPLEFT", cardName, "BOTTOMLEFT", 0, -13)
+	cardInfo:SetPoint("BOTTOMRIGHT", reassign, "TOPRIGHT", -6, 8)
+	cardInfo:SetSpacing(3)
+	self.cardInfo = cardInfo
 	UI.Tooltip(reassign, "종족 다시 분류", "자동 분류가 틀렸다면 이 개체가 속한 종족을 직접 정할 수 있습니다.\n(목록에서 개체를 오른쪽 클릭해도 됩니다)")
 	self.reassignBtn = reassign
 
@@ -411,7 +411,6 @@ function D:SpeciesRow(name, leftText, rightText, leftColor)
 		local c = leftColor or UI.COL.creature
 		r.label:SetTextColor(c[1], c[2], c[3])
 	end
-	r.label:SetPoint("RIGHT", r, "RIGHT", -150, 0)
 	r.right:SetText(UI:Themed(rightText or ""))
 	self.y = self.y + 22
 	return r
@@ -522,10 +521,10 @@ function D:DrawTribe(id)
 
 	self:Text(string.format("발견 %d종   ·   처치 %s%s   ·   희귀 %d   ·   서식지 %d곳",
 		s.species, ns.Comma(s.kills), (def.unit and def.unit ~= "마리") and def.unit or "", s.rares, s.zoneCount), UI.F.body, col.text, 0, 4)
-	if tribeData.first then
+	if s.first then
 		self:Text(ns.Format("첫 조우  {date}  ·  {zone}  ·  {lvl}레벨  ·  {creature}", {
-			date = ns.FormatShortDate(tribeData.first), zone = (tribeData.zone ~= "" and tribeData.zone) or "어딘가",
-			lvl = tribeData.plvl or "?", creature = ns.Quote(tribeData.by or "?"),
+			date = ns.FormatShortDate(s.first), zone = (s.firstZone and s.firstZone ~= "" and s.firstZone) or "어딘가",
+			lvl = s.firstLvl or "?", creature = ns.Quote(s.firstName or "?"),
 		}), UI.F.small, col.sub)
 	end
 
@@ -570,7 +569,7 @@ function D:DrawTribe(id)
 		local right = LevelText(c)
 		local cls = ClsText(c)
 		if cls ~= "" then right = right .. "  " .. cls end
-		right = right .. "  " .. ns.Hex("처치 " .. ns.Comma(c.kills), ns.COLOR.parchment)
+		if c.kills > 0 then right = right .. "  " .. ns.Hex("처치 " .. ns.Comma(c.kills), ns.COLOR.parchment) end
 		local color = B.IsRare(c.cls) and col.rare or col.creature
 		self:SpeciesRow(name, string.format("%02d   %s", i, name), right, color)
 	end
@@ -714,27 +713,23 @@ function D:RefreshCard()
 	end
 
 	local lines = {}
-	lines[#lines + 1] = "종족   " .. (def and def.name or "?") .. (c.tname and ("  (" .. c.tname .. ")") or "")
-	if c.family and not (def and def.dynamic) then lines[#lines + 1] = "계통   " .. c.family end
+	local typeText = c.tname and ("  (" .. c.tname .. (c.family and not (def and def.dynamic) and (" · " .. c.family) or "") .. ")") or ""
+	lines[#lines + 1] = "종족   " .. (def and def.name or "?") .. typeText
 	local lv = LevelText(c)
 	local cls = ClsText(c)
 	if lv ~= "" or cls ~= "" then lines[#lines + 1] = "레벨   " .. (lv ~= "" and lv:gsub("^Lv ", "") or "-") .. (cls ~= "" and ("   " .. cls) or "") end
 	lines[#lines + 1] = string.format("처치 %s   ·   목격 %s", ns.Comma(c.kills), ns.Comma(c.seen))
-	lines[#lines + 1] = ""
-	lines[#lines + 1] = "첫 발견   " .. ns.FormatShortDate(c.first)
-	lines[#lines + 1] = "    " .. ((c.zone ~= "" and c.zone) or "?") .. ((c.sub and c.sub ~= "" and c.sub ~= c.zone) and (" · " .. c.sub) or "")
-	lines[#lines + 1] = "    당시 내 레벨 " .. (c.plvl or "?")
-	local zoneText, zc = SortedZones(c.zones, 4)
-	if zc > 0 then
-		lines[#lines + 1] = ""
-		lines[#lines + 1] = "서식지   " .. zoneText
-	end
+	local place = (c.zone ~= "" and c.zone) or "?"
+	if c.sub and c.sub ~= "" and c.sub ~= c.zone then place = place .. " · " .. c.sub end
+	lines[#lines + 1] = string.format("첫 발견   %s  (내 레벨 %s)", ns.FormatShortDate(c.first), c.plvl or "?")
+	lines[#lines + 1] = "              " .. place
+	local zoneText, zc = SortedZones(c.zones, 3)
+	if zc > 0 then lines[#lines + 1] = "서식지   " .. zoneText end
 	if c.rareKilled then
-		lines[#lines + 1] = ""
 		lines[#lines + 1] = ns.Hex("희귀 개체 처치  " .. ns.FormatShortDate(c.rareKilled), ns.COLOR.good)
 	end
 	if B.dex.overrides[name] then
-		lines[#lines + 1] = ns.Hex("(직접 분류한 개체)", ns.COLOR.dim)
+		lines[#lines + 1] = ns.Hex("직접 분류한 개체", ns.COLOR.dim)
 	end
 	self.cardInfo:SetText(UI:Themed(table.concat(lines, "\n")))
 	self.reassignBtn:Show()
@@ -834,12 +829,13 @@ function D:AfterReassign(name)
 end
 
 ------------------------------------------------------------------------
-function D:Refresh()
+function D:Refresh(_, reason)
 	if not self.panel then return end
 	if self.sel.kind == "tribe" and not ns.GetTribe(self.sel.id) then
 		self.sel = { kind = "recent" }
 	end
 	self:RefreshList()
+	if reason == "dex" and UI.IsTyping() then return end -- 글이 써지는 중이면 목록만 갱신
 	self:RefreshDetail(true)
 	self:RefreshCard()
 end

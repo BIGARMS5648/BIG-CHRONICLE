@@ -4,7 +4,8 @@
 local ADDON, ns = ...
 
 ns.TITLE = "BIG CHRONICLE"
-ns.VERSION = "1.0.0"
+ns.ICON = "Interface\\AddOns\\" .. ADDON .. "\\Media\\Icon"  -- 글자 없는 두루마리 아이콘 (64×64 TGA)
+ns.VERSION = "1.1.0"
 _G.BigChronicle = ns
 
 do
@@ -260,8 +261,8 @@ function ns.FormatDuration(sec)
 	local h = floor((sec % 86400) / 3600)
 	local m = floor((sec % 3600) / 60)
 	local s = sec % 60
-	if d > 0 then return format("%d일 %d시간", d, h) end
-	if h > 0 then return format("%d시간 %d분", h, m) end
+	if d > 0 then return h > 0 and format("%d일 %d시간", d, h) or format("%d일", d) end
+	if h > 0 then return m > 0 and format("%d시간 %d분", h, m) or format("%d시간", h) end
 	if m > 0 then return format("%d분", m) end
 	return format("%d초", s)
 end
@@ -401,13 +402,16 @@ local function CharDefaults()
 		zones = {},
 		subzones = {},
 		levels = {},
-		quests = { count = 0, ids = {} },
+		levelTracked = {},  -- 레벨에 도달했을 때까지 접속해 있던 누적 시간(초)
+		quests = { count = 0, ids = {}, zones = {} },
 		dungeons = {},
 		bosses = {},
 		pvp = {},
+		pvpMaps = {},
 		deaths = 0,
 		money = {},
 		stats = { tracked = 0 },
+		ach = { done = {}, retro = {}, flags = {} },  -- 업적
 		dex = {
 			creatures = {},   -- [이름] = 개체 정보
 			tribes = {},      -- [종족 id] = 발견 정보
@@ -456,7 +460,7 @@ ns:On("PLAYER_LOGIN", function()
 		ns.char = BigChronicleCharDB
 	end
 	ns.ready = true
-	for _, mod in ipairs({ ns.Bestiary, ns.Chronicle, ns.Toast, ns.Minimap }) do
+	for _, mod in ipairs({ ns.Bestiary, ns.Chronicle, ns.Achievements, ns.Toast, ns.Minimap }) do
 		if mod and mod.Init then
 			local ok, err = pcall(mod.Init, mod)
 			if not ok then ns:Error(err) end
@@ -470,7 +474,7 @@ function ns:ResetData(what)
 	local fresh = CharDefaults()
 	local c = self.char
 	if what == "journal" or what == "all" then
-		for _, k in ipairs({ "log", "zones", "subzones", "levels", "quests", "dungeons", "bosses", "pvp", "money", "stats" }) do
+		for _, k in ipairs({ "log", "zones", "subzones", "levels", "levelTracked", "quests", "dungeons", "bosses", "pvp", "pvpMaps", "money", "stats" }) do
 			c[k] = fresh[k]
 		end
 		c.deaths = 0
@@ -480,8 +484,10 @@ function ns:ResetData(what)
 	if what == "dex" or what == "all" then
 		c.dex = fresh.dex
 	end
+	c.ach = fresh.ach -- 업적은 남은 기록으로 다시 판정한다 (이미 이룬 것은 조용히 정리)
 	if self.Bestiary and self.Bestiary.OnReset then self.Bestiary:OnReset() end
-	if self.Chronicle and self.Chronicle.OnReset then self.Chronicle:OnReset() end
+	if (what == "journal" or what == "all") and self.Chronicle and self.Chronicle.OnReset then self.Chronicle:OnReset() end
+	if self.Achievements and self.Achievements.OnReset then self.Achievements:OnReset() end
 	self:Fire("LOG_ADDED")
 	self:Fire("DEX_UPDATED")
 end
@@ -498,7 +504,7 @@ local function ShowHelp()
 	local P = ns.Print
 	P("사용법 — |cffffd100/bc|r 또는 |cffffd100/연대기|r")
 	P("  |cffffd100/bc|r : 창 열기/닫기")
-	P("  |cffffd100/bc 일지|r · |cffffd100/bc 도감|r · |cffffd100/bc 통계|r · |cffffd100/bc 설정|r")
+	P("  |cffffd100/bc 일지|r · |cffffd100/bc 도감|r · |cffffd100/bc 업적|r · |cffffd100/bc 통계|r · |cffffd100/bc 설정|r")
 	P("  |cffffd100/bc 기록 <내용>|r : 나만의 기록을 일지에 남기기  (|cffffd100/일지 <내용>|r 도 가능)")
 	P("  |cffffd100/bc 내보내기|r : 일지 전체를 복사 가능한 글로 보기")
 	P("  |cffffd100/bc 미니맵|r : 미니맵 버튼 보이기/숨기기")
@@ -515,6 +521,8 @@ function ns:HandleSlash(msg)
 		if UI then UI:Open("journal") end
 	elseif cmd == "도감" or cmd == "dex" or cmd == "bestiary" then
 		if UI then UI:Open("bestiary") end
+	elseif cmd == "업적" or cmd == "achievements" or cmd == "ach" then
+		if UI then UI:Open("achievements") end
 	elseif cmd == "통계" or cmd == "stats" then
 		if UI then UI:Open("stats") end
 	elseif cmd == "설정" or cmd == "config" or cmd == "options" then

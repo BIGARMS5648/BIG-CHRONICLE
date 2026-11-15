@@ -151,20 +151,25 @@ function M.runOnUpdate(elapsed)
 end
 
 C_Timer = {
-	After = function(sec, fn) M.timers[#M.timers + 1] = fn end,
+	After = function(sec, fn)
+		M.timerSeq = (M.timerSeq or 0) + 1
+		M.timers[#M.timers + 1] = { due = M.gt + (sec or 0), seq = M.timerSeq, fn = fn }
+	end,
 	NewTicker = function(sec, fn) local t = { fn = fn, sec = sec }; M.tickers[#M.tickers + 1] = t; return t end,
 }
 function M.runTimers()
 	local guard = 0
 	while #M.timers > 0 and guard < 100 do
 		local list = M.timers; M.timers = {}
-		for _, fn in ipairs(list) do fn() end
+		table.sort(list, function(a, b) if a.due ~= b.due then return a.due < b.due end return a.seq < b.seq end)
+		for _, t in ipairs(list) do t.fn() end
 		guard = guard + 1
 	end
 end
 function M.tick(n)
 	for _ = 1, n or 1 do
 		M.advance(10)
+		M.runTimers() -- 실제 게임처럼 지연 호출도 흘려보낸다
 		for _, t in ipairs(M.tickers) do if t.sec == 10 then t.fn() end end
 	end
 end
@@ -190,11 +195,12 @@ function UnitCreatureFamily(u) local x = U(u); return x and x.family end
 function UnitClassification(u) local x = U(u); return x and x.cls or "normal" end
 function UnitIsDead(u) local x = U(u); return x and x.dead end
 function UnitIsTapDenied() return false end
+function UnitIsDeadOrGhost(u) if u == "player" then return S.ghost or false end local x = U(u); return x and x.dead end
 function GetZoneText() return S.inInstance and S.instanceName or S.zone end
 function GetRealZoneText() return GetZoneText() end
 function GetSubZoneText() return S.inInstance and "" or S.sub end
 function IsInInstance() return S.inInstance, S.instanceType end
-function GetInstanceInfo() return S.instanceName, S.instanceType, 1, "일반", 5, 0, false, 33 end
+function GetInstanceInfo() return S.instanceName, S.instanceType, 1, "일반", 5, 0, false, S.instanceMap or 0 end
 function GetNumGroupMembers() return S.group end
 function GetMoney() return S.money end
 function GetQuestID() return M.questFrameID end

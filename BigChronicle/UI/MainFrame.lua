@@ -4,10 +4,11 @@ local ADDON, ns = ...
 local UI = ns.UI
 
 UI.TABS = {
-	{ id = "journal",  name = "모험 일지",   key = "1" },
-	{ id = "bestiary", name = "몬스터 도감", key = "2" },
-	{ id = "stats",    name = "연대기 통계", key = "3" },
-	{ id = "settings", name = "설정",        key = "4" },
+	{ id = "journal",      name = "모험 일지",   key = "1" },
+	{ id = "bestiary",     name = "몬스터 도감", key = "2" },
+	{ id = "achievements", name = "업적",        key = "3" },
+	{ id = "stats",        name = "연대기 통계", key = "4" },
+	{ id = "settings",     name = "설정",        key = "5" },
 }
 
 local WIDTH, HEIGHT = 940, 640
@@ -15,6 +16,7 @@ local WIDTH, HEIGHT = 940, 640
 function UI:TabModule(id)
 	if id == "journal" then return ns.JournalTab end
 	if id == "bestiary" then return ns.BestiaryTab end
+	if id == "achievements" then return ns.AchievementsTab end
 	if id == "stats" then return ns.StatsTab end
 	if id == "settings" then return ns.SettingsTab end
 end
@@ -136,6 +138,7 @@ function UI:Build()
 
 	ns:Listen("LOG_ADDED", function() UI:QueueRefresh("log") end)
 	ns:Listen("DEX_UPDATED", function() UI:QueueRefresh("dex") end)
+	ns:Listen("ACH_UPDATED", function() UI:QueueRefresh("ach") end)
 	ns:On("PLAYER_REGEN_DISABLED", function() UI:UpdateKeyboard(true) end)
 	ns:On("PLAYER_REGEN_ENABLED", function() UI:UpdateKeyboard() end)
 	return f
@@ -151,7 +154,7 @@ function UI:UpdateKeyboard(entering)
 	local want = f:IsShown() and ns.db.hotkeys and not inCombat
 	pcall(f.EnableKeyboard, f, want and true or false)
 	if want then pcall(f.SetPropagateKeyboardInput, f, true) end
-	f.hints:SetText(ns.db.hotkeys and "1~4 탭 전환   ·   ←/→ 쪽 넘기기   ·   ↑/↓ 도감 넘기기   ·   Space 글 바로 보기   ·   Esc 닫기"
+	f.hints:SetText(ns.db.hotkeys and "1~5 탭 전환   ·   ←/→ 쪽 넘기기   ·   ↑/↓ 도감 넘기기   ·   Space 글 바로 보기   ·   Esc 닫기"
 		or "Esc 닫기")
 end
 
@@ -184,8 +187,9 @@ function UI:RefreshHeader()
 	local class = ns.Call(UnitClass, "player") or meta.class or ""
 	f.title:SetText(name .. "의 모험 전기")
 	local found, total, species = ns.Bestiary:Completion()
-	f.subtitle:SetText(string.format("%s  ·  %d레벨  ·  기록 %s개  ·  도감 %d/%d 종족, %s종",
-		ns.Trim(race .. " " .. class), ns.PlayerLevel(), ns.Comma(#ns.char.log), found, total, ns.Comma(species)))
+	local aDone, aTotal, aPts = ns.Achievements:Summary()
+	f.subtitle:SetText(string.format("%s  ·  %d레벨  ·  기록 %s개  ·  도감 %d/%d 종족, %s종  ·  업적 %d/%d (%s점)",
+		ns.Trim(race .. " " .. class), ns.PlayerLevel(), ns.Comma(#ns.char.log), found, total, ns.Comma(species), aDone, aTotal, ns.Comma(aPts)))
 end
 
 function UI:SelectTab(id)
@@ -214,8 +218,9 @@ end
 
 -- 기록이 연달아 들어올 때 한 번만 다시 그리도록 모은다. 관계없는 탭은 다시 그리지 않는다.
 local RELEVANT = {
-	log = { journal = true, stats = true },
+	log = { journal = true, stats = true, achievements = true },
 	dex = { bestiary = true, stats = true },
+	ach = { achievements = true },
 }
 
 function UI:QueueRefresh(kind)
@@ -319,6 +324,7 @@ function UI:ShowExport()
 	end
 	local f = self.exportFrame
 	f.text = ns.Chronicle:ExportText()
+	if ns.Achievements then ns.Achievements:NoteExport() end
 	f.editBox:SetText(f.text)
 	f:Show()
 	UI.FadeIn(f, 0.2)

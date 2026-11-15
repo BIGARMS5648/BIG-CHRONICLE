@@ -25,7 +25,8 @@ M.runTimers()
 
 local db = ns.char
 print("== start")
-check(#db.log == 1, "first entry recorded")
+check(db.log[1] and db.log[1].cat == "start", "first entry recorded")
+check(#db.log == 2 and db.log[2].cat == "achievement", "achievements already earned before install are summarized in one line")
 print("    " .. ns.StripCodes(db.log[1].text))
 check(ns.StripCodes(db.log[1].text):find("^32레벨, 가시덤불 골짜기에서 첫 모험을 시작했다%.") ~= nil, "start sentence matches example")
 
@@ -207,7 +208,9 @@ M.fire("PLAYER_ENTERING_WORLD", false, false)
 M.tick(100) -- > 15 min
 check(db.expedition == nil, "expedition ended after grace")
 print("    " .. ns.StripCodes(db.log[#db.log].text))
-check(db.log[#db.log].ended == true, "expedition end entry")
+local endedEntry = false
+for i = math.max(1, #db.log - 3), #db.log do if db.log[i].ended then endedEntry = true end end
+check(endedEntry, "expedition end entry")
 
 -- battleground
 S.inInstance, S.instanceType, S.instanceName = true, "pvp", "전쟁노래 협곡"
@@ -299,8 +302,9 @@ local ok, err = pcall(function()
 	assert(not ns.UI.IsTyping(), "space finishes typing")
 	f:Fire("OnKeyDown", "1"); assert(ns.UI.current == "journal", "key 1 -> journal")
 	f:Fire("OnKeyDown", "LEFT"); f:Fire("OnKeyDown", "RIGHT")
-	f:Fire("OnKeyDown", "3"); assert(ns.UI.current == "stats", "key 3 -> stats")
-	f:Fire("OnKeyDown", "4"); assert(ns.UI.current == "settings", "key 4 -> settings")
+	f:Fire("OnKeyDown", "3"); assert(ns.UI.current == "achievements", "key 3 -> achievements")
+	f:Fire("OnKeyDown", "4"); assert(ns.UI.current == "stats", "key 4 -> stats")
+	f:Fire("OnKeyDown", "5"); assert(ns.UI.current == "settings", "key 5 -> settings")
 	ns.SettingsTab:SetTheme(ns.UI.themeId == "light" and "dark" or "light")
 	M.inCombat = true; f:Fire("OnKeyDown", "2"); assert(ns.UI.current == "settings", "no hotkeys in combat"); M.inCombat = false
 	for i = 1, 40 do M.runOnUpdate(0.1) end
@@ -313,7 +317,9 @@ check(ok, "UI flows ran without error " .. tostring(err))
 local uiNote = false
 for i = math.max(1, #db.log - 3), #db.log do if db.log[i].text:find("UI로 남긴 기록") then uiNote = true end end
 check(uiNote, "note via UI")
-check(db.log[#db.log].text:find("열린 창에서 추가된 기록") ~= nil, "note while window open")
+local openNote = false
+for i = math.max(1, #db.log - 3), #db.log do if db.log[i].text:find("열린 창에서 추가된 기록") then openNote = true end end
+check(openNote, "note while window open")
 local exportText = ns.UI.exportFrame.text
 check(exportText:find("■ 제4장") ~= nil, "export has chapters")
 print("---- export excerpt ----")
@@ -330,7 +336,7 @@ print("== reset")
 M.autoAccept = true
 ns:ResetData("all")
 M.runTimers()
-check(#ns.char.log == 1 and ns.char.log[1].cat == "start", "reset restarts chronicle")
+check(ns.char.log[1] and ns.char.log[1].cat == "start" and #ns.char.log <= 2, "reset restarts chronicle")
 check(next(ns.char.dex.creatures) == nil, "dex cleared")
 
 -- errors captured?

@@ -5,6 +5,8 @@
 --            "=놀" 처럼 앞에 = 를 붙이면 띄어쓰기로 나뉜 단어가 정확히 같을 때만 일치
 -- types    : 지정하면 해당 생물 유형(인간형 등)일 때만 키워드가 적용된다
 -- unit     : 처치 수를 셀 때 쓰는 단위 (기본 "마리")
+-- short    : 칭호·처치 업적 문장에 쓰는 짧은 이름 (기본 name)
+-- phrase   : "처음으로 ○○과 마주쳤다" 문장에 쓰는 이름 (기본 name)
 -- lore     : [1] 첫 조우 시, [2] ★★ 관찰자, [3] ★★★ 연구자 등급에서 해금
 
 local ADDON, ns = ...
@@ -149,7 +151,7 @@ ns.TRIBES = {
 		},
 	},
 	{
-		id = "yeti", name = "예티와 웬디고", en = "Yeti & Wendigo", icon = I .. "Spell_Frost_FrostNova",
+		id = "yeti", name = "예티·웬디고", short = "예티", en = "Yeti & Wendigo", icon = I .. "Spell_Frost_FrostNova",
 		keywords = { "예티", "yeti", "웬디고", "wendigo" },
 		hint = "눈보라 너머에서 거대한 털북숭이 형체가 포효한다.",
 		habitats = { "던 모로", "알터랙 산맥", "힐스브래드 구릉지", "페랄라스", "여명의 설원" },
@@ -175,7 +177,7 @@ ns.TRIBES = {
 	-- 세력
 	--------------------------------------------------------------------
 	{
-		id = "defias", name = "데피아즈 형제단", en = "Defias Brotherhood", icon = I .. "Ability_Stealth", unit = "명",
+		id = "defias", name = "데피아즈 형제단", short = "데피아즈", en = "Defias Brotherhood", icon = I .. "Ability_Stealth", unit = "명",
 		types = HUMANOID, keywords = { "데피아즈", "defias", "vancleef", "밴클리프" },
 		hint = "붉은 두건을 쓴 무법자들이 농장을 약탈하고 있다는 소문이 돈다.",
 		habitats = { "엘윈 숲", "서부 몰락지대", "붉은마루 산맥", "저습지" },
@@ -230,7 +232,7 @@ ns.TRIBES = {
 		},
 	},
 	{
-		id = "darkiron", name = "검은무쇠 드워프", en = "Dark Iron Dwarves", icon = I .. "INV_Misc_Head_Dwarf_01", unit = "명",
+		id = "darkiron", name = "검은무쇠 드워프", short = "검은무쇠 드워프", en = "Dark Iron Dwarves", icon = I .. "INV_Misc_Head_Dwarf_01", unit = "명",
 		types = HUMANOID, keywords = { "검은무쇠", "dark iron" },
 		hint = "화산재가 날리는 땅에서 불꽃처럼 붉은 눈이 번뜩인다.",
 		habitats = { "저습지", "황야의 땅", "이글거리는 협곡", "불타는 평원" },
@@ -241,7 +243,7 @@ ns.TRIBES = {
 		},
 	},
 	{
-		id = "orc", name = "적대 오크 부족", en = "Hostile Orc Clans", icon = I .. "INV_Misc_Head_Orc_01", unit = "명",
+		id = "orc", name = "적대 오크 부족", short = "오크", en = "Hostile Orc Clans", icon = I .. "INV_Misc_Head_Orc_01", unit = "명",
 		types = HUMANOID, keywords = { "검은바위", "용아귀", "불타는 칼날", "blackrock", "dragonmaw", "burning blade", "bleeding hollow" },
 		hint = "산기슭에서 전쟁 북소리와 함께 오크들의 함성이 울린다.",
 		habitats = { "붉은마루 산맥", "불타는 평원", "저습지", "듀로타", "불모의 땅", "잊혀진 땅" },
@@ -263,7 +265,7 @@ ns.TRIBES = {
 		},
 	},
 	{
-		id = "grimtotem", name = "성난토템 부족", en = "Grimtotem", icon = I .. "INV_Misc_Head_Tauren_01", unit = "명",
+		id = "grimtotem", name = "성난토템 부족", short = "성난토템", en = "Grimtotem", icon = I .. "INV_Misc_Head_Tauren_01", unit = "명",
 		types = HUMANOID, keywords = { "성난토템", "grimtotem" },
 		hint = "타우렌의 땅 깊은 곳에 배신의 토템이 세워졌다.",
 		habitats = { "돌발톱 산맥", "버섯구름 봉우리", "페랄라스", "먼지진흙 습지대" },
@@ -377,7 +379,7 @@ ns.TRIBES = {
 		},
 	},
 	{
-		id = "humanoid", name = "기타 인간형", en = "Other Humanoids", icon = I .. "INV_Misc_Head_Human_01", unit = "명",
+		id = "humanoid", name = "기타 인간형", short = "무법자", phrase = "정체 모를 인간형 무리", en = "Other Humanoids", icon = I .. "INV_Misc_Head_Human_01", unit = "명",
 		byType = "humanoid",
 		hint = "길 위에서 마주치는 수많은 무법자와 이방인들.",
 		habitats = { "아제로스 전역" },
@@ -388,7 +390,7 @@ ns.TRIBES = {
 		},
 	},
 	{
-		id = "mystery", name = "미지의 존재", en = "Unknown", icon = I .. "INV_Misc_QuestionMark",
+		id = "mystery", name = "미지의 존재", phrase = "정체를 알 수 없는 존재", en = "Unknown", icon = I .. "INV_Misc_QuestionMark",
 		byType = "unknown",
 		hint = "어떤 분류에도 속하지 않는 기묘한 존재가 있다고 한다.",
 		habitats = { "???" },

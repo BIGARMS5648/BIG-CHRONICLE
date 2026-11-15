@@ -6,15 +6,15 @@ local O = {}
 ns.SettingsTab = O
 
 local OPTIONS = {
-	{ key = "chat",         label = "새 기록을 채팅창에 알리기",       desc = "일지에 기록이 추가될 때 채팅창에도 짧게 출력합니다. (장소 발견 제외)" },
-	{ key = "toast",        label = "도감 알림 팝업 보이기",           desc = "새 종족·개체·희귀 개체를 발견하면 화면 위쪽에 두루마리 알림을 띄웁니다." },
-	{ key = "sound",        label = "알림 효과음",                     desc = "알림 팝업이 뜰 때 효과음을 재생합니다." },
-	{ key = "logSubzones",  label = "세부 장소 발견도 일지에 기록",     desc = "마을·동굴 같은 세부 장소를 처음 찾았을 때도 기록합니다." },
-	{ key = "questRewards", label = "퀘스트 기록에 보상 표시",          desc = "퀘스트 완료 기록 끝에 경험치와 골드 보상을 덧붙입니다." },
-	{ key = "nameplates",   label = "이름표로도 몬스터 발견",           desc = "적 이름표가 보이는 거리의 몬스터도 도감에 등록합니다." },
-	{ key = "tooltip",      label = "몬스터 툴팁에 도감 정보 표시",     desc = "마우스를 올렸을 때 도감 번호, 종족, 처치 수를 보여 줍니다." },
-	{ key = "typewriter",   label = "글자가 한 자씩 써지는 연출",       desc = "도감의 배경 이야기가 대화창처럼 차례로 써집니다. (클릭·Space로 건너뛰기)" },
-	{ key = "hotkeys",      label = "키보드 단축키 사용",               desc = "창이 열려 있을 때 1~4, 방향키, Space를 사용합니다. 전투 중에는 자동으로 꺼집니다." },
+	{ key = "chat",         label = "새 기록을 채팅창에 알리기",   desc = "장소 발견을 뺀 새 기록을 채팅창에도 짧게 보여 줍니다." },
+	{ key = "toast",        label = "도감 알림 팝업",              desc = "새 종족·개체·희귀 개체를 발견하면 두루마리 알림을 띄웁니다." },
+	{ key = "sound",        label = "알림 효과음",                 desc = "알림 팝업이 뜰 때 효과음을 재생합니다." },
+	{ key = "logSubzones",  label = "세부 장소 발견도 기록",       desc = "마을·동굴 같은 세부 장소를 처음 찾았을 때도 남깁니다." },
+	{ key = "questRewards", label = "퀘스트 보상 표시",            desc = "퀘스트 기록 끝에 경험치와 골드 보상을 덧붙입니다." },
+	{ key = "nameplates",   label = "이름표로도 몬스터 발견",      desc = "적 이름표가 보이는 거리의 몬스터도 도감에 등록합니다." },
+	{ key = "tooltip",      label = "툴팁에 도감 정보 표시",       desc = "몬스터 툴팁에 도감 번호, 종족, 처치 수를 붙입니다." },
+	{ key = "typewriter",   label = "한 글자씩 써지는 연출",       desc = "배경 이야기가 차례로 써집니다. 클릭·Space로 건너뜁니다." },
+	{ key = "hotkeys",      label = "키보드 단축키",               desc = "창이 열려 있을 때 1~4, 방향키, Space를 씁니다. (전투 중 꺼짐)" },
 }
 
 local function Confirm(key, text, onAccept)
@@ -62,10 +62,11 @@ function O:Create(parent)
 			end,
 			opt.desc)
 		if prev then
-			cb:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -24)
+			cb:SetPoint("TOPLEFT", prev.desc, "BOTTOMLEFT", -26, -9)
 		else
-			cb:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 2, -16)
+			cb:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 2, -14)
 		end
+		cb.desc:SetWidth(430)
 		self.checks[#self.checks + 1] = cb
 		prev = cb
 	end
@@ -73,7 +74,8 @@ function O:Create(parent)
 		function() return not ns.db.minimap.hide end,
 		function(v) ns.db.minimap.hide = not v; if ns.Minimap then ns.Minimap:Update() end end,
 		"왼쪽 클릭: 창 열기 · 오른쪽 클릭: 도감 · 드래그: 위치 옮기기")
-	mm:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 0, -24)
+	mm:SetPoint("TOPLEFT", prev.desc, "BOTTOMLEFT", -26, -9)
+	mm.desc:SetWidth(430)
 	self.checks[#self.checks + 1] = mm
 
 	-- 오른쪽: 테마 / 데이터 관리 / 정보
@@ -138,6 +140,7 @@ function O:Create(parent)
 	info:SetSpacing(3)
 	info:SetText(UI:Themed("|cffd4af37BIG CHRONICLE|r  v" .. ns.VERSION .. "\n" ..
 		"|cffffd100/bc|r 창 열기   ·   |cffffd100/도감|r 도감 열기\n" ..
+		"|cffffd100/bc 업적|r 업적 보기\n" ..
 		"|cffffd100/일지 <내용>|r 나만의 기록 남기기\n" ..
 		"|cffffd100/bc 내보내기|r 일지 전체 복사"))
 	return p

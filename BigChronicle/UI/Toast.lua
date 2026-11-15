@@ -11,6 +11,7 @@ local STYLE = {
 	species = { hold = 3.0, sound = { "IG_QUEST_LOG_OPEN" } },
 	rare    = { hold = 6.0, sound = { "UI_LEGENDARY_LOOT_TOAST", "UI_EPICLOOT_TOAST", "RAID_WARNING" } },
 	rank    = { hold = 5.0, sound = { "UI_EPICLOOT_TOAST", "LEVELUPSOUND" } },
+	achievement = { hold = 5.0, sound = { "UI_ALERT_ACHIEVEMENT", "UI_EPICLOOT_TOAST", "LEVELUPSOUND" } },
 }
 
 local OPEN, FADE_OUT = 0.3, 0.8
@@ -141,9 +142,9 @@ function Toast:Next()
 	end
 	local col = UI.COL
 	local style = STYLE[item.kind] or STYLE.species
-	f.icon:SetTexture(item.icon or "Interface\\Icons\\INV_Misc_Book_09")
+	f.icon:SetTexture(item.icon or ns.ICON)
 	f.title:SetText(item.title)
-	local tc = (item.kind == "rare" and col.rare) or (item.kind == "tribe" and col.good) or col.accent
+	local tc = (item.kind == "rare" and col.rare) or (item.kind == "tribe" and col.good) or (item.kind == "achievement" and col.title) or col.accent
 	f.title:SetTextColor(tc[1], tc[2], tc[3])
 	f.body:SetText(item.body)
 	f.hold = style.hold

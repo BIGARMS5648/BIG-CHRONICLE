@@ -158,6 +158,7 @@ function S:Refresh()
 		{ "희귀 개체", rares .. "종" },
 		{ "야수 계통", dynCount .. "종" },
 		{ "총 처치", ns.Comma(kills) },
+		{ "업적", (function() local d, t, p = ns.Achievements:Summary() return string.format("%d / %d (%s점)", d, t, ns.Comma(p)) end)() },
 	})
 
 	-- 레벨 연대기
@@ -170,8 +171,9 @@ function S:Refresh()
 		local t = db.levels[l]
 		local extra = ""
 		local prevLvl = lvls[i - 1]
-		if prevLvl and prevLvl == l - 1 and db.levels[prevLvl] then
-			extra = ns.Hex("     이전 레벨부터 " .. ns.FormatDuration(t - db.levels[prevLvl]), ns.COLOR.dim)
+		local lt, plt = db.levelTracked and db.levelTracked[l], db.levelTracked and prevLvl and db.levelTracked[prevLvl]
+		if prevLvl and prevLvl == l - 1 and lt and plt then
+			extra = ns.Hex("     이전 레벨부터 " .. ns.FormatDuration(lt - plt) .. " 모험", ns.COLOR.dim)
 		elseif i == 1 then
 			extra = ns.Hex("     기록 시작", ns.COLOR.dim)
 		end
