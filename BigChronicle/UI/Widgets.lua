@@ -1,7 +1,6 @@
 -- BIG CHRONICLE :: UI 공용 위젯 / 테마
--- 금테 장정 스타일: 닳은 가죽, 두꺼운 금테와 모서리 장식, 버클 달린 가죽끈, 붉은 깃발,
--- 금테를 두른 가죽 버튼, 가장자리가 그을린 양피지 칸, 명조·Cinzel 제목.
--- 질감·문장·글꼴은 Media 폴더의 무료 에셋을 쓴다 (출처는 Media/LICENSES.txt).
+-- 단순하고 묵직한 가죽 수첩: 실제 가죽 사진 질감의 표지, 실제 종이 사진 질감의 속지, 가는 선.
+-- 장식은 쓰지 않는다. 글꼴은 게임 기본 글꼴 그대로. (질감 출처는 Media/LICENSES.txt)
 
 local ADDON, ns = ...
 local UI = ns.UI or {}
@@ -12,35 +11,25 @@ UI.WHITE = WHITE
 local MEDIA = "Interface\\AddOns\\" .. ADDON .. "\\Media\\"
 UI.MEDIA = MEDIA
 local function M(name) return MEDIA .. name end
+local STAR = "Interface\\Cooldown\\star4"
 UI.TEX = {
-	paper = M "Parchment", panel = M "Panel", leather = M "Leather", vignette = M "Vignette",
-	goldBar = M "GoldBar", corner = M "Corner", laurel = M "Laurel", plaque = M "Plaque",
-	banner = M "Banner", strap = M "Strap", medallion = M "Medallion",
-	tab = M "Tab", tabActive = M "TabActive", button = M "Button", buttonActive = M "ButtonActive",
-	buttonRed = M "ButtonRed", badge = M "Badge", field = M "Field", iconFrame = M "IconFrame",
-	close = M "Close", scrollThumb = M "ScrollThumb", scrollArrow = M "ScrollArrow", checkBox = M "CheckBox",
-	sketchCastle = M "SketchCastle", sketchCamp = M "SketchCamp",
-	ornCorner = M "OrnCorner", fleuron = M "Fleuron", emblem = M "Emblem", dust = M "Dust",
-	check = M "Check", ink = M "Ink", ghost = M "PageGhost",
+	leather = M "Leather", paper = M "Paper", panel = M "Paper",
 	seal = M "Seal", sealDex = M "SealDex", sealAch = M "SealAch",
+	check = "Interface\\Buttons\\UI-CheckBox-Check", dust = STAR, ink = WHITE,
 }
 UI.ICON = setmetatable({}, { __index = function(_, k) return MEDIA .. "Icons\\" .. k end })
-UI.SERIF_FONT = M "Fonts\\NanumMyeongjo-ExtraBold.ttf"
-UI.SERIF_BODY = M "Fonts\\NanumMyeongjo-Bold.ttf"
-UI.CINZEL = M "Fonts\\Cinzel-Bold.ttf"
-
 -- 가죽 위 글씨 색 (테마와 상관없이 같다)
 UI.LEATHER = {
-	cover = { 0.50, 0.23, 0.14 },   -- 겉가죽
-	inset = { 0.30, 0.14, 0.09 },   -- 한 단 짙은 가죽 칸
+	cover = { 0.80, 0.78, 0.76 },   -- 가죽 사진에 살짝만 어둡게
+	inset = { 0.42, 0.40, 0.38 },   -- 한 단 짙은 가죽 칸
 	dark  = { 0.10, 0.05, 0.03 },
-	text  = { 0.94, 0.87, 0.73 },
-	sub   = { 0.82, 0.73, 0.58 },
-	muted = { 0.64, 0.55, 0.42 },
-	title = { 0.97, 0.81, 0.47 },   -- 금박 글씨
-	accent = { 0.98, 0.74, 0.42 },
-	ink   = { 0.22, 0.11, 0.05 },   -- 금빛 바탕 위 글씨
-	gold  = { 0.90, 0.72, 0.38 },
+	text  = { 0.93, 0.88, 0.78 },
+	sub   = { 0.80, 0.73, 0.62 },
+	muted = { 0.62, 0.55, 0.45 },
+	title = { 0.95, 0.86, 0.66 },
+	accent = { 0.95, 0.80, 0.55 },
+	ink   = { 0.16, 0.10, 0.06 },
+	gold  = { 0.80, 0.68, 0.48 },
 }
 
 ------------------------------------------------------------------------
@@ -48,8 +37,8 @@ UI.LEATHER = {
 ------------------------------------------------------------------------
 UI.THEMES = {
 	light = {
-		name = "양피지",
-		page   = { 0.96, 0.90, 0.77 },
+		name = "밝은 속지",
+		page   = { 1, 1, 1 },
 		page2  = { 0.88, 0.80, 0.65 },
 		edge   = { 0.36, 0.22, 0.12 },
 		line   = { 0.40, 0.26, 0.14, 0.55 },
@@ -60,7 +49,7 @@ UI.THEMES = {
 		title  = { 0.22, 0.10, 0.05 },
 		accent = { 0.55, 0.12, 0.07 },
 		hover  = { 0.70, 0.48, 0.18, 0.12 },
-		sel    = { 0.92, 0.70, 0.30, 0.30 },   -- 금빛 띠
+		sel    = { 0.35, 0.20, 0.08, 0.16 },
 		bar    = { 0.62, 0.16, 0.10 },
 		barBg  = { 0.30, 0.18, 0.08, 0.12 },
 		creature = { 0.10, 0.30, 0.32 },
@@ -78,8 +67,8 @@ UI.THEMES = {
 		},
 	},
 	dark = {
-		name = "흑단",
-		page   = { 0.30, 0.26, 0.22 },
+		name = "어두운 속지",
+		page   = { 0.34, 0.31, 0.29 },
 		page2  = { 0.22, 0.19, 0.16 },
 		edge   = { 0.70, 0.58, 0.40 },
 		line   = { 0.80, 0.66, 0.44, 0.35 },
@@ -160,19 +149,18 @@ function UI:InitTheme()
 	for k, v in pairs(self.LEATHER) do self.COL["l" .. k] = v end
 	self.COL.paperTop, self.COL.paperBottom = theme.page, theme.page
 	local C, L, sh = self.COL, self.LEATHER, theme.fontShadow
-	local SERIF, BODY = self.SERIF_FONT, self.SERIF_BODY
-	MakeFont(self.F.title,   { "QuestTitleFont", "GameFontNormalHuge" }, 22, C.title, sh, SERIF)
-	MakeFont(self.F.header,  { "QuestTitleFont", "GameFontNormalLarge" }, 17, C.title, sh, SERIF)
-	MakeFont(self.F.heading, { "GameFontNormal" }, 14, C.accent, sh, SERIF)
-	MakeFont(self.F.button,  { "GameFontNormal" }, 13, L.title, true, SERIF)
-	MakeFont(self.F.tab,     { "GameFontNormal" }, 15, L.text, true, SERIF)
-	MakeFont(self.F.label,   { "GameFontNormalSmall" }, 11, C.muted, sh, SERIF)
-	MakeFont(self.F.body,    { "QuestFont", "GameFontHighlight" }, 13, C.text, sh, BODY)
-	MakeFont(self.F.small,   { "GameFontHighlightSmall" }, 11.5, C.sub, sh, BODY)
-	MakeFont(self.F.tiny,    { "GameFontHighlightSmall" }, 10.5, C.muted, sh, BODY)
-	MakeFont(self.F.key,     { "GameFontHighlightSmall" }, 10, L.text, true, BODY)
-	MakeFont(self.F.brand,   { "QuestTitleFont", "GameFontNormalHuge" }, 20, L.title, true, self.CINZEL)
-	MakeFont(self.F.brandSmall, { "GameFontNormalSmall" }, 10, L.sub, true, self.CINZEL)
+	MakeFont(self.F.title,   { "QuestTitleFont", "GameFontNormalHuge" }, 22, C.title, sh)
+	MakeFont(self.F.header,  { "QuestTitleFont", "GameFontNormalLarge" }, 17, C.title, sh)
+	MakeFont(self.F.heading, { "GameFontNormal" }, 14, C.accent, sh)
+	MakeFont(self.F.button,  { "GameFontNormal" }, 13, L.title, true)
+	MakeFont(self.F.tab,     { "GameFontNormal" }, 15, L.text, true)
+	MakeFont(self.F.label,   { "GameFontNormalSmall" }, 11, C.muted, sh)
+	MakeFont(self.F.body,    { "QuestFont", "GameFontHighlight" }, 13, C.text, sh)
+	MakeFont(self.F.small,   { "GameFontHighlightSmall" }, 11.5, C.sub, sh)
+	MakeFont(self.F.tiny,    { "GameFontHighlightSmall" }, 10.5, C.muted, sh)
+	MakeFont(self.F.key,     { "GameFontHighlightSmall" }, 10, L.text, true)
+	MakeFont(self.F.brand,   { "GameFontNormalHuge" }, 20, L.title, true)
+	MakeFont(self.F.brandSmall, { "GameFontNormalSmall" }, 10, L.sub, true)
 end
 
 -- 기록 문장 속 색 코드를 현재 테마에 맞춘다
@@ -275,162 +263,53 @@ function UI.Outline(frame, c, inset, layer, sub)
 	return t
 end
 
--- 왼쪽 위 기준 텍스처를 네 모서리에 뒤집어 붙인다
-local CORNER_COORDS = {
-	TOPLEFT = { 0, 1, 0, 1 }, TOPRIGHT = { 1, 0, 0, 1 },
-	BOTTOMLEFT = { 0, 1, 1, 0 }, BOTTOMRIGHT = { 1, 0, 1, 0 },
-}
-function UI.Corners(frame, path, size, inset, color, layer, sub)
-	local out = {}
-	for point, tc in pairs(CORNER_COORDS) do
-		local t = frame:CreateTexture(nil, layer or "OVERLAY", nil, sub or 0)
-		t:SetSize(size, size)
-		local dx = point:find("LEFT") and (inset or 0) or -(inset or 0)
-		local dy = point:find("TOP") and -(inset or 0) or (inset or 0)
-		t:SetPoint(point, frame, point, dx, dy)
-		t:SetTexture(path)
-		t:SetTexCoord(tc[1], tc[2], tc[3], tc[4])
-		if color then UI.Tint(t, color) end
-		out[point] = t
-	end
-	return out
-end
-
--- 가로 3조각 텍스처 (양 끝은 비율을 지키고 가운데만 늘어난다)
--- capFrac: 텍스처 폭에 대한 끝 조각 비율, ratio: 텍스처 폭/높이
-function UI.Slice3(frame, path, capFrac, ratio, layer, sub, mirror)
-	capFrac, ratio = capFrac or 0.16, ratio or 4
-	local s = {}
-	local l = frame:CreateTexture(nil, layer or "BACKGROUND", nil, sub or 0)
-	local m = frame:CreateTexture(nil, layer or "BACKGROUND", nil, sub or 0)
-	local r = frame:CreateTexture(nil, layer or "BACKGROUND", nil, sub or 0)
-	l:SetPoint("TOPLEFT"); l:SetPoint("BOTTOMLEFT")
-	r:SetPoint("TOPRIGHT"); r:SetPoint("BOTTOMRIGHT")
-	m:SetPoint("TOPLEFT", l, "TOPRIGHT"); m:SetPoint("BOTTOMRIGHT", r, "BOTTOMLEFT")
-	local function coords()
-		local v0, v1 = 0, 1
-		if mirror then v0, v1 = 1, 0 end
-		l:SetTexCoord(0, capFrac, v0, v1)
-		m:SetTexCoord(capFrac, 1 - capFrac, v0, v1)
-		r:SetTexCoord(1 - capFrac, 1, v0, v1)
-	end
-	function s:SetTexture(p)
-		l:SetTexture(p); m:SetTexture(p); r:SetTexture(p)
-		coords()
-	end
-	function s:SetVertexColor(...)
-		l:SetVertexColor(...); m:SetVertexColor(...); r:SetVertexColor(...)
-	end
-	function s:SetShown(v) l:SetShown(v); m:SetShown(v); r:SetShown(v) end
-	function s:Update()
-		local h = frame:GetHeight() or 0
-		local w = frame:GetWidth() or 0
-		local cap = math.min(h * capFrac * ratio, w / 2)
-		l:SetWidth(math.max(1, cap)); r:SetWidth(math.max(1, cap))
-	end
-	frame:HookScript("OnSizeChanged", function() s:Update() end)
-	s:SetTexture(path)
-	s:Update()
-	s.l, s.m, s.r = l, m, r
-	return s
-end
-
--- 금테 띠: 가로로 반복되는 금테 텍스처를 가로/세로로 붙인다
--- side: "TOP" | "BOTTOM" | "LEFT" | "RIGHT" (바깥쪽 테두리가 그쪽을 향한다)
-function UI.GoldStrip(frame, side, thickness, layer, sub)
-	local t = frame:CreateTexture(nil, layer or "BORDER", nil, sub or 0)
-	t:SetTexture(UI.TEX.goldBar, "REPEAT", "REPEAT")
-	local tile = thickness * 8 -- 256x32 텍스처
-	local function update()
-		local len = (side == "TOP" or side == "BOTTOM") and (t:GetWidth() or 0) or (t:GetHeight() or 0)
-		local n = math.max(1, len / tile)
-		if side == "TOP" then
-			t:SetTexCoord(0, n, 0, 1)
-		elseif side == "BOTTOM" then
-			t:SetTexCoord(0, n, 1, 0)
-		elseif side == "LEFT" then
-			t:SetTexCoord(0, 0, n, 0, 0, 1, n, 1)
-		else
-			t:SetTexCoord(0, 1, n, 1, 0, 0, n, 0)
-		end
-	end
-	frame:HookScript("OnSizeChanged", update)
-	t.UpdateTiling = update
-	return t
-end
-
--- 두꺼운 금테 + 모서리 장식을 프레임 둘레에 두른다
--- inset: 바깥 가장자리에서 금테까지, thick: 금테 두께, corner: 모서리 장식 크기
+-- 가는 이중 테두리 (예전 금테 자리): 바깥 짙은 선 + 안쪽 옅은 선
 function UI.GoldFrame(frame, inset, thick, corner, cornerOut, level)
+	local L = UI.LEATHER
 	local holder = CreateFrame("Frame", nil, frame)
 	holder:SetAllPoints(frame)
 	if level then holder:SetFrameLevel(level) end
-	local top = UI.GoldStrip(holder, "TOP", thick)
-	top:SetPoint("TOPLEFT", inset, -inset); top:SetPoint("TOPRIGHT", -inset, -inset); top:SetHeight(thick)
-	local bot = UI.GoldStrip(holder, "BOTTOM", thick)
-	bot:SetPoint("BOTTOMLEFT", inset, inset); bot:SetPoint("BOTTOMRIGHT", -inset, inset); bot:SetHeight(thick)
-	local left = UI.GoldStrip(holder, "LEFT", thick)
-	left:SetPoint("TOPLEFT", inset, -inset); left:SetPoint("BOTTOMLEFT", inset, inset); left:SetWidth(thick)
-	local right = UI.GoldStrip(holder, "RIGHT", thick)
-	right:SetPoint("TOPRIGHT", -inset, -inset); right:SetPoint("BOTTOMRIGHT", -inset, inset); right:SetWidth(thick)
-	for _, t in ipairs({ top, bot, left, right }) do t:UpdateTiling() end
-	holder.strips = { top, bot, left, right }
-	if corner then
-		holder.corners = UI.Corners(holder, UI.TEX.corner, corner, -(cornerOut or 0), nil, "OVERLAY", 2)
-	end
+	UI.Outline(holder, { 0, 0, 0, 0.9 }, 0)
+	UI.Outline(holder, { L.gold[1], L.gold[2], L.gold[3], 0.22 }, (inset or 0) + 3)
 	return holder
 end
 
--- 양피지 칸: 가장자리가 거칠게 그을린 양피지 한 장 (+ 희미한 잉크 삽화)
+-- 속지 한 장: 종이 사진 질감 + 그림자 + 가는 테두리
 function UI.Paper(frame, opts)
 	opts = opts or {}
 	local C = UI.COL
 	if opts.shadow ~= false then
 		local shadow = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
-		shadow:SetPoint("TOPLEFT", 1, -2)
-		shadow:SetPoint("BOTTOMRIGHT", 4, -6)
-		shadow:SetTexture(UI.TEX.panel)
-		shadow:SetVertexColor(0, 0, 0, opts.shadow or 0.6)
+		shadow:SetPoint("TOPLEFT", 2, -2)
+		shadow:SetPoint("BOTTOMRIGHT", 3, -3)
+		shadow:SetColorTexture(0, 0, 0, 0.45)
 	end
-	local paper = frame:CreateTexture(nil, "BACKGROUND", nil, -6)
-	paper:SetPoint("TOPLEFT", -3, 3)
-	paper:SetPoint("BOTTOMRIGHT", 3, -3)
-	paper:SetTexture(UI.TEX.panel)
+	local paper = UI.Tiled(frame, "BACKGROUND", -6, UI.TEX.paper, 512, 512)
 	UI.Tint(paper, opts.tint or C.page)
 	frame.paper = paper
-	if opts.sketch then
-		local sk = frame:CreateTexture(nil, "BACKGROUND", nil, -4)
-		sk:SetSize(opts.sketchW or 300, (opts.sketchW or 300) / 2)
-		sk:SetPoint("BOTTOMRIGHT", -10, 8)
-		sk:SetTexture(opts.sketch)
-		UI.Tint(sk, C.edge, C.sketch)
-		frame.sketch = sk
-	end
+	UI.Outline(frame, { 0, 0, 0, 0.55 }, 0)
+	-- 삽화는 쓰지 않는다 (자리만 남겨 둔다)
+	local sk = frame:CreateTexture(nil, "BACKGROUND", nil, -4)
+	sk:Hide()
+	frame.sketch = sk
 	return paper
 end
 
--- 장식 구분선: 양끝이 흐려지는 선 가운데에 백합 문장
+-- 구분선: 양끝이 흐려지는 가는 선
 function UI.Divider(parent, width, color)
 	local C = UI.COL
 	color = color or C.edge
 	local f = CreateFrame("Frame", nil, parent)
-	f:SetSize(width or 300, 14)
-	local orn = f:CreateTexture(nil, "ARTWORK")
-	orn:SetSize(14, 14)
-	orn:SetPoint("CENTER")
-	orn:SetTexture(UI.TEX.fleuron)
-	UI.Tint(orn, color, 0.85)
+	f:SetSize(width or 300, 6)
 	local l = f:CreateTexture(nil, "ARTWORK")
 	l:SetHeight(1)
-	l:SetPoint("LEFT", 0, 0)
-	l:SetPoint("RIGHT", orn, "LEFT", -6, 0)
-	UI.Gradient(l, "HORIZONTAL", { color[1], color[2], color[3], 0 }, { color[1], color[2], color[3], 0.75 })
+	l:SetPoint("LEFT", 0, 0); l:SetPoint("RIGHT", f, "CENTER", 0, 0)
+	UI.Gradient(l, "HORIZONTAL", { color[1], color[2], color[3], 0 }, { color[1], color[2], color[3], 0.6 })
 	local r = f:CreateTexture(nil, "ARTWORK")
 	r:SetHeight(1)
-	r:SetPoint("LEFT", orn, "RIGHT", 6, 0)
-	r:SetPoint("RIGHT", 0, 0)
-	UI.Gradient(r, "HORIZONTAL", { color[1], color[2], color[3], 0.75 }, { color[1], color[2], color[3], 0 })
-	f.line, f.orn = l, orn
+	r:SetPoint("LEFT", f, "CENTER", 0, 0); r:SetPoint("RIGHT", 0, 0)
+	UI.Gradient(r, "HORIZONTAL", { color[1], color[2], color[3], 0.6 }, { color[1], color[2], color[3], 0 })
+	f.line = l
 	return f
 end
 
@@ -443,22 +322,14 @@ function UI.Rule(parent, alpha)
 	return t
 end
 
--- 칸
---   기본: 양피지 칸 (opts.sketch 로 잉크 삽화를 깔 수 있다)
---   opts.leather: 한 단 짙은 가죽 칸에 가는 금선 (왼쪽 목록용)
+-- 칸: 기본은 속지 한 장, opts.leather 는 한 단 짙은 가죽 칸
 function UI.Section(parent, opts)
 	opts = opts or {}
 	local f = CreateFrame("Frame", nil, parent)
 	if opts.leather then
-		local L = UI.LEATHER
-		local bg = UI.Tiled(f, "BACKGROUND", -6, UI.TEX.leather, 256, 256)
-		UI.Tint(bg, L.inset)
-		local wear = f:CreateTexture(nil, "BACKGROUND", nil, -5)
-		wear:SetAllPoints()
-		wear:SetTexture(UI.TEX.vignette)
-		wear:SetVertexColor(0, 0, 0, 0.55)
+		local bg = UI.Tiled(f, "BACKGROUND", -6, UI.TEX.leather, 512, 512)
+		UI.Tint(bg, UI.LEATHER.inset)
 		UI.Outline(f, { 0, 0, 0, 0.8 }, 0)
-		UI.Outline(f, { L.gold[1], L.gold[2], L.gold[3], 0.45 }, 2)
 		f.leather = true
 	else
 		UI.Paper(f, opts)
@@ -474,53 +345,57 @@ function UI.Text(parent, font, color, layer)
 	return fs
 end
 
--- 아이콘 둘레에 금테 (아이콘과 같은 부모에 붙인다)
+-- 아이콘 둘레의 가는 테두리
 function UI.FrameIcon(icon, pad, parent)
 	parent = parent or icon:GetParent()
-	local t = parent:CreateTexture(nil, "OVERLAY", nil, 1)
-	t:SetPoint("TOPLEFT", icon, "TOPLEFT", -(pad or 3), pad or 3)
-	t:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", pad or 3, -(pad or 3))
-	t:SetTexture(UI.TEX.iconFrame)
-	return t
+	local h = CreateFrame("Frame", nil, parent)
+	h:SetPoint("TOPLEFT", icon, "TOPLEFT", -1, 1)
+	h:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 1, -1)
+	UI.Outline(h, { 0, 0, 0, 0.85 }, 0)
+	return h
 end
 
-------------------------------------------------------------------------
--- 단축키·개수 배지 (짙은 알약 모양에 금테)
-------------------------------------------------------------------------
+-- 단축키 배지: 짙은 네모에 글자
 function UI.KeyBadge(parent, key)
 	local L = UI.LEATHER
 	local f = CreateFrame("Frame", nil, parent)
-	f:SetSize(22, 18)
-	UI.Slice3(f, UI.TEX.badge, 0.32, 2, "BACKGROUND")
+	f:SetSize(18, 16)
+	local bg = f:CreateTexture(nil, "BACKGROUND")
+	bg:SetAllPoints()
+	bg:SetColorTexture(0, 0, 0, 0.45)
 	local fs = f:CreateFontString(nil, "OVERLAY", UI.F.key)
 	fs:SetPoint("CENTER", 0, 0)
 	TextColor(fs, L.text)
 	f.text = fs
 	function f:SetKey(k)
 		fs:SetText(k)
-		local w = (fs:GetStringWidth() or 8) + 14
-		self:SetWidth(math.max(22, w))
+		self:SetWidth(math.max(18, (fs:GetStringWidth() or 8) + 10))
 	end
 	f:SetKey(key)
 	return f
 end
 UI.Badge = UI.KeyBadge
 
-------------------------------------------------------------------------
--- 버튼: 금테를 두른 가죽 버튼. style "red" 는 붉은 버튼. 선택되면 금빛으로 바뀐다.
-------------------------------------------------------------------------
+-- 가죽 조각 바탕 (버튼·탭 공용): 가죽 질감 + 짙은 테두리 + 위쪽 옅은 빛
+local function Plate(b)
+	local bg = UI.Tiled(b, "BACKGROUND", -2, UI.TEX.leather, 512, 512)
+	UI.Outline(b, { 0, 0, 0, 0.9 }, 0)
+	local top = b:CreateTexture(nil, "BORDER", nil, 1)
+	top:SetPoint("TOPLEFT", 1, -1); top:SetPoint("TOPRIGHT", -1, -1); top:SetHeight(1)
+	top:SetColorTexture(1, 0.9, 0.75, 0.12)
+	local hl = b:CreateTexture(nil, "HIGHLIGHT")
+	hl:SetPoint("TOPLEFT", 1, -1); hl:SetPoint("BOTTOMRIGHT", -1, 1)
+	hl:SetColorTexture(1, 0.9, 0.75, 0.08)
+	return bg
+end
+
+-- 버튼: 납작한 가죽 조각. style "red" 는 주된 동작(조금 붉게). 선택되면 밝아진다.
 function UI.Button(parent, text, w, h, onClick, key, style)
 	local L = UI.LEATHER
 	local b = CreateFrame("Button", nil, parent)
 	b:SetSize(w or 80, h or 24)
-	local normal = style == "red" and UI.TEX.buttonRed or UI.TEX.button
-	local bg = UI.Slice3(b, normal, 0.12, 4, "BACKGROUND")
+	local bg = Plate(b)
 	b.bg = bg
-	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 3, -3)
-	hl:SetPoint("BOTTOMRIGHT", -3, 3)
-	hl:SetColorTexture(1, 0.85, 0.5, 0.10)
-	pcall(hl.SetBlendMode, hl, "ADD")
 	local fs = b:CreateFontString(nil, "OVERLAY", UI.F.button)
 	fs:SetPoint("CENTER", key and 10 or 0, 0)
 	b:SetFontString(fs)
@@ -534,9 +409,14 @@ function UI.Button(parent, text, w, h, onClick, key, style)
 	if onClick then b:SetScript("OnClick", onClick) end
 	function b:SetSelected(on)
 		self.selected = on
-		bg:SetTexture(on and UI.TEX.buttonActive or normal)
-		TextColor(fs, on and L.ink or (style == "red" and L.text or L.title))
-		fs:SetShadowOffset(on and 0 or 1, on and 0 or -1)
+		if on then
+			bg:SetVertexColor(1.0, 0.95, 0.88)
+		elseif style == "red" then
+			bg:SetVertexColor(0.95, 0.55, 0.48)
+		else
+			bg:SetVertexColor(0.72, 0.69, 0.66)
+		end
+		TextColor(fs, on and L.title or L.text)
 	end
 	b:SetSelected(false)
 	b:HookScript("OnEnable", function(self) self:SetAlpha(1) end)
@@ -544,63 +424,55 @@ function UI.Button(parent, text, w, h, onClick, key, style)
 	return b
 end
 
--- 색인 탭: 사다리꼴 가죽 탭. 고른 탭은 금빛으로 빛난다.
+-- 색인 탭: 납작한 가죽 조각. 고른 탭은 밝아지고 아래에 선이 그어진다.
 function UI.Tab(parent, text, key, onClick, _, icon)
 	local L = UI.LEATHER
 	local b = CreateFrame("Button", nil, parent)
-	b:SetSize(170, 36)
-	local bg = UI.Slice3(b, UI.TEX.tab, 0.17, 4, "BACKGROUND")
+	b:SetSize(150, 30)
+	local bg = Plate(b)
 	b.bg = bg
-	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 16, -4)
-	hl:SetPoint("BOTTOMRIGHT", -16, 2)
-	hl:SetColorTexture(1, 0.85, 0.5, 0.08)
-	pcall(hl.SetBlendMode, hl, "ADD")
 	local fs = b:CreateFontString(nil, "OVERLAY", UI.F.tab)
-	fs:SetPoint("CENTER", icon and 12 or 0, -1)
+	fs:SetPoint("CENTER", icon and 10 or 0, 0)
 	fs:SetText(text)
 	b.label = fs
 	local ic
 	if icon then
 		ic = b:CreateTexture(nil, "ARTWORK")
-		ic:SetSize(20, 20)
-		ic:SetPoint("RIGHT", fs, "LEFT", -8, 0)
+		ic:SetSize(16, 16)
+		ic:SetPoint("RIGHT", fs, "LEFT", -6, 0)
 		ic:SetTexture(icon)
 	end
+	local mark = b:CreateTexture(nil, "ARTWORK")
+	mark:SetPoint("BOTTOMLEFT", 1, 1); mark:SetPoint("BOTTOMRIGHT", -1, 1); mark:SetHeight(2)
+	mark:SetColorTexture(L.title[1], L.title[2], L.title[3], 0.9)
 	b:SetScript("OnClick", onClick)
 	function b:SetSelected(on)
-		bg:SetTexture(on and UI.TEX.tabActive or UI.TEX.tab)
-		TextColor(fs, on and L.ink or L.text)
-		fs:SetShadowOffset(on and 0 or 1, on and 0 or -1)
+		if on then bg:SetVertexColor(1.0, 0.95, 0.88) else bg:SetVertexColor(0.62, 0.59, 0.56) end
+		TextColor(fs, on and L.title or L.sub)
 		if ic then
-			local c = on and L.ink or L.gold
+			local c = on and L.title or L.muted
 			ic:SetVertexColor(c[1], c[2], c[3], 1)
 		end
+		mark:SetShown(on and true or false)
 	end
 	b:SetSelected(false)
 	return b
 end
 
--- 왼쪽 목록의 한 줄: 금테 두른 가죽 버튼. 고르면 금빛, 오른쪽에 개수 배지.
--- opts.badge: 오른쪽 글자를 배지 안에 넣는다
+-- 목록의 한 줄
+--   opts.flat: 속지 위의 줄 (고르면 옅은 잉크 띠)
+--   기본: 가죽 칸 위의 줄 (고르면 밝은 띠와 왼쪽 표시)
 local function FlatRow(parent, height)
 	local C = UI.COL
 	local b = CreateFrame("Button", nil, parent)
 	b:SetHeight(height or 24)
 	local sel = b:CreateTexture(nil, "BACKGROUND")
-	sel:SetPoint("TOPLEFT", 0, -1)
-	sel:SetPoint("BOTTOMRIGHT", -2, 1)
-	UI.Gradient(sel, "HORIZONTAL", { C.sel[1], C.sel[2], C.sel[3], math.min(1, C.sel[4] * 2) }, { C.sel[1], C.sel[2], C.sel[3], C.sel[4] * 0.6 })
+	sel:SetPoint("TOPLEFT", 0, -1); sel:SetPoint("BOTTOMRIGHT", -2, 1)
+	sel:SetColorTexture(C.sel[1], C.sel[2], C.sel[3], C.sel[4])
 	sel:Hide()
 	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 0, -1)
-	hl:SetPoint("BOTTOMRIGHT", -2, 1)
-	UI.Gradient(hl, "HORIZONTAL", { C.hover[1], C.hover[2], C.hover[3], C.hover[4] * 1.6 }, { C.hover[1], C.hover[2], C.hover[3], C.hover[4] * 0.4 })
-	local rule = b:CreateTexture(nil, "BORDER")
-	rule:SetPoint("BOTTOMLEFT", 4, 0)
-	rule:SetPoint("BOTTOMRIGHT", -6, 0)
-	rule:SetHeight(1)
-	rule:SetColorTexture(C.line[1], C.line[2], C.line[3], 0.18)
+	hl:SetPoint("TOPLEFT", 0, -1); hl:SetPoint("BOTTOMRIGHT", -2, 1)
+	hl:SetColorTexture(C.hover[1], C.hover[2], C.hover[3], C.hover[4])
 	local label = UI.Text(b, UI.F.body)
 	label:SetPoint("LEFT", 10, 0)
 	label:SetJustifyV("MIDDLE")
@@ -617,9 +489,7 @@ local function FlatRow(parent, height)
 		sel:SetShown(on and true or false)
 		TextColor(label, on and C.title or C.text)
 	end
-	function b:SetDim()
-		TextColor(label, C.muted)
-	end
+	function b:SetDim() TextColor(label, C.muted) end
 	b:SetScript("OnClick", function(self, button)
 		if self.onClick then self.onClick(self, button) end
 	end)
@@ -632,57 +502,40 @@ function UI.NavRow(parent, height, opts)
 	if opts.flat then return FlatRow(parent, height) end
 	local b = CreateFrame("Button", nil, parent)
 	b:SetHeight(height or 26)
-	local bg = UI.Slice3(b, UI.TEX.button, 0.12, 4, "BACKGROUND")
-	b.bg = bg
+	local sel = b:CreateTexture(nil, "BACKGROUND")
+	sel:SetAllPoints()
+	sel:SetColorTexture(1, 0.9, 0.75, 0.13)
+	sel:Hide()
+	local bar = b:CreateTexture(nil, "ARTWORK")
+	bar:SetPoint("TOPLEFT", 0, 0); bar:SetPoint("BOTTOMLEFT", 0, 0); bar:SetWidth(2)
+	bar:SetColorTexture(L.title[1], L.title[2], L.title[3], 0.9)
+	bar:Hide()
 	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 3, -3)
-	hl:SetPoint("BOTTOMRIGHT", -3, 3)
-	hl:SetColorTexture(1, 0.85, 0.5, 0.10)
-	pcall(hl.SetBlendMode, hl, "ADD")
+	hl:SetAllPoints()
+	hl:SetColorTexture(1, 0.9, 0.75, 0.07)
 	local label = UI.Text(b, UI.F.body)
 	label:SetPoint("LEFT", 12, 0)
 	label:SetJustifyV("MIDDLE")
 	label:SetWordWrap(false)
 	b.label = label
 	local right = UI.Text(b, UI.F.small)
+	right:SetPoint("RIGHT", -10, 0)
 	right:SetJustifyH("RIGHT")
 	right:SetJustifyV("MIDDLE")
 	b.right = right
-	local badge
-	if opts.badge then
-		badge = CreateFrame("Frame", nil, b)
-		badge:SetSize(34, math.max(14, (height or 26) - 10))
-		badge:SetPoint("RIGHT", -6, 0)
-		UI.Slice3(badge, UI.TEX.badge, 0.32, 2, "BACKGROUND")
-		right:SetParent(badge)
-		right:SetPoint("CENTER", badge, "CENTER", 0, 0)
-		right:SetJustifyH("CENTER")
-		b.badge = badge
-		label:SetPoint("RIGHT", badge, "LEFT", -4, 0)
-		local origSetText = right.SetText
-		right.SetText = function(self, t)
-			origSetText(self, t)
-			badge:SetShown(t ~= nil and t ~= "")
-			badge:SetWidth(math.max(26, (self:GetStringWidth() or 10) + 14))
-		end
-	else
-		right:SetPoint("RIGHT", -10, 0)
-		label:SetPoint("RIGHT", right, "LEFT", -4, 0)
-	end
+	label:SetPoint("RIGHT", right, "LEFT", -4, 0)
+	UI.OnLeather(label, L.text)
+	UI.OnLeather(right, L.muted)
 	function b:SetSelected(on)
 		self.selected = on
-		bg:SetTexture(on and UI.TEX.buttonActive or UI.TEX.button)
-		TextColor(label, on and L.ink or L.text)
-		label:SetShadowOffset(on and 0 or 1, on and 0 or -1)
-		if not badge then TextColor(right, on and L.ink or L.accent) end
+		sel:SetShown(on and true or false)
+		bar:SetShown(on and true or false)
+		TextColor(label, on and L.title or L.text)
 	end
-	function b:SetDim()
-		TextColor(label, L.muted)
-	end
+	function b:SetDim() TextColor(label, L.muted) end
 	b:SetScript("OnClick", function(self, button)
 		if self.onClick then self.onClick(self, button) end
 	end)
-	TextColor(right, L.text)
 	b:SetSelected(false)
 	return b
 end
@@ -707,14 +560,13 @@ function UI.Check(parent, label, get, set, desc, light)
 	local cb = CreateFrame("Button", nil, parent)
 	cb:SetSize(16, 16)
 	local box = cb:CreateTexture(nil, "BACKGROUND")
-	box:SetPoint("TOPLEFT", -3, 3)
-	box:SetPoint("BOTTOMRIGHT", 3, -3)
-	box:SetTexture(UI.TEX.checkBox)
+	box:SetAllPoints()
+	box:SetColorTexture(0, 0, 0, light and 0.45 or 0.12)
+	UI.Outline(cb, light and { L.gold[1], L.gold[2], L.gold[3], 0.6 } or { C.edge[1], C.edge[2], C.edge[3], 0.8 })
 	local mark = cb:CreateTexture(nil, "OVERLAY")
 	mark:SetSize(22, 22)
-	mark:SetPoint("CENTER", 2, 2)
+	mark:SetPoint("CENTER", 0, 0)
 	mark:SetTexture(UI.TEX.check)
-	mark:SetVertexColor(0.34, 0.10, 0.05)
 	local hl = cb:CreateTexture(nil, "HIGHLIGHT")
 	hl:SetAllPoints()
 	hl:SetColorTexture(1, 0.85, 0.5, 0.25)
@@ -768,40 +620,17 @@ function UI.Scroll(parent)
 	bar:SetPoint("TOPLEFT", sf, "TOPRIGHT", 3, -15)
 	bar:SetPoint("BOTTOMLEFT", sf, "BOTTOMRIGHT", 3, 15)
 	local track = bar:CreateTexture(nil, "BACKGROUND")
-	track:SetPoint("TOP", 0, 2); track:SetPoint("BOTTOM", 0, -2); track:SetWidth(8)
-	track:SetColorTexture(0.10, 0.055, 0.03, 0.85)
-	for _, side in ipairs({ "LEFT", "RIGHT" }) do
-		local e = bar:CreateTexture(nil, "BORDER")
-		e:SetPoint("TOP" .. side, track, "TOP" .. side); e:SetPoint("BOTTOM" .. side, track, "BOTTOM" .. side)
-		e:SetWidth(1)
-		e:SetColorTexture(L.gold[1], L.gold[2], L.gold[3], 0.7)
-	end
+	track:SetPoint("TOP", 0, 14); track:SetPoint("BOTTOM", 0, -14); track:SetWidth(4)
+	track:SetColorTexture(0, 0, 0, 0.25)
 	local thumb = bar:CreateTexture(nil, "OVERLAY")
-	thumb:SetTexture(UI.TEX.scrollThumb)
-	thumb:SetSize(16, 44)
+	thumb:SetColorTexture(0.30, 0.20, 0.12, 0.85)
+	thumb:SetSize(6, 44)
 	bar:SetThumbTexture(thumb)
 	bar:SetMinMaxValues(0, 0)
 	bar:SetValue(0)
 	bar:SetValueStep(1)
 	bar:SetScript("OnValueChanged", function(_, v) sf:SetVerticalScroll(v) end)
 	sf.bar = bar
-	local function arrow(point, rel, dir)
-		local a = CreateFrame("Button", nil, bar)
-		a:SetSize(15, 15)
-		a:SetPoint(point, bar, rel, 0, 0)
-		local t = a:CreateTexture(nil, "ARTWORK")
-		t:SetAllPoints()
-		t:SetTexture(UI.TEX.scrollArrow)
-		if dir > 0 then t:SetTexCoord(0, 1, 1, 0) end
-		local hl = a:CreateTexture(nil, "HIGHLIGHT")
-		hl:SetAllPoints()
-		hl:SetColorTexture(1, 0.85, 0.5, 0.25)
-		a:SetScript("OnClick", function() sf:ScrollBy(dir * 60) end)
-		return a
-	end
-	arrow("BOTTOM", "TOP", -1)
-	arrow("TOP", "BOTTOM", 1)
-
 	sf:EnableMouseWheel(true)
 	sf:SetScript("OnMouseWheel", function(_, delta)
 		local lo, hi = bar:GetMinMaxValues()
@@ -1008,7 +837,10 @@ function UI.EditBox(parent, w, h, placeholder)
 	eb:SetTextColor(L.text[1], L.text[2], L.text[3])
 	eb:SetTextInsets(10, 8, 2, 2)
 	eb:SetMaxLetters(240)
-	UI.Slice3(eb, UI.TEX.field, 0.14, 4, "BACKGROUND")
+	local bg = eb:CreateTexture(nil, "BACKGROUND")
+	bg:SetAllPoints()
+	bg:SetColorTexture(0.13, 0.09, 0.06, 0.88)
+	UI.Outline(eb, { 0, 0, 0, 0.9 }, 0)
 	local glow = eb:CreateTexture(nil, "BORDER")
 	glow:SetPoint("TOPLEFT", 3, -3)
 	glow:SetPoint("BOTTOMRIGHT", -3, 3)

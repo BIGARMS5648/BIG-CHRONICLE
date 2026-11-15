@@ -297,16 +297,11 @@ function E.MakePageTurn(page)
 	sheet:SetWidth(1)
 	sheet:SetFrameLevel(page:GetFrameLevel() + 35)
 	sheet:EnableMouse(false)
-	-- 가장자리가 그을린 양피지 한 장: 폭이 줄면 통째로 눌려 원근처럼 보인다
+	-- 속지 한 장: 폭이 줄면 통째로 눌려 원근처럼 보인다
 	local paper = sheet:CreateTexture(nil, "BACKGROUND", nil, 0)
 	paper:SetAllPoints()
-	paper:SetTexture(UI.TEX.panel)
+	paper:SetTexture(UI.TEX.paper)
 	UI.Tint(paper, C.page)
-	local ghost = sheet:CreateTexture(nil, "BORDER")
-	ghost:SetPoint("TOPLEFT", 6, -6)
-	ghost:SetPoint("BOTTOMRIGHT", -6, 6)
-	ghost:SetTexture(UI.TEX.ghost)
-	UI.Tint(ghost, C.text, 0.20)
 	-- 들릴수록 바깥쪽이 그늘진다
 	local shade = sheet:CreateTexture(nil, "ARTWORK")
 	shade:SetPoint("TOPLEFT", 3, -4)
@@ -428,8 +423,8 @@ end
 
 local function BuildCard()
 	if card then return card end
-	MakeFont("BigChronicleFontCinematic", "QuestTitleFont", 38, UI.SERIF_FONT, { 0.96, 0.88, 0.70 })
-	MakeFont("BigChronicleFontCinematicLabel", "GameFontNormal", 14, UI.SERIF_FONT, { 0.86, 0.70, 0.40 })
+	MakeFont("BigChronicleFontCinematic", "QuestTitleFont", 38, nil, { 0.96, 0.88, 0.70 })
+	MakeFont("BigChronicleFontCinematicLabel", "GameFontNormal", 14, nil, { 0.86, 0.70, 0.40 })
 	MakeFont("BigChronicleFontCinematicSmall", "GameFontNormal", 13, nil, { 0.78, 0.72, 0.62 })
 	local f = CreateFrame("Frame", "BigChronicleChapterCard", UIParent)
 	f:SetSize(CARD_W, CARD_H)
@@ -473,16 +468,6 @@ local function BuildCard()
 	local title = titleHolder:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematic")
 	title:SetPoint("CENTER")
 	f.title, f.titleHolder = title, titleHolder
-	-- 제목 양옆의 금빛 월계수 가지
-	local laurelL = titleHolder:CreateTexture(nil, "ARTWORK")
-	laurelL:SetSize(88, 44)
-	laurelL:SetPoint("RIGHT", title, "LEFT", -12, 0)
-	laurelL:SetTexture(UI.TEX.laurel)
-	laurelL:SetTexCoord(1, 0, 0, 1)
-	local laurelR = titleHolder:CreateTexture(nil, "ARTWORK")
-	laurelR:SetSize(88, 44)
-	laurelR:SetPoint("LEFT", title, "RIGHT", 12, 0)
-	laurelR:SetTexture(UI.TEX.laurel)
 
 	local rule = UI.Divider(f, 300, gold)
 	rule:SetPoint("TOP", titleHolder, "BOTTOM", 0, -2)
@@ -542,7 +527,7 @@ function E.ChapterCard(chIdx, isStart)
 	local num, name = ch.title:match("^(.-)%s*·%s*(.+)$")
 	num = num or ch.title
 	if isStart then
-		E.ShowCard("BIG CHRONICLE", ns.PlayerName() .. "의 연대기, 첫 장", ch.title .. "  —  " .. ch.desc)
+		E.ShowCard("BIG CHRONICLE", ns.PlayerName() .. "의 모험 수첩, 첫 장", ch.title .. "  —  " .. ch.desc)
 	else
 		E.ShowCard((num:gsub("%s+", "")), name or ch.title, ch.desc)
 	end

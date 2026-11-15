@@ -92,7 +92,7 @@ function O:Create(parent)
 
 	local h0 = right:CreateFontString(nil, "OVERLAY", UI.F.header)
 	h0:SetPoint("TOP", 0, -18)
-	h0:SetText("장정 테마")
+	h0:SetText("속지 테마")
 	local themeNote = UI.Text(right, UI.F.small)
 	themeNote:SetPoint("TOP", h0, "BOTTOM", 0, -6)
 	themeNote:SetWidth(290)
@@ -100,9 +100,9 @@ function O:Create(parent)
 	themeNote:SetText("테마를 바꾸면 UI를 다시 불러옵니다.")
 
 	self.themeButtons = {}
-	local tb1 = UI.Button(right, "양피지", 138, 28, function() O:SetTheme("light") end)
+	local tb1 = UI.Button(right, "밝은 속지", 138, 28, function() O:SetTheme("light") end)
 	tb1:SetPoint("TOPRIGHT", themeNote, "BOTTOM", -4, -10)
-	local tb2 = UI.Button(right, "흑단", 138, 28, function() O:SetTheme("dark") end)
+	local tb2 = UI.Button(right, "어두운 속지", 138, 28, function() O:SetTheme("dark") end)
 	tb2:SetPoint("TOPLEFT", themeNote, "BOTTOM", 4, -10)
 	self.themeButtons.light, self.themeButtons.dark = tb1, tb2
 

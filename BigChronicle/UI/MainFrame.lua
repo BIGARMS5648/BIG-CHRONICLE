@@ -11,11 +11,9 @@ UI.TABS = {
 	{ id = "settings",     name = "설정",        key = "5", icon = "cog" },
 }
 
-local WIDTH, HEIGHT = 1000, 720
-local EDGE, BAR = 8, 16          -- 바깥 가장자리에서 금테까지 / 금테 두께
-local CORNER, CORNER_OUT = 104, 4 -- 모서리 장식 크기 / 바깥으로 나오는 만큼
+local WIDTH, HEIGHT = 960, 640
 -- 탭 아래 내용이 놓이는 자리
-local CONTENT_L, CONTENT_R, CONTENT_T, CONTENT_B = 40, 36, 158, 68
+local CONTENT_L, CONTENT_R, CONTENT_T, CONTENT_B = 18, 18, 78, 40
 
 function UI:TabModule(id)
 	if id == "journal" then return ns.JournalTab end
@@ -25,18 +23,17 @@ function UI:TabModule(id)
 	if id == "settings" then return ns.SettingsTab end
 end
 
--- 붉은 바탕에 금테를 두른 닫기 버튼
+-- 닫기 버튼 (× 글자)
 local function CloseButton(parent, onClick, size)
+	local L = UI.LEATHER
 	local b = CreateFrame("Button", nil, parent)
-	b:SetSize(size or 32, size or 32)
-	local t = b:CreateTexture(nil, "ARTWORK")
-	t:SetAllPoints()
-	t:SetTexture(UI.TEX.close)
-	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 4, -4)
-	hl:SetPoint("BOTTOMRIGHT", -4, 4)
-	hl:SetColorTexture(1, 0.8, 0.5, 0.25)
-	pcall(hl.SetBlendMode, hl, "ADD")
+	b:SetSize(size or 26, size or 26)
+	local fs = b:CreateFontString(nil, "OVERLAY", UI.F.title)
+	fs:SetPoint("CENTER", 0, 0)
+	fs:SetText("×")
+	UI.OnLeather(fs, L.sub)
+	b:SetScript("OnEnter", function() fs:SetTextColor(1, 0.45, 0.35) end)
+	b:SetScript("OnLeave", function() fs:SetTextColor(L.sub[1], L.sub[2], L.sub[3]) end)
 	b:SetScript("OnClick", onClick)
 	return b
 end
@@ -56,10 +53,6 @@ local function LeatherBack(frame, tile, fixedW, fixedH)
 		t = UI.Tiled(frame, "BACKGROUND", -7, UI.TEX.leather, tile, tile)
 	end
 	UI.Tint(t, L.cover)
-	local wear = frame:CreateTexture(nil, "BACKGROUND", nil, -6)
-	wear:SetAllPoints()
-	wear:SetTexture(UI.TEX.vignette)
-	wear:SetVertexColor(0, 0, 0, 0.7)
 	return t
 end
 UI.LeatherBack = LeatherBack
@@ -112,65 +105,39 @@ function UI:Build()
 
 	-- ③ 사다리꼴 가죽 탭 (고른 탭은 금빛)
 	self.tabButtons = {}
-	local tabW, tabOverlap = 182, -3
-	local x = CONTENT_L + 2
+	local tabW = 150
+	local x = CONTENT_L
 	for _, tab in ipairs(UI.TABS) do
 		local b = UI.Tab(body, tab.name, tab.key, function() UI:SelectTab(tab.id) end, nil, UI.ICON[tab.icon])
 		b:SetWidth(tabW)
-		b:SetPoint("BOTTOMLEFT", f, "TOPLEFT", x, -(CONTENT_T - 4))
-		x = x + tabW - tabOverlap
+		b:SetPoint("BOTTOMLEFT", f, "TOPLEFT", x, -(CONTENT_T - 6))
+		x = x + tabW + 4
 		self.tabButtons[tab.id] = b
 	end
-	local tabRule = body:CreateTexture(nil, "ARTWORK")
-	tabRule:SetPoint("TOPLEFT", f, "TOPLEFT", CONTENT_L - 6, -(CONTENT_T - 4))
-	tabRule:SetPoint("TOPRIGHT", f, "TOPRIGHT", -(CONTENT_R - 6), -(CONTENT_T - 4))
-	tabRule:SetHeight(2)
-	UI.Gradient(tabRule, "VERTICAL", { 0.35, 0.22, 0.08, 0.9 }, { L.gold[1], L.gold[2], L.gold[3], 0.9 })
 
-	-- ④ 두꺼운 금테와 모서리 장식, 가죽끈과 버클, 붉은 깃발, 제목 명판
-	local trim = UI.GoldFrame(f, EDGE, BAR, CORNER, CORNER_OUT, body:GetFrameLevel() + 40)
+	-- ④ 가는 테두리, 제목, 닫기 버튼
+	local trim = UI.GoldFrame(f, 0, 0, nil, nil, body:GetFrameLevel() + 40)
 	f.trim = trim
-	for _, frac in ipairs({ 0.33, 0.55, 0.77 }) do
-		local strap = trim:CreateTexture(nil, "ARTWORK", nil, 3)
-		strap:SetSize(54, 47)
-		strap:SetPoint("LEFT", f, "TOPLEFT", -14, -HEIGHT * frac)
-		strap:SetTexture(UI.TEX.strap)
-		strap:SetTexCoord(0.42, 1, 0, 1)
-	end
-	local banner = trim:CreateTexture(nil, "ARTWORK", nil, 4)
-	banner:SetSize(62, 124)
-	banner:SetPoint("TOP", f, "TOPLEFT", 150, -2)
-	banner:SetTexture(UI.TEX.banner)
-	local plaque = trim:CreateTexture(nil, "ARTWORK", nil, 5)
-	plaque:SetSize(420, 210)
-	plaque:SetPoint("TOP", f, "TOP", 0, 68)
-	plaque:SetTexture(UI.TEX.plaque)
-	f.plaque = plaque
 	local brand = trim:CreateFontString(nil, "OVERLAY", UI.F.brand)
-	brand:SetPoint("CENTER", plaque, "TOP", 0, -131)
+	brand:SetPoint("TOPLEFT", f, "TOPLEFT", 22, -14)
 	brand:SetText("BIG CHRONICLE")
+	f.plaque = brand
+	local plaque = brand
 	local title = trim:CreateFontString(nil, "OVERLAY", UI.F.label)
-	title:SetPoint("TOP", brand, "BOTTOM", 0, -3)
+	title:SetPoint("BOTTOMLEFT", f, "TOPLEFT", 214, -33)
 	UI.OnLeather(title, L.sub)
 	f.title = title
-	for _, side in ipairs({ "LEFT", "RIGHT" }) do
-		local laurel = trim:CreateTexture(nil, "ARTWORK", nil, 3)
-		laurel:SetSize(92, 46)
-		laurel:SetPoint("BOTTOM" .. side, f, "BOTTOM" .. side, side == "LEFT" and 96 or -96, 22)
-		laurel:SetTexture(UI.TEX.laurel)
-		if side == "LEFT" then laurel:SetTexCoord(1, 0, 0, 1) end
-	end
-	local close = CloseButton(trim, function() f:Hide() end, 34)
-	close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -34, -34)
+	local close = CloseButton(trim, function() f:Hide() end, 28)
+	close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -10, -8)
 
 	-- ⑤ 아래쪽: 모험 요약과 단축키 안내
 	local sub = trim:CreateFontString(nil, "OVERLAY", UI.F.small)
-	sub:SetPoint("BOTTOM", f, "BOTTOM", 0, 46)
-	sub:SetJustifyH("CENTER")
+	sub:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 22, 14)
+	sub:SetJustifyH("LEFT")
 	UI.OnLeather(sub, L.text)
 	f.subtitle = sub
 	local hints = trim:CreateFontString(nil, "OVERLAY", UI.F.tiny)
-	hints:SetPoint("BOTTOM", f, "BOTTOM", 0, 30)
+	hints:SetPoint("TOPRIGHT", f, "TOPRIGHT", -46, -18)
 	UI.OnLeather(hints, L.muted)
 	f.hints = hints
 
@@ -182,29 +149,8 @@ function UI:Build()
 		region:SetWidth(w)
 		squish[#squish + 1] = { region, w }
 	end
-	-- 넘어가는 표지의 금테: 무늬가 폭과 함께 눌리도록 반복 횟수를 고정한다
 	local function FixedTrim(frame)
-		local tile = BAR * 8
-		local top = frame:CreateTexture(nil, "BORDER")
-		top:SetTexture(UI.TEX.goldBar, "REPEAT", "REPEAT")
-		top:SetPoint("TOPLEFT", 0, -EDGE); top:SetPoint("TOPRIGHT", 0, -EDGE); top:SetHeight(BAR)
-		top:SetTexCoord(0, WIDTH / tile, 0, 1)
-		local bot = frame:CreateTexture(nil, "BORDER")
-		bot:SetTexture(UI.TEX.goldBar, "REPEAT", "REPEAT")
-		bot:SetPoint("BOTTOMLEFT", 0, EDGE); bot:SetPoint("BOTTOMRIGHT", 0, EDGE); bot:SetHeight(BAR)
-		bot:SetTexCoord(0, WIDTH / tile, 1, 0)
-		local n = (HEIGHT - EDGE * 2) / tile
-		local left = frame:CreateTexture(nil, "BORDER", nil, 1)
-		left:SetTexture(UI.TEX.goldBar, "REPEAT", "REPEAT")
-		left:SetPoint("TOPLEFT", 0, -EDGE); left:SetPoint("BOTTOMLEFT", 0, EDGE)
-		left:SetTexCoord(0, 0, n, 0, 0, 1, n, 1)
-		Squish(left, BAR)
-		local right = frame:CreateTexture(nil, "BORDER", nil, 1)
-		right:SetTexture(UI.TEX.goldBar, "REPEAT", "REPEAT")
-		right:SetPoint("TOPRIGHT", 0, -EDGE); right:SetPoint("BOTTOMRIGHT", 0, EDGE)
-		right:SetTexCoord(0, 1, n, 1, 0, 0, n, 0)
-		Squish(right, BAR)
-		for _, t in pairs(UI.Corners(frame, UI.TEX.corner, CORNER, -CORNER_OUT, nil, "OVERLAY", 2)) do Squish(t, CORNER) end
+		UI.Outline(frame, { 0, 0, 0, 0.9 }, 0)
 	end
 
 	local flap = CreateFrame("Frame", nil, f)
@@ -215,14 +161,9 @@ function UI:Build()
 	LeatherBack(flap, 512, WIDTH, HEIGHT)
 	FixedTrim(flap)
 	local inner = UI.Outline(flap, { L.gold[1], L.gold[2], L.gold[3], 0.55 }, 44, "BORDER")
-	local medal = flap:CreateTexture(nil, "ARTWORK")
-	medal:SetHeight(230)
-	Squish(medal, 230)
-	medal:SetPoint("CENTER", 0, 44)
-	medal:SetTexture(UI.TEX.medallion)
 	local flapTitle = flap:CreateFontString(nil, "OVERLAY", UI.F.brand)
-	flapTitle:SetPoint("TOP", medal, "BOTTOM", 0, -18)
-	flapTitle:SetText(UI.Spaced("BIG CHRONICLE", 1))
+	flapTitle:SetPoint("CENTER", flap, "CENTER", 0, 20)
+	flapTitle:SetText("BIG CHRONICLE")
 	local flapRule = UI.Divider(flap, 300, L.gold)
 	flapRule:SetPoint("TOP", flapTitle, "BOTTOM", 0, -10)
 	Squish(flapRule, 300)
@@ -249,8 +190,8 @@ function UI:Build()
 	LeatherBack(inside, 512, WIDTH, HEIGHT)
 	UI.Outline(inside, { 0, 0, 0, 1 }, 0)
 	local endpaper = inside:CreateTexture(nil, "BORDER")
-	endpaper:SetTexture(UI.TEX.panel)
-	endpaper:SetVertexColor(C.page2[1] * 0.92, C.page2[2] * 0.88, C.page2[3] * 0.8)
+	endpaper:SetTexture(UI.TEX.paper)
+	endpaper:SetVertexColor(C.page[1] * 0.8, C.page[2] * 0.8, C.page[3] * 0.8)
 	local endShade = inside:CreateTexture(nil, "OVERLAY", nil, 6)
 	endShade:SetAllPoints()
 	UI.Gradient(endShade, "HORIZONTAL", { 0, 0, 0, 0.7 }, { 0, 0, 0, 0.1 })
@@ -402,7 +343,7 @@ function UI:RefreshHeader()
 	local name = ns.PlayerName()
 	local race = ns.Call(UnitRace, "player") or meta.race or ""
 	local class = ns.Call(UnitClass, "player") or meta.class or ""
-	f.title:SetText(UI.Spaced(name .. "의 연대기", 1))
+	f.title:SetText(name .. "의 모험 수첩")
 	local found, total, species = ns.Bestiary:Completion()
 	local aDone, aTotal, aPts = ns.Achievements:Summary()
 	f.subtitle:SetText(string.format("%s  ·  %d레벨  ·  기록 %s개  ·  도감 %d/%d 종족, %s종  ·  업적 %d/%d (%s점)",
@@ -512,7 +453,7 @@ function UI:ShowExport()
 		div:SetPoint("TOP", hint, "BOTTOM", 0, -6)
 
 		local close = CloseButton(f, function() f:Hide() end, 28)
-		close:SetPoint("TOPRIGHT", -22, -22)
+		close:SetPoint("TOPRIGHT", -8, -8)
 		close:SetFrameLevel(f:GetFrameLevel() + 10)
 
 		local box = UI.Section(f)

@@ -30,7 +30,6 @@ MEDIA = ROOT / "BigChronicle" / "Media"
 CACHE = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/bigchronicle-assets").resolve()
 CACHE.mkdir(parents=True, exist_ok=True)
 (MEDIA / "Icons").mkdir(parents=True, exist_ok=True)
-(MEDIA / "Fonts").mkdir(parents=True, exist_ok=True)
 random.seed(7)
 np.random.seed(7)
 
@@ -374,88 +373,38 @@ def mask_icon(mask, size):
 
 
 # ---------------------------------------------------------------- 실행
-ICONS = ["quill-ink", "dragon-head", "laurel-crown", "hourglass", "cog", "griffin-symbol"]
-OBSOLETE = ["Grid", "Ring", "Hole", "Tape", "Sticky", "Torn", "Underline", "PenCircle", "Paperclip", "Stitch", "Paper",
-            "SpineBand", "Ribbon"]
+ICONS = ["quill-ink", "dragon-head", "laurel-crown", "hourglass", "cog"]
+KEEP = {"Leather", "Paper", "Seal", "SealDex", "SealAch", "Icon"}
+POLYHAVEN = "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_leather/brown_leather_albedo_1k.jpg"
+AMBIENTCG = "https://ambientcg.com/get?file=Paper005_1K-JPG.zip"
 
 
 def main():
-    sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-    import ornate as O
-
-    paper_src = Image.open(subtle("natural_paper.png")).convert("RGB")
-    leather_src = Image.open(subtle("leather_1.png")).convert("RGB")
-
-    parchment = parchment_tex(paper_src)
-    save_tga(parchment, "Parchment.tga")
-    leather = O.worn_leather(leather_src)
-    save_tga(leather, "Leather.tga")
-    save_tga(vignette_tex(), "Vignette.tga")
-    save_tga(orn_corner_tex(), "OrnCorner.tga")
-    save_tga(dust_tex(), "Dust.tga")
-    save_tga(check_tex(), "Check.tga")
-    save_tga(ink_tex(), "Ink.tga")
-    save_tga(ghost_page_tex(), "PageGhost.tga")
+    """표지와 속지는 실제 사진 텍스처(CC0)를 크기만 줄여 그대로 쓴다."""
+    import zipfile
+    leather = Image.open(fetch(POLYHAVEN, "brown_leather_albedo_1k.jpg")).convert("RGB")
+    save_tga(leather.resize((512, 512), Image.LANCZOS), "Leather.tga")
+    z = zipfile.ZipFile(fetch(AMBIENTCG, "Paper005_1K-JPG.zip"))
+    name = next(n for n in z.namelist() if "Color" in n)
+    paper = Image.open(z.open(name)).convert("RGB")
+    save_tga(paper.resize((512, 512), Image.LANCZOS), "Paper.tga")
 
     icons = game_icons()
-    names = ["wax-seal", "dragon-head", "laurel-crown", "fleur-de-lys", "curling-vines", "curled-leaf", "compass",
-             "stone-bridge", "castle-ruins", "pine-tree", "forest-camp", "tower-flag"] + ICONS
-    masks = render_masks(icons, list(dict.fromkeys(names)))
-
+    masks = render_masks(icons, ["wax-seal", "dragon-head", "laurel-crown"] + ICONS)
     save_tga(wax_seal(masks["wax-seal"], None), "Seal.tga")
     save_tga(wax_seal(masks["wax-seal"], masks["dragon-head"]), "SealDex.tga")
     save_tga(wax_seal(masks["wax-seal"], masks["laurel-crown"], color=(140, 24, 22)), "SealAch.tga")
-    save_tga(mask_icon(masks["fleur-de-lys"], 64), "Fleuron.tga")
-    save_tga(mask_icon(masks["griffin-symbol"], 256), "Emblem.tga")
-
-    # 금테 장정
-    save_tga(O.gold_bar(), "GoldBar.tga")
-    save_tga(O.ornate_corner(masks), "Corner.tga")
-    save_tga(O.laurel_tex(), "Laurel.tga")
-    save_tga(O.title_plaque(masks, leather), "Plaque.tga")
-    save_tga(O.banner_tex(masks), "Banner.tga")
-    save_tga(O.strap_tex(leather), "Strap.tga")
-    save_tga(O.cover_medallion(masks, leather), "Medallion.tga")
-    save_tga(O.tab_tex(True, leather), "TabActive.tga")
-    save_tga(O.tab_tex(False, leather), "Tab.tga")
-    save_tga(O.button_tex("normal", leather), "Button.tga")
-    save_tga(O.button_tex("active", leather), "ButtonActive.tga")
-    save_tga(O.button_tex("red", leather), "ButtonRed.tga")
-    save_tga(O.badge_tex(), "Badge.tga")
-    save_tga(O.field_tex(), "Field.tga")
-    save_tga(O.icon_frame_tex(), "IconFrame.tga")
-    save_tga(O.close_tex(), "Close.tga")
-    save_tga(O.scroll_thumb_tex(), "ScrollThumb.tga")
-    save_tga(O.scroll_arrow_tex(), "ScrollArrow.tga")
-    save_tga(O.checkbox_tex(), "CheckBox.tga")
-    save_tga(O.parchment_panel(parchment), "Panel.tga")
-    save_tga(O.sketch_scene(masks, "castle"), "SketchCastle.tga")
-    save_tga(O.sketch_scene(masks, "camp"), "SketchCamp.tga")
 
     # 예전 디자인에서 쓰던 파일 정리
-    for n in OBSOLETE:
-        p = MEDIA / f"{n}.tga"
-        if p.exists():
+    for p in MEDIA.glob("*.tga"):
+        if p.stem not in KEEP:
             p.unlink()
     for p in (MEDIA / "Icons").glob("*.tga"):
-        if p.stem not in ICONS:
-            p.unlink()
-    for p in (MEDIA / "Fonts").glob("NanumPenScript*"):
         p.unlink()
     for n in ICONS:
         save_tga(mask_icon(masks[n], 64), f"Icons/{n}.tga")
-
-    # 글꼴: 나눔명조 ExtraBold(제목)·Bold(본문), Cinzel Bold(영문 제목, 가변 글꼴에서 굵기 700으로 고정)
-    for name in ("NanumMyeongjo-ExtraBold.ttf", "NanumMyeongjo-Bold.ttf"):
-        shutil.copy(fetch(FONT.format(name), name), MEDIA / "Fonts" / name)
-    shutil.copy(fetch(FONT.format("OFL.txt"), "NanumMyeongjo-OFL.txt"), MEDIA / "Fonts" / "NanumMyeongjo-OFL.txt")
-    cinzel_base = "https://raw.githubusercontent.com/google/fonts/main/ofl/cinzel/{}"
-    vf = fetch(cinzel_base.format("Cinzel%5Bwght%5D.ttf"), "Cinzel-VF.ttf")
-    from fontTools.ttLib import TTFont
-    from fontTools.varLib import instancer
-    inst = instancer.instantiateVariableFont(TTFont(vf), {"wght": 700})
-    inst.save(MEDIA / "Fonts" / "Cinzel-Bold.ttf")
-    shutil.copy(fetch(cinzel_base.format("OFL.txt"), "Cinzel-OFL.txt"), MEDIA / "Fonts" / "Cinzel-OFL.txt")
+    if (MEDIA / "Fonts").exists():
+        shutil.rmtree(MEDIA / "Fonts")   # 글꼴은 게임 기본 글꼴을 쓴다
     print("done")
 
 

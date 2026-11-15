@@ -85,7 +85,7 @@ Every achievement arrives as a parchment dispatch sealed with red wax and adds a
 
 ## ✨ Effects
 
-- The **leather front cover**, set with a gold griffin medallion, really swings open on its spine every time you open the book
+- The **leather front cover** really swings open on its spine every time you open the book
 - Changing chapters or turning journal pages **flips an actual parchment sheet** — forward for later chapters, backward for earlier ones
 - Reaching a new chapter unfurls a **dark cinematic band with a gilded chapter title between laurel branches**, with drifting gold dust
 - Every notification is **stamped with a red wax seal** — a laurel seal for achievements, a dragon seal for bestiary discoveries (new tribes, new creatures, rares and research ranks)
@@ -96,17 +96,14 @@ Every achievement arrives as a parchment dispatch sealed with red wax and adds a
 
 ---
 
-## 🎨 Gilded Leather Book UI
+## 🎨 Leather Notebook UI
 
-The window looks like an old RPG adventurer's handbook: **worn leather bound in heavy gold**.
+A plain, heavy **leather notebook**. No ornaments.
 
-- Cracked **red-brown leather**, a **thick gold frame** with vine-work **corner pieces** set with red gems, and **buckled straps** on the spine
-- A **gold title plaque** with a compass ornament and laurel branches, a **red banner** hanging at the top left, and a red close button
-- **Trapezoid leather tabs** — the selected one glows gold
-- Lists are **gold-rimmed leather buttons** with count badges; content sits on **torn, burnt-edged parchment panels**
-- **Engraving-style ink illustrations** in the corners of the parchment, gold icon frames and a gold scrollbar
-- **Serif (Myeongjo) text** throughout, with Cinzel for the English title
-- **Parchment (light) and Ebony (dark)** themes
+- The cover is a **real leather photo texture** and the pages a **real paper photo texture** (both CC0)
+- Flat leather tabs and buttons, thin border lines, clean lists on paper
+- Uses the **game's own fonts**
+- **Light and dark page** themes
 - Lore is revealed with a **typewriter effect** (click or press Space to show it all at once)
 - New journal entries gently fade in
 - Discovering a new tribe or rare creature brings a **wax-sealed parchment dispatch** to the top of the screen — click it to jump straight to that creature's bestiary page
@@ -166,7 +163,6 @@ Please leave bug reports and ideas in the comments. Typing `/bc debug` shows int
 
 ## Credits for free assets
 
-- Parchment and leather textures: [Subtle Patterns](https://github.com/atlemo/SubtlePatterns) — CC BY-SA 3.0
-- Crest, ornaments, illustrations, icons and wax seal design: [game-icons.net](https://game-icons.net) (Lorc, Delapouite and contributors) — CC BY 3.0
-- Fonts: Nanum Myeongjo ExtraBold and Bold (NHN), Cinzel Bold (The Cinzel Project Authors) — SIL Open Font License 1.1
-- Full details are in `Media/LICENSES.txt` inside the addon folder
+- Leather cover: [Poly Haven "Brown Leather"](https://polyhaven.com/a/brown_leather) — CC0
+- Paper pages: [ambientCG "Paper 005"](https://ambientcg.com/view?id=Paper005) — CC0
+- Tab icons and wax seal design: [game-icons.net](https://game-icons.net) (Lorc, Delapouite and contributors) — CC BY 3.0

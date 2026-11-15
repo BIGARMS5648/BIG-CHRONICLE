@@ -1,3 +1,9 @@
+## 1.6.0
+
+- **Simple leather notebook**: all ornaments (gold frame, corner pieces, plaque, banner, straps, sketches) are gone. The cover now uses a real leather photo texture and the pages a real paper photo texture (CC0, from Poly Haven and ambientCG), with flat tabs and buttons and thin border lines
+- The addon now uses the game's own fonts; no fonts are bundled
+- Smaller download
+
 ## 1.5.0
 
 - **Gilded leather book redesign**: worn red-brown leather, a thick gold frame with ornate vine corners and red gems, buckled straps on the spine, a gold title plaque with laurels, a red banner, trapezoid leather tabs (gold when selected), gold-rimmed leather list buttons with count badges, torn-edged parchment panels with engraving-style ink illustrations, gold icon frames and a gold scrollbar
