@@ -123,7 +123,10 @@ BigChronicle/
 ├─ Data/Tribes.lua     34개 종족 정의, 분류 키워드, 서식지, 배경 이야기
 ├─ Chronicle.lua       모험 일지 기록 (지역·레벨·퀘스트·던전·죽음·재물·메모)
 ├─ Bestiary.lua        도감 (발견·분류·처치 집계·연구 등급·툴팁)
+├─ Media/Icon.tga      애드온 목록 아이콘 (64×64)
 └─ UI/                 두루마리 테마, 위젯, 메인 창, 일지/도감/통계/설정 탭, 알림, 미니맵
+curseforge/            CurseForge 설명글, 변경 내역, 프로젝트 아이콘(PNG)
+tools/                 아이콘 생성 스크립트 (SVG → PNG/TGA)
 tests/
 ├─ mockwow.lua         일반 Lua 5.1에서 돌아가는 최소한의 WoW API 흉내
 └─ test_run.lua        로그인 → 탐험 → 레벨업 → 퀘스트 → 도감 → 던전 → UI 조작 시나리오 테스트
@@ -134,4 +137,10 @@ tests/
 ```
 lua5.1 tests/test_run.lua
 THEME=dark lua5.1 tests/test_run.lua
+```
+
+아이콘을 다시 만들려면 (Python + Pillow, Node Playwright 필요):
+
+```
+NODE_PATH=$(npm root -g) python3 tools/make_icon.py out/
 ```

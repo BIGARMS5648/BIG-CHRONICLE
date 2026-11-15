@@ -5,7 +5,7 @@
 ## Version: 1.0.0
 ## SavedVariables: BigChronicleDB
 ## SavedVariablesPerCharacter: BigChronicleCharDB
-## IconTexture: Interface\Icons\INV_Misc_Book_09
+## IconTexture: Interface\AddOns\BigChronicle\Media\Icon
 ## AddonCompartmentFunc: BigChronicle_OnAddonCompartmentClick
 
 Core.lua
