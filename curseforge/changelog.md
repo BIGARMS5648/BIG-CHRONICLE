@@ -1,3 +1,8 @@
+## 1.10.10
+
+- Opening and closing the book now plays the game's own book sounds (the spellbook opening and closing), instead of the bundled sounds that did not fit
+- The download only bundles the wax seal sound now
+
 ## 1.10.9
 
 - Removed the hardcore achievements: "reach level N without ever dying" (levels 10–60), dungeon clears under 30 and 20 minutes, 11 or more levels in one day, and goals no single character can realistically reach (exalted with 20–30 factions, 1,000-day streaks, 200,000 kills of one tribe, 2,000,000 kills, 200,000 gold, 20,000 quests, 20,000 hours, 200 quests in a day and similar). About 9,800 achievements remain

@@ -448,6 +448,19 @@ check(ns.UI.themeId == "light" and ns.db.theme == nil, "parchment is the only th
 check(themed:find("8a5a12") ~= nil, "parchment theme remaps colors")
 
 -- reset
+-- 창을 열고 닫는 소리: 게임에 들어 있는 책 소리 (주문서 펴기·덮기)
+print("== book sounds")
+do
+	local played, realPS, realPSF = {}, PlaySound, PlaySoundFile
+	PlaySound = function(id) played[#played + 1] = id; return true end
+	PlaySoundFile = function() return false end
+	ns.db.sound = true
+	ns.Effects.Sound("open"); ns.Effects.Sound("close")
+	local sk = SOUNDKIT or {}
+	check(played[1] == (sk.IG_SPELLBOOK_OPEN or 829) and played[2] == (sk.IG_SPELLBOOK_CLOSE or 830), "open/close play the book sounds")
+	PlaySound, PlaySoundFile = realPS, realPSF
+end
+
 -- 알림 위치: 잠금을 풀면 예시 알림을 끌어 옮기고, 오른쪽 클릭으로 잠근다
 print("== toast position")
 do

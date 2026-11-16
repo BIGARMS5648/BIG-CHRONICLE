@@ -7,7 +7,7 @@ tools/slice_assets.py 가 잘라 낸다. 이 스크립트는 효과용 파일만
   - 효과음: Kenney "RPG Audio" (CC0)    https://kenney.nl/assets/rpg-audio
 
 캐시 폴더의 kenney/ 아래에 p_star_06.png, p_light_01.png, p_dirt_02.png,
-p_magic_05.png 와 bookOpen.ogg 등 효과음 파일을 받아 두고 실행한다.
+p_magic_05.png 와 bookPlace1.ogg 효과음 파일을 받아 두고 실행한다.
 
 사용법 (Python + Pillow):
     python3 tools/build_assets.py <캐시_폴더>
@@ -23,7 +23,7 @@ MEDIA = ROOT / "BigChronicle" / "Media"
 CACHE = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/bigchronicle-assets").resolve()
 
 PARTICLES = (("star_06", "Star"), ("light_01", "Glow"), ("dirt_02", "Crumb"), ("magic_05", "Magic"))
-SOUNDS = ("bookOpen", "bookClose", "bookPlace1")
+SOUNDS = ("bookPlace1",)   # 밀랍 인장 소리 (창을 열고 닫는 소리는 게임 기본 소리)
 
 
 def save_tga(img, rel):

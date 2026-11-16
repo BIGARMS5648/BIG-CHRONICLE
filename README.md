@@ -163,7 +163,7 @@ TOC에는 Forever 인터페이스 번호 `16001`이 들어 있습니다. 출시 
 ## 사용한 에셋
 
 - 화면 그림 (창틀·탭·버튼·양피지·인장·아이콘·로고·미니맵 아이콘): 제작자가 직접 준비한 그림 (`art/`)
-- 효과 입자·효과음: [Kenney](https://kenney.nl) Particle Pack, RPG Audio — CC0
+- 효과 입자·밀랍 인장 소리: [Kenney](https://kenney.nl) Particle Pack, RPG Audio — CC0 (창을 열고 닫는 소리는 게임에 들어 있는 책 소리)
 - 자세한 내용은 `BigChronicle/Media/LICENSES.txt`
 
 ---

@@ -17,7 +17,7 @@ BIG CHRONICLE - assets
    License : CC0 1.0 (public domain)
 
 3) Sound effects: Kenney "RPG Audio"
-   Files   : Sounds\bookOpen.ogg, bookClose.ogg, bookPlace1.ogg
+   Files   : Sounds\bookPlace1.ogg (wax seal stamp)
    Source  : https://kenney.nl/assets/rpg-audio
    License : CC0 1.0 (public domain)
 

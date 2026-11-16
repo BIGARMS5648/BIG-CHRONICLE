@@ -174,4 +174,4 @@ Please leave bug reports and ideas in the comments. Typing `/bc debug` shows int
 ## Credits
 
 - Interface art (frame, tabs, buttons, parchment, seals, icons, logo, minimap icon): hand-made art by the author
-- Effect particles and sounds: [Kenney](https://kenney.nl) Particle Pack and RPG Audio — CC0
+- Effect particles and the wax seal sound: [Kenney](https://kenney.nl) Particle Pack and RPG Audio — CC0 (the book opening and closing sounds are the game's own)

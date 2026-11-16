@@ -77,16 +77,16 @@ end
 ------------------------------------------------------------------------
 -- 효과음
 ------------------------------------------------------------------------
--- 동봉한 효과음 (Kenney RPG Audio, CC0). 못 틀면 게임 기본 효과음으로 대신한다.
+-- 창을 열고 닫는 소리는 게임에 들어 있는 '책을 펴고 덮는 소리'(주문서 열기·닫기)를 쓴다.
+-- 밀랍 인장 소리만 동봉한 파일(Kenney RPG Audio, CC0)이다.
+-- 소리 후보는 앞에서부터 시도한다. 숫자는 사운드킷 번호 (829 = 주문서 펴기, 830 = 주문서 덮기).
 local SND = "Interface\\AddOns\\" .. ADDON .. "\\Media\\Sounds\\"
 local FILES = {
-	open  = { "bookOpen.ogg" },
-	close = { "bookClose.ogg" },
 	stamp = { "bookPlace1.ogg" },
 }
 local SOUNDS = {
-	open    = { "IG_QUEST_LOG_OPEN", "IG_SPELLBOOK_OPEN" },
-	close   = { "IG_QUEST_LOG_CLOSE", "IG_SPELLBOOK_CLOSE" },
+	open    = { "IG_SPELLBOOK_OPEN", 829, "IG_QUEST_LOG_OPEN" },
+	close   = { "IG_SPELLBOOK_CLOSE", 830, "IG_QUEST_LOG_CLOSE" },
 	stamp   = { "UI_EPICLOOT_TOAST", "IG_QUEST_LIST_COMPLETE" },
 	chapter = { "UI_LEGENDARY_LOOT_TOAST", "UI_EPICLOOT_TOAST", "LEVELUPSOUND" },
 }
@@ -97,12 +97,13 @@ function E.Sound(kind)
 		local ok, played = pcall(PlaySoundFile, SND .. files[math.random(#files)], "SFX")
 		if ok and played then return end
 	end
-	if not SOUNDKIT or not PlaySound then return end
+	if not PlaySound then return end
 	for _, key in ipairs(SOUNDS[kind] or {}) do
-		local id = SOUNDKIT[key]
+		local id = type(key) == "number" and key or (SOUNDKIT and SOUNDKIT[key])
 		if id then
-			pcall(PlaySound, id)
-			return
+			-- 이 클라이언트에 없는 소리면 PlaySound가 false를 돌려준다 → 다음 후보
+			local ok, willPlay = pcall(PlaySound, id, "SFX")
+			if ok and willPlay ~= false then return end
 		end
 	end
 end
