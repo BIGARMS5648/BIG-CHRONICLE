@@ -363,7 +363,7 @@ end
 
 -- 창틀: 금 모서리 + 박음질 가죽 테두리 + 안쪽의 짙은 가죽
 -- opts.scale: 배율, opts.ornament: 위아래 가운데 장식 ("top", "bottom", "both")
--- opts.fixedW: 표지가 넘어갈 때 무늬가 함께 눌리도록 반복 횟수를 고정할 폭
+-- opts.fixedW: 무늬 반복 횟수를 고정할 폭 (선택, 크기가 바뀌어도 무늬가 늘지 않게)
 function UI.WindowFrame(frame, opts)
 	opts = opts or {}
 	local F = ATLAS.Frame

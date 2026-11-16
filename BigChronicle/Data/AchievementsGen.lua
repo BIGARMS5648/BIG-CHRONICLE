@@ -56,13 +56,14 @@ local DEF_MT = {
 
 -- 사다리 하나 만들기
 --   o.id: id 앞부분, o.cat, o.icon, o.goals, o.progress(ctx) → 현재 값
---   o.name(goal) / o.desc(goal) → 문자열, o.flavor, o.format, o.key(손으로 쓴 업적과 겹침 검사용)
+--   o.name(goal) / o.desc(goal) → 문자열, o.flavor, o.format
+--   o.key: 손으로 쓴 업적과 겹치는지 값 이름으로 검사, o.skip: 손으로 쓴 업적이 이미 다루는 목표 { [goal] = true }
 local function Ladder(o)
 	local L = { ladder = o.id, cat = o.cat, icon = o.icon, progress = o.progress, flavor = o.flavor,
 		format = o.format, minor = true, nameFn = o.name, descFn = o.desc }
 	local n = #o.goals
 	for i, goal in ipairs(o.goals) do
-		if not (o.key and taken[o.key .. ":" .. goal]) then
+		if not (o.key and taken[o.key .. ":" .. goal]) and not (o.skip and o.skip[goal]) then
 			-- 사다리 위쪽일수록 점수가 크다
 			local r = i / n
 			local pts = o.points or (r < 0.4 and 5 or r < 0.75 and 10 or r < 0.95 and 25 or 50)
@@ -95,41 +96,45 @@ local SEEN_BANDS = { { 1, "목격자" }, { 25, "관찰자" }, { 250, "추적자"
 local RANK_NAMES = { "조우", "관찰자", "연구자", "권위자", "전설의 사냥꾼" }
 local function Stars(n) return string.rep("★", n) .. string.rep("☆", 5 - n) end
 
+local Josa = ns.Josa
 for _, t in ipairs(ns.TRIBES) do
 	local id, tname = t.id, t.name
-	Ladder({ id = "tk_" .. id, cat = "tribe", icon = t.icon, goals = Nice(1, 200000),
-		name = function(g) return tname .. " " .. Band(g, KILL_BANDS) .. " " .. Comma(g) end,
-		desc = function(g) return tname .. " 종족을 " .. Comma(g) .. "마리 처치하기" end,
+	local short = t.short or t.name
+	local unit = t.unit or "마리"
+	-- 첫 만남(조우), ★★★ 연구자, 100마리 처치는 손으로 쓴 종족 업적이 있다
+	Ladder({ id = "tk_" .. id, cat = "tribe", icon = t.icon, goals = Nice(1, 200000), skip = { [100] = true },
+		name = function(g) return short .. " " .. Band(g, KILL_BANDS) .. " " .. Comma(g) end,
+		desc = function(g) return Josa(tname, "을") .. " " .. Comma(g) .. unit .. " 처치하기" end,
 		progress = function(ctx) return ctx.tribeKills[id] or 0 end,
-		flavor = tname .. "의 이름이 사냥 기록에 또 한 줄 늘었다." })
-	Ladder({ id = "ts_" .. id, cat = "tribe", icon = t.icon, goals = { 1, 2, 3, 4, 5, 6, 8, 10 },
-		name = function(g) return tname .. " 표본 " .. g .. "종" end,
-		desc = function(g) return tname .. " 종족의 서로 다른 몬스터 " .. g .. "종 발견하기" end,
+		flavor = Josa(tname, "과") .. "의 싸움이 사냥 기록에 또 한 줄 늘었다." })
+	Ladder({ id = "ts_" .. id, cat = "tribe", icon = t.icon, goals = { 2, 3, 4, 5, 6, 8, 10 },
+		name = function(g) return short .. " 표본 " .. g .. "종" end,
+		desc = function(g) return "도감의 " .. tname .. " 항목에 서로 다른 몬스터 " .. g .. "종 올리기" end,
 		progress = function(ctx) return ctx.tribeSpecies[id] or 0 end,
 		flavor = "도감의 " .. tname .. " 항목에 새 그림이 붙었다." })
-	Ladder({ id = "tr_" .. id, cat = "tribe", icon = t.icon, goals = { 2, 3, 4, 5, 6 }, points = 10,
-		name = function(g) return tname .. " " .. RANK_NAMES[g - 1] end,
+	Ladder({ id = "tr_" .. id, cat = "tribe", icon = t.icon, goals = { 3, 5, 6 }, points = 10,
+		name = function(g) return short .. " " .. RANK_NAMES[g - 1] end,
 		desc = function(g) return tname .. " 연구 등급 " .. Stars(g - 1) .. " " .. RANK_NAMES[g - 1] .. " 달성" end,
 		progress = function(ctx) return ctx.tribeRank[id] or 0 end,
 		flavor = tname .. "에 대해 아는 것이 한 겹 더 깊어졌다." })
-	Ladder({ id = "tw_" .. id, cat = "tribe", icon = t.icon, goals = Nice(1, 10000),
-		name = function(g) return tname .. " " .. Band(g, SEEN_BANDS) .. " " .. Comma(g) end,
-		desc = function(g) return tname .. " 종족을 " .. Comma(g) .. "번 목격하기" end,
+	Ladder({ id = "tw_" .. id, cat = "tribe", icon = t.icon, goals = Nice(10, 10000),   -- 첫 목격은 '첫 만남' 업적
+		name = function(g) return short .. " " .. Band(g, SEEN_BANDS) .. " " .. Comma(g) end,
+		desc = function(g) return Josa(tname, "을") .. " " .. Comma(g) .. "번 목격하기" end,
 		progress = function(ctx) return ctx.tribeSeen[id] or 0 end,
-		flavor = "멀리서도 " .. tname .. "의 기척을 알아차리게 되었다." })
+		flavor = "멀리서도 " .. Josa(short, "의") .. " 기척을 알아차리게 되었다." })
 	-- 알려진 서식지마다
 	for _, zone in ipairs(t.habitats or {}) do
 		local key = id .. "|" .. zone
 		Ladder({ id = "hz_" .. id .. "_" .. zone, cat = "tribe", icon = t.icon, goals = { 1, 3, 5 },
-			name = function(g) return zone .. "의 " .. tname .. " " .. g .. "종" end,
-			desc = function(g) return zone .. "에서 " .. tname .. " 종족 " .. g .. "종 발견하기" end,
+			name = function(g) return zone .. "의 " .. short .. " " .. g .. "종" end,
+			desc = function(g) return zone .. "에서 " .. tname .. " " .. g .. "종 발견하기" end,
 			progress = function(ctx) return ctx.habitatSpecies[key] or 0 end,
-			flavor = zone .. "의 " .. tname .. " 무리를 도감에 옮겨 적었다." })
+			flavor = zone .. "의 " .. short .. " 무리를 도감에 옮겨 적었다." })
 		Ladder({ id = "hw_" .. id .. "_" .. zone, cat = "tribe", icon = t.icon, goals = { 10, 50, 100, 250, 500 },
-			name = function(g) return zone .. "의 " .. tname .. " 관찰 " .. Comma(g) end,
-			desc = function(g) return zone .. "에서 " .. tname .. " 종족을 " .. Comma(g) .. "번 목격하기" end,
+			name = function(g) return zone .. "의 " .. short .. " 관찰 " .. Comma(g) end,
+			desc = function(g) return zone .. "에서 " .. Josa(tname, "을") .. " " .. Comma(g) .. "번 목격하기" end,
 			progress = function(ctx) return ctx.habitatSeen[key] or 0 end,
-			flavor = zone .. "의 " .. tname .. "들이 어디서 무엇을 하는지 이제 눈에 선하다." })
+			flavor = zone .. "의 " .. short .. " 무리가 어디서 무엇을 하는지 이제 눈에 선하다." })
 	end
 end
 
@@ -154,7 +159,7 @@ for _, z in ipairs(ns.CLASSIC_ZONES) do
 		progress = function(ctx) return ctx.zoneTime[name] or 0 end,
 		flavor = name .. "에서 흘려보낸 시간도 이야기가 되었다." })
 	Ladder({ id = "zq_" .. z.map, cat = "quest", icon = I .. "INV_Misc_Note_01",
-		goals = z.fewQuests and { 1, 2, 3 } or { 1, 2, 3, 5, 7, 10, 12, 15, 20, 25, 30, 35, 40, 50 },
+		goals = z.fewQuests and { 1, 2 } or { 1, 2, 3, 5, 7, 12, 15, 20, 25, 30, 35, 40, 50 },   -- 3·10개는 '이야기꾼' 업적
 		name = function(g) return name .. "의 해결사 " .. g end,
 		desc = function(g) return name .. "에서 퀘스트 " .. g .. "개 완료하기" end,
 		progress = function(ctx) return math.max(ctx.questZone[name] or 0, ctx.questMap[z.map] or 0) end,
@@ -194,7 +199,7 @@ local function Instance(d, cat, icon)
 		desc = function(g) return name .. "에 " .. g .. "번 들어가기" end,
 		progress = function(ctx) return math.max(ctx.runCount[map] or 0, ctx.runCountName[name] or 0) end,
 		flavor = name .. "의 입구가 이제 집 앞 골목처럼 익숙하다." })
-	Ladder({ id = "ic_" .. map, cat = cat, icon = icon, goals = RUN_GOALS,
+	Ladder({ id = "ic_" .. map, cat = cat, icon = icon, goals = RUN_GOALS, skip = { [1] = true, [5] = true },
 		name = function(g) return name .. " 정복 " .. g .. "회" end,
 		desc = function(g) return name .. "에서 보스를 쓰러뜨리고 원정을 " .. g .. "번 마치기" end,
 		progress = function(ctx) return math.max(ctx.clearCount[map] or 0, ctx.clearCountName[name] or 0) end,
@@ -212,7 +217,7 @@ local function Instance(d, cat, icon)
 					local best = ctx.bestClear[name]
 					return (best and best <= m * 60) and 1 or 0
 				end,
-				flavor = "숨 돌릴 틈도 없이 " .. name .. "을 휩쓸고 나왔다." })
+				flavor = "숨 돌릴 틈도 없이 " .. Josa(name, "을") .. " 휩쓸고 나왔다." })
 		end
 	end
 end
@@ -220,7 +225,7 @@ for _, d in ipairs(ns.CLASSIC_DUNGEONS) do Instance(d, "dungeon", I .. "INV_Misc
 for _, d in ipairs(ns.CLASSIC_RAIDS) do Instance(d, "raid", I .. "INV_Misc_Head_Dragon_01") end
 for _, b in ipairs(ns.CLASSIC_BATTLEGROUNDS) do
 	local name, map = b.name, b.map
-	Ladder({ id = "bg_" .. map, cat = "pvp", icon = I .. "Ability_DualWield", goals = Nice(1, 2000),
+	Ladder({ id = "bg_" .. map, cat = "pvp", icon = I .. "Ability_DualWield", goals = Nice(1, 2000), skip = { [1] = true, [10] = true },
 		name = function(g) return name .. " 참전 " .. Comma(g) .. "회" end,
 		desc = function(g) return name .. "에 " .. Comma(g) .. "번 참전하기" end,
 		progress = function(ctx) return math.max(ctx.bgMaps[map] or 0, ctx.bgNames[name] or 0) end,
@@ -234,7 +239,7 @@ do
 	local goals = {}
 	for lv = 2, 60 do goals[#goals + 1] = lv end
 	Ladder({ id = "lv", cat = "growth", icon = I .. "Spell_Holy_InnerFire", goals = goals, key = "level", points = 5,
-		name = function(g) return g .. "레벨 달성" end,
+		name = function(g) return g .. "레벨" end,
 		desc = function(g) return g .. "레벨에 도달하기" end,
 		progress = function(ctx) return ctx.level or 0 end,
 		flavor = "한 걸음 더 강해졌다." })
@@ -265,6 +270,22 @@ for _, c in ipairs(CLASSES) do
 		desc = function(g) return cname .. " 캐릭터로 " .. g .. "레벨에 도달하기" end,
 		progress = function(ctx) return ctx.classToken == token and ctx.level or 0 end,
 		flavor = cname .. "의 길도 이제 손에 익었다." })
+	-- 직업마다 한 캐릭터로 쌓은 처치·퀘스트·도감 (계정 공용이라 여러 직업을 키울수록 채워진다)
+	Ladder({ id = "ck_" .. token, cat = "growth", icon = I .. c[3], goals = { 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000 },
+		name = function(g) return cname .. "의 칼끝 " .. Comma(g) end,
+		desc = function(g) return cname .. " 캐릭터로 몬스터 " .. Comma(g) .. "마리 처치하기" end,
+		progress = function(ctx) return ctx.classToken == token and ctx.kills or 0 end,
+		flavor = cname .. "의 손에 쓰러진 적이 산을 이룬다." })
+	Ladder({ id = "cq_" .. token, cat = "growth", icon = I .. c[3], goals = { 10, 25, 50, 100, 250, 500, 1000, 2500 },
+		name = function(g) return cname .. "의 해결사 " .. Comma(g) end,
+		desc = function(g) return cname .. " 캐릭터로 퀘스트 " .. Comma(g) .. "개 완료하기" end,
+		progress = function(ctx) return ctx.classToken == token and ctx.quests or 0 end,
+		flavor = cname .. "의 이름으로 맺은 약속을 하나 더 지켰다." })
+	Ladder({ id = "cd_" .. token, cat = "growth", icon = I .. c[3], goals = { 10, 25, 50, 100, 200, 300, 500 },
+		name = function(g) return cname .. "의 도감 " .. Comma(g) .. "종" end,
+		desc = function(g) return cname .. " 캐릭터로 서로 다른 몬스터 " .. Comma(g) .. "종 발견하기" end,
+		progress = function(ctx) return ctx.classToken == token and ctx.species or 0 end,
+		flavor = cname .. "의 눈으로 본 세상이 도감에 쌓였다." })
 end
 for _, r in ipairs(RACES) do
 	local rtoken, rname = r[1], r[2]
@@ -273,6 +294,11 @@ for _, r in ipairs(RACES) do
 		desc = function(g) return rname .. " 캐릭터로 " .. g .. "레벨에 도달하기" end,
 		progress = function(ctx) return ctx.raceToken == rtoken and ctx.level or 0 end,
 		flavor = rname .. "의 피가 흐르는 영웅이 또 하나 자랐다." })
+	Ladder({ id = "rk_" .. rtoken, cat = "growth", icon = I .. "Spell_Holy_InnerFire", goals = { 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000 },
+		name = function(g) return rname .. "의 칼끝 " .. Comma(g) end,
+		desc = function(g) return rname .. " 캐릭터로 몬스터 " .. Comma(g) .. "마리 처치하기" end,
+		progress = function(ctx) return ctx.raceToken == rtoken and ctx.kills or 0 end,
+		flavor = rname .. "의 이름이 전장에 울려 퍼진다." })
 	for _, token in ipairs(r[3]) do
 		local cname = CLASS_NAME[token]
 		Ladder({ id = "rcc_" .. rtoken .. "_" .. token, cat = "growth", icon = I .. "Spell_Holy_InnerFire", goals = { 10, 20, 30, 40, 50, 60 },
@@ -346,17 +372,14 @@ end
 ------------------------------------------------------------------------
 -- 일지: 기록 종류별, 시간대별, 요일별, 달별
 ------------------------------------------------------------------------
+-- (지역·퀘스트·죽음 등 다른 누적 업적과 같은 것을 세는 종류는 빼고, 겹치지 않는 것만)
 local LOG_CATS = {
-	{ "zone", "지역 탐험", 100 }, { "subzone", "장소 발견", 3000 }, { "level", "레벨업", 60 },
-	{ "quest", "퀘스트", 20000 }, { "dungeon", "던전 원정", 10000 }, { "boss", "보스 처치", 20000 },
-	{ "pvp", "전장", 10000 }, { "death", "죽음", 10000 }, { "dex", "도감", 5000 },
-	{ "rare", "희귀 개체", 1000 }, { "milestone", "사냥 이정표", 5000 }, { "money", "재물", 50 },
-	{ "bind", "귀환석", 300 }, { "note", "나의 기록", 5000 },
+	{ "milestone", "사냥 이정표", 5000 },
 }
 for _, c in ipairs(LOG_CATS) do
 	local cat, cname, hi = c[1], c[2], c[3]
 	Ladder({ id = "lc_" .. cat, cat = "chronicle", icon = I .. "INV_Misc_Book_09", goals = Nice(1, hi),
-		name = function(g) return "「" .. cname .. "」 기록 " .. Comma(g) end,
+		name = function(g) return cname .. " 기록 " .. Comma(g) end,
 		desc = function(g) return "일지에 '" .. cname .. "' 기록 " .. Comma(g) .. "개 남기기" end,
 		progress = function(ctx) return ctx.logCat[cat] or 0 end,
 		flavor = "전기의 '" .. cname .. "' 장이 또 두꺼워졌다." })

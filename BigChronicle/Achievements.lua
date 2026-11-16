@@ -371,7 +371,9 @@ function A:Evaluate()
 	local ctx = self:Context()
 	self.ctx = ctx
 	-- 처음 켰을 때, 또는 업데이트로 업적 목록이 바뀐 뒤 처음 판정할 때 이미 만족한 것은 '이전에 이룬 업적'으로 조용히 남긴다
-	local quiet = not ach.initialized or ach.sig ~= ns.ACH_SIGNATURE
+	-- (애드온을 1레벨에 처음 켠 캐릭터는 '이전에 이룬 것'이 없으니 그냥 새 업적으로 다룬다)
+	local fresh = not ach.initialized and ((db.meta and db.meta.startLevel) or 1) <= 1
+	local quiet = not fresh and (not ach.initialized or ach.sig ~= ns.ACH_SIGNATURE)
 	local account = self:Account().done
 	local newly, retro = {}, {}
 	-- 같은 사다리(같은 값)의 단계는 값을 한 번만 읽고, 낮은 단계를 못 넘으면 높은 단계는 건너뛴다
@@ -420,57 +422,71 @@ function A:Evaluate()
 			{ retro = #retro })
 	end
 	ach.initialized = true
-	if #newly > 0 then
-		-- 손으로 쓴 업적은 하나하나 알리고, 자동 업적은 한 번에 묶어 알린다 (알림이 쏟아지지 않도록)
-		local minor = {}
-		for _, def in ipairs(newly) do
-			if def.minor then minor[#minor + 1] = def else self:Announce(def) end
-		end
-		if #minor == 1 then
-			self:Announce(minor[1])
-		elseif #minor > 1 then
-			self:AnnounceMany(minor)
-		end
-	end
+	if #newly > 0 then self:Announce(newly) end
 	if #newly > 0 or #retro > 0 then ns:Fire("ACH_UPDATED", newly) end
 end
 
-function A:Announce(def)
-	ns.char.ach.unseen = ns.char.ach.unseen or {}
-	ns.char.ach.unseen[def.id] = true
-	local flavor = def.flavor or "또 하나의 이야기가 완성되었다."
-	local data = { ach = def.id }
-	-- 던전·공격대 업적은 원정이 끝난 시각에 맞춰 적는다 (원정 정리는 던전을 나온 뒤 늦게 이루어질 수 있다)
-	local cat = def.cat
-	if (cat == "dungeon" or cat == "raid") and self.lastExpStop and time() - self.lastExpStop < 3600 then
-		data.t = self.lastExpStop
-		ns.char.ach.done[def.id] = self.lastExpStop
-		local e = self:Account().done[def.id]
-		if e and e.by == ns.PlayerName() then e.t = self.lastExpStop end
-	end
-	ns.Chronicle:Add("achievement", flavor .. ns.Hex("  — 업적 「" .. def.name .. "」 달성 · +" .. def.points .. "점", ns.COLOR.dim), data)
-	if ns.Toast then
-		ns.Toast:Show("업적 달성!", "「" .. def.name .. "」   +" .. def.points .. "점", def.icon, "achievement", { ach = def.id })
-	end
-end
-
--- 자동 업적 여러 개를 한 줄, 한 장의 알림으로
-function A:AnnounceMany(defs)
+-- 한 번의 판정에서 새로 이룬 업적들을 알린다
+--   전기: 손으로 쓴 업적만 남긴다. 여럿이면 가장 큰 업적의 문장으로 한 줄에 묶는다.
+--         자동 업적(단계별 이정표)은 전기에 따로 쓰지 않고, 같은 줄의 '외 N개'에만 더한다.
+--   알림: 한 번에 한 장 (하나면 그 업적, 여럿이면 '업적 N개 달성!')
+function A:Announce(list)
 	local ach = ns.char.ach
 	ach.unseen = ach.unseen or {}
-	local pts, names = 0, {}
-	table.sort(defs, function(a, b) return a.points > b.points end)
-	for i, def in ipairs(defs) do
+	local major, minor, pts = {}, {}, 0
+	for _, def in ipairs(list) do
 		ach.unseen[def.id] = true
 		pts = pts + def.points
-		if i <= 3 then names[#names + 1] = "「" .. def.name .. "」" end
+		if def.minor then minor[#minor + 1] = def else major[#major + 1] = def end
 	end
-	local more = #defs > 3 and (" 외 " .. (#defs - 3) .. "개") or ""
-	ns.Chronicle:Add("achievement", "여러 갈래의 길에서 한꺼번에 이정표를 지났다." ..
-		ns.Hex("  — 업적 " .. table.concat(names, ", ") .. more .. " 달성 · +" .. pts .. "점", ns.COLOR.dim), { ach = defs[1].id, many = #defs })
+	local byPoints = function(a, b) return a.points > b.points end
+	table.sort(major, byPoints)
+	table.sort(minor, byPoints)
+	-- 같은 사다리의 여러 단계는 가장 높은 단계 하나만 이름으로 보여 준다
+	local shown, seenLadder = {}, {}
+	local function pick(def)
+		local L = def.ladder
+		if L then
+			if seenLadder[L] then
+				if def.goal > seenLadder[L].goal then
+					for i, d in ipairs(shown) do if d == seenLadder[L] then shown[i] = def end end
+					seenLadder[L] = def
+				end
+				return
+			end
+			seenLadder[L] = def
+		end
+		shown[#shown + 1] = def
+	end
+	for _, def in ipairs(major) do pick(def) end
+	for _, def in ipairs(minor) do pick(def) end
+	local top = shown[1]
+
+	if #major > 0 then
+		local data = { ach = major[1].id, major = #major, count = #list }
+		-- 던전·공격대 업적은 원정이 끝난 시각에 맞춰 적는다 (원정 정리는 던전을 나온 뒤 늦게 이루어질 수 있다)
+		for _, def in ipairs(major) do
+			if (def.cat == "dungeon" or def.cat == "raid") and self.lastExpStop and time() - self.lastExpStop < 3600 then
+				data.t = self.lastExpStop
+				ach.done[def.id] = self.lastExpStop
+				local e = self:Account().done[def.id]
+				if e and e.by == ns.PlayerName() then e.t = self.lastExpStop end
+			end
+		end
+		local names = {}
+		for i = 1, math.min(3, #major) do names[i] = "「" .. major[i].name .. "」" end
+		local rest = #list - #names
+		local tail = "  — 업적 " .. table.concat(names, ", ") .. (rest > 0 and (" 외 " .. rest .. "개") or "") .. " 달성 · +" .. pts .. "점"
+		ns.Chronicle:Add("achievement", (major[1].flavor or "또 하나의 이야기가 완성되었다.") .. ns.Hex(tail, ns.COLOR.dim), data)
+	end
 	if ns.Toast then
-		ns.Toast:Show("업적 " .. #defs .. "개 달성!", names[1] .. (#defs > 1 and (" 외 " .. (#defs - 1) .. "개") or "") .. "   +" .. pts .. "점",
-			defs[1].icon, "achievement", { ach = defs[1].id })
+		-- 점수는 제목 줄에, 업적 이름은 아랫줄에 (이름이 길어도 점수가 잘리지 않도록)
+		if #list == 1 then
+			ns.Toast:Show("업적 달성!   +" .. top.points .. "점", "「" .. top.name .. "」", top.icon, "achievement", { ach = top.id })
+		else
+			ns.Toast:Show("업적 " .. #list .. "개 달성!   +" .. pts .. "점", "「" .. top.name .. "」",
+				top.icon, "achievement", { ach = top.id })
+		end
 	end
 end
 

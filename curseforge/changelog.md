@@ -1,3 +1,16 @@
+## 1.10.5
+
+Fixes from a full simulated playthrough (levels 1–60 on five different runs):
+
+- **Journal no longer flooded by achievements**: only story achievements are written to the journal, several at once share one line ("…and N more"), and tiered milestones live in the achievements tab. A 1–60 run now writes about 235 journal entries instead of 360
+- At most one achievement notification per moment; the points sit on the title line and long names shrink to fit (the notification is also a little wider)
+- Removed achievements that counted the same thing twice (e.g. "first meeting" and "rank Encountered", 100 kills, storyteller quests, dungeon clears, journal-type counts that matched lifetime totals), and renamed three achievements that shared a name
+- Added per-class kills, quests and bestiary species and per-race kills (about 10,050 achievements in all)
+- Proper Korean particles and units in generated names ("명" for people, 을/를 and 과/와)
+- A brand-new level 1 character no longer gets the "looking back on past adventures" line
+- Settings: the hotkey note now says 1–5, the notification option mentions achievements, and the reset section notes that achievements are account-wide and stay
+- Stats page uses thousands separators for the achievement count
+
 ## 1.10.4
 
 - New minimap icon: a gold-rimmed leather book with a compass star (also used in the addon list)

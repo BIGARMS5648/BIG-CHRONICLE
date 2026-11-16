@@ -7,7 +7,7 @@ ns.SettingsTab = O
 
 local OPTIONS = {
 	{ key = "chat",         label = "새 기록을 채팅창에 알리기",   desc = "장소 발견을 뺀 새 기록을 채팅창에도 짧게 보여 줍니다." },
-	{ key = "toast",        label = "도감 알림 팝업",              desc = "새 종족·개체·희귀 개체를 발견하면 화면 위쪽에 알림을 띄웁니다." },
+	{ key = "toast",        label = "발견·업적 알림 팝업",           desc = "새 종족·개체·희귀 개체 발견과 업적 달성을 알림으로 띄웁니다." },
 	{ key = "sound",        label = "알림 효과음",                 desc = "알림 팝업이 뜰 때 효과음을 재생합니다." },
 	{ key = "logSubzones",  label = "세부 장소 발견도 기록",       desc = "마을·동굴 같은 세부 장소를 처음 찾았을 때도 남깁니다." },
 	{ key = "questRewards", label = "퀘스트 보상 표시",            desc = "퀘스트 기록 끝에 경험치와 골드 보상을 덧붙입니다." },
@@ -15,7 +15,7 @@ local OPTIONS = {
 	{ key = "tooltip",      label = "툴팁에 도감 정보 표시",       desc = "몬스터 툴팁에 도감 번호, 종족, 처치 수를 붙입니다." },
 	{ key = "typewriter",   label = "한 글자씩 써지는 연출",       desc = "배경 이야기가 차례로 써집니다. 클릭·Space로 건너뜁니다." },
 	{ key = "effects",      label = "화면 연출",                   desc = "새 장 두루마리, 금가루, 밀랍 인장 효과를 보여 줍니다." },
-	{ key = "hotkeys",      label = "키보드 단축키",               desc = "창이 열려 있을 때 1~4, 방향키, Space를 씁니다. (전투 중 꺼짐)" },
+	{ key = "hotkeys",      label = "키보드 단축키",               desc = "창이 열려 있을 때 1~5, 방향키, Space를 씁니다. (전투 중 꺼짐)" },
 }
 
 local function Confirm(key, text, onAccept)
@@ -115,7 +115,7 @@ function O:Create(parent)
 	note:SetPoint("TOP", h, "BOTTOM", 0, -6)
 	note:SetWidth(290)
 	note:SetJustifyH("CENTER")
-	note:SetText("기록은 캐릭터마다 따로 저장됩니다.\n초기화한 기록은 되돌릴 수 없습니다.")
+	note:SetText("일지와 도감은 캐릭터마다 따로 저장됩니다.\n업적은 계정 공용이라 초기화해도 남습니다.\n초기화한 기록은 되돌릴 수 없습니다.")
 
 	local b1 = UI.Button(right, "모험 일지 초기화", 290, 26, function()
 		Confirm("BIGCHRONICLE_RESET_JOURNAL", "BIG CHRONICLE\n\n이 캐릭터의 모험 일지와 통계를 모두 지울까요?", function() ns:ResetData("journal") end)

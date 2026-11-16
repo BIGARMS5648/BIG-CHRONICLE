@@ -37,7 +37,7 @@ local BURST = {
 	species     = { count = 6 },
 }
 local MAX_QUEUE = 4
-local WIDTH, HEIGHT = 400, 96
+local WIDTH, HEIGHT = 460, 96
 
 function Toast:Init()
 	self.queue = {}
@@ -256,6 +256,11 @@ function Toast:Next()
 	f.title:SetText(item.title)
 	f.title:SetTextColor(ink[1], ink[2], ink[3])
 	f.body:SetText(item.body)
+	-- 아랫줄이 길면 (긴 업적 이름 등) 한 단계 작은 글씨로
+	f.body:SetFontObject(UI.F.body)
+	local room = WIDTH - 86 - 88
+	if (f.body:GetStringWidth() or 0) > room then f.body:SetFontObject(UI.F.small) end
+	f.body:SetTextColor(0.16, 0.10, 0.06)
 	f.link = item.link
 	f.brand:SetText(item.link and (item.link.ach and "눌러서 업적 보기" or "눌러서 도감 보기") or "BIG CHRONICLE")
 	f.hold = style.hold

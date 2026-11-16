@@ -424,11 +424,28 @@ for _, lv in ipairs({ 10, 20, 30, 40, 50, 60 }) do
 		issue(string.format("무사 업적 %d 판정 이상 (첫 죽음 %s레벨)", lv, tostring(firstDeath)))
 	end
 end
-local achEntries = 0
-for _, e in ipairs(db.log) do if e.cat == "achievement" then achEntries = achEntries + (e.retro or e.many or 1) end end
-local doneCount = 0
-for _ in pairs(db.ach.done) do doneCount = doneCount + 1 end
-if achEntries ~= doneCount then issue(string.format("업적 기록 %d줄 / 달성 %d개 불일치", achEntries, doneCount)) end
+-- 전기에는 손으로 쓴 업적만 남는다 (자동 업적은 같은 줄의 '외 N개'에만 더해진다). 이전에 이룬 업적은 한 줄로 묶인다.
+local loggedMajor, loggedRetro, loggedAll = 0, 0, 0
+for _, e in ipairs(db.log) do
+	if e.cat == "achievement" then
+		if e.retro then loggedRetro = loggedRetro + e.retro else loggedMajor = loggedMajor + (e.major or 0) end
+		loggedAll = loggedAll + (e.retro or e.count or 0)
+	end
+end
+local doneMajor, doneRetro = 0, 0
+for id in pairs(db.ach.done) do
+	local def = ns.ACH_BY_ID[id]
+	if db.ach.retro[id] then doneRetro = doneRetro + 1
+	elseif def and not def.minor then doneMajor = doneMajor + 1 end
+end
+if loggedMajor ~= doneMajor then issue(string.format("전기에 남은 업적 %d개 / 달성한 손 업적 %d개 불일치", loggedMajor, doneMajor)) end
+if loggedRetro ~= doneRetro then issue(string.format("이전 업적 기록 %d개 / 실제 %d개 불일치", loggedRetro, doneRetro)) end
+-- 업적 기록 줄이 레벨업 줄보다 많으면 전기가 업적으로 뒤덮인 것
+local levelLines, achLines = 0, 0
+for _, e in ipairs(db.log) do
+	if e.cat == "level" then levelLines = levelLines + 1 elseif e.cat == "achievement" then achLines = achLines + 1 end
+end
+if achLines > levelLines * 1.2 then issue(string.format("업적 기록이 너무 많다: %d줄 (레벨업 %d줄)", achLines, levelLines)) end
 
 -- 9) UI를 모두 열어 본다 (큰 데이터에서 오류가 없는지)
 local ok, err = pcall(function()
@@ -476,7 +493,7 @@ if pdir then
 	ns.UI:SelectTab("settings"); settle(); dump("settings")
 	f:Hide(); ns.UI:Open("journal"); step(5); dump("opening"); settle()
 	f:Hide()
-	ns.Toast:Show("업적 달성!", "「백 가지 이야기」   +10점", "Interface\\Icons\\INV_Misc_Note_01", "achievement", { ach = "quest100" })
+	ns.Toast:Show("업적 달성!   +10점", "「백 가지 이야기」", "Interface\\Icons\\INV_Misc_Note_01", "achievement", { ach = "quest100" })
 	step(14); M.Dump(pdir .. "/toast.json"); settle()
 	-- 도감 발견 알림 (용 문장 밀랍 인장)
 	ns.Toast.queue = {}; ns.Toast.frame:Hide()

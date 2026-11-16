@@ -161,7 +161,7 @@ function S:Refresh()
 		{ "희귀 개체", rares .. "종" },
 		{ "야수 계통", dynCount .. "종" },
 		{ "총 처치", ns.Comma(kills) },
-		{ "업적", (function() local d, t, p = ns.Achievements:Summary() return string.format("%d / %d (%s점)", d, t, ns.Comma(p)) end)() },
+		{ "업적", (function() local d, t, p = ns.Achievements:Summary() return string.format("%s / %s (%s점)", ns.Comma(d), ns.Comma(t), ns.Comma(p)) end)() },
 	})
 
 	-- 레벨 연대기

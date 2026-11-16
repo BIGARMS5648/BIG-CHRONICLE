@@ -66,7 +66,7 @@ On top of that, **beast families** such as wolves, spiders and raptors each get 
 
 ---
 
-## 🏆 Achievements — over 10,000
+## 🏆 Achievements — about 10,000
 
 Inspired by the Wrath-era achievements for classic (level 1–60) content, focusing on what **Forever's official achievements don't already cover**, plus achievements unique to this addon:
 
@@ -80,16 +80,16 @@ Inspired by the Wrath-era achievements for classic (level 1–60) content, focus
 - **Battlegrounds, Reputation, Trials, Chronicle** — battles joined, exalted factions, your first death and deathless levels, personal notes and exports
 - **Little Joys** — playful achievements based on real-world dates: 7- and 30-day streaks, 100 days together, weekend warrior, night owl, New Year's Day…
 
-- **Over 10,000 tiered achievements** built on everything the addon records:
+- **About 10,000 tiered achievements** built on everything the addon records (nothing is counted twice):
   - every tribe: kills (up to 200,000), species, research ranks ★1–★5, sightings, and finds in each known habitat
   - every one of the 40 classic zones: visits, time spent, quests, places, creatures found, sightings and deaths
   - every dungeon and raid: entries, clears, boss kills and fast clears (90 to 20 minutes); every battleground
   - every level from 2 to 60, plus levels **per class, per race and per race/class** (achievements are account-wide, so alts fill these in)
-  - lifetime totals and journal statistics by entry type, hour, weekday and month
+  - kills, quests and bestiary species per class, kills per race, lifetime totals and journal statistics by hour, weekday and month
 - **Account-wide**: an achievement earned on one character counts on all of them, showing who earned it
 - **Search** achievements by name or description
 
-Every achievement arrives as a parchment dispatch sealed with red wax and adds a short line of story to your journal. When several land at once, they share one notification and one journal line.
+Every achievement arrives as a parchment dispatch sealed with red wax. Story achievements also add a line to your journal; tiered milestones are folded into that line ("and N more") and live in the achievements tab. When several land at once, they share one notification.
 
 ---
 
