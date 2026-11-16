@@ -309,6 +309,8 @@ end
 ------------------------------------------------------------------------
 local card
 local CARD_W, SCROLL_H = 620, 124
+local TITLE_W = CARD_W - 200   -- 두루마리 양 끝의 말린 부분을 뺀, 글씨가 들어갈 폭
+local TITLE_FONTS = { "BigChronicleFontCinematic", "BigChronicleFontCinematicMid", "BigChronicleFontCinematicFit" }
 local function MakeFont(name, base, size, color, shadow)
 	local font = _G[name] or (CreateFont and CreateFont(name))
 	if not font then return end
@@ -334,6 +336,9 @@ local function BuildCard()
 	if card then return card end
 	-- 두루마리 위의 글씨는 테마와 상관없이 잉크 색
 	MakeFont("BigChronicleFontCinematic", "GameFontNormalLarge", 30, { 0.22, 0.10, 0.05 }, false)
+	-- 제목이 길면 (캐릭터 이름이 긴 첫 장 카드 등) 한 단계씩 작은 글씨로 줄인다
+	MakeFont("BigChronicleFontCinematicMid", "GameFontNormalLarge", 25, { 0.22, 0.10, 0.05 }, false)
+	MakeFont("BigChronicleFontCinematicFit", "GameFontNormalLarge", 21, { 0.22, 0.10, 0.05 }, false)
 	MakeFont("BigChronicleFontCinematicLabel", "GameFontNormal", 13, { 0.55, 0.12, 0.07 }, false)
 	MakeFont("BigChronicleFontCinematicSmall", "GameFontNormal", 13, { 0.95, 0.88, 0.74 }, true)
 	local f = CreateFrame("Frame", "BigChronicleChapterCard", UIParent)
@@ -360,8 +365,7 @@ local function BuildCard()
 	f.label = label
 
 	local titleHolder = CreateFrame("Frame", nil, ink)
-	titleHolder:SetSize(CARD_W - 220, 40)
-	titleHolder:SetPoint("TOP", label, "BOTTOM", 0, -2)
+	titleHolder:SetSize(TITLE_W, 40)
 	local title = titleHolder:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematic")
 	title:SetPoint("CENTER")
 	f.title, f.titleHolder = title, titleHolder
@@ -380,6 +384,19 @@ function E.ShowCard(label, title, sub)
 	f.label:SetText(label or "")
 	f.title:SetText(title or "")
 	f.sub:SetText(sub or "")
+	-- 머리글이 없으면 제목을 두루마리 가운데에, 있으면 머리글 아래에 놓는다
+	f.titleHolder:ClearAllPoints()
+	if (label or "") == "" then
+		f.titleHolder:SetPoint("CENTER", f.band, "CENTER", 0, 3)
+	else
+		f.titleHolder:SetPoint("TOP", f.label, "BOTTOM", 0, -2)
+	end
+	-- 두루마리 폭을 넘으면 글씨를 줄인다
+	for _, font in ipairs(TITLE_FONTS) do
+		if _G[font] then f.title:SetFontObject(font) end
+		local w = f.title:GetStringWidth() or 0
+		if w <= TITLE_W then break end
+	end
 	f:SetAlpha(1)
 	f:Show()
 	local minW = 230
@@ -414,7 +431,7 @@ function E.ChapterCard(chIdx, isStart)
 	local num, name = ch.title:match("^(.-)%s*·%s*(.+)$")
 	num = num or ch.title
 	if isStart then
-		E.ShowCard("BIG CHRONICLE", ns.PlayerName() .. "의 도감 수첩, 첫 장", ch.title .. "  —  " .. ch.desc)
+		E.ShowCard(nil, ns.PlayerName() .. "의 도감 수첩, 첫 장", ch.title .. "  —  " .. ch.desc)
 	else
 		E.ShowCard((num:gsub("%s+", "")), name or ch.title, ch.desc)
 	end
