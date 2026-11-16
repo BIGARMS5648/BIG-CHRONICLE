@@ -128,6 +128,7 @@ An **ornate leather bestiary notebook**. Every frame, plaque, tab, button, parch
 - `/bc export` — show the whole chronicle as copyable text
 - `/bc minimap` — show or hide the minimap button
 - `/bc toast` (`/bc 알림`) — unlock or lock the notification position
+- `/bc toast reset` (`/bc 알림 초기화`) — move notifications back to the default spot (top center)
 
 Minimap button: left-click opens the journal · right-click opens the bestiary · drag to move it
 

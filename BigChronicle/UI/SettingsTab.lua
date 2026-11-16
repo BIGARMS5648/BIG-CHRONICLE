@@ -100,7 +100,7 @@ function O:Create(parent)
 	lock.desc:SetWidth(270)
 	self.checks[#self.checks + 1] = lock
 	self.lockCheck = lock
-	local resetPos = UI.Button(right, "알림 위치 초기화", 290, 26, function()
+	local resetPos = UI.Button(right, "알림 위치를 기본 위치로", 290, 26, function()
 		if ns.Toast then ns.Toast:ResetPosition() end
 	end)
 	resetPos:SetPoint("TOP", right, "TOP", 0, -118)

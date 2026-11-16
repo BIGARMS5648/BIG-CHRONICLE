@@ -474,8 +474,21 @@ do
 	check(T.frame:IsShown() and T.frame.title:GetText() == "업적 달성!", "queued toast shows after locking")
 	local p = T.frame.__points[#T.frame.__points]
 	check(p and p[1] == "TOP" and p[4] == pos.x, "toast uses the saved position")
+	for _ = 1, 4 do T.frame:Fire("OnUpdate", 30) end   -- 앞의 알림을 끝낸다
+	check(not T.frame:IsShown(), "earlier toast finished")
+	ns.db.toastPos = { x = 120, y = -300 }
 	T:ResetPosition()
 	check(ns.db.toastPos == nil, "position reset")
+	local rp = T.frame.__points[#T.frame.__points]
+	check(rp and rp[4] == 0 and rp[5] <= -100, "toast goes back to the top center")
+	check(T.frame:IsShown() and T.frame.sample and T.frame.title:GetText() == "알림 위치", "a sample toast shows the default spot")
+	ns.UI:SelectTab("settings")
+	T.frame:Fire("OnMouseUp", "LeftButton")
+	check(ns.UI.current == "settings" and not T.frame:IsShown(), "clicking the sample just closes it")
+	ns.db.toastPos = { x = 50, y = -200 }
+	ns:HandleSlash("알림 초기화")
+	check(ns.db.toastPos == nil, "/bc 알림 초기화 resets the position")
+	T.frame:Hide(); T.queue = {}
 	ns:HandleSlash("알림")
 	check(T.moving, "/bc 알림 unlocks")
 	ns:HandleSlash("알림")

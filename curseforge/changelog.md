@@ -1,3 +1,8 @@
+## 1.10.7
+
+- Settings: the reset button is now called "알림 위치를 기본 위치로" (back to the default position). It moves notifications back to the top center of the screen, confirms in chat and drops a sample notification there so you can see the spot
+- New command `/bc 알림 초기화` (`/bc toast reset`) does the same
+
 ## 1.10.6
 
 - Achievement and discovery notifications play only the wax stamp sound again (the extra chime is gone)

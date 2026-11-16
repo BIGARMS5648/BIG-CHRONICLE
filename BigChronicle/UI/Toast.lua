@@ -102,7 +102,8 @@ function Toast:Build()
 			self.dragged = nil
 			return
 		end
-		if btn == "LeftButton" then Toast:OpenLink(self.link) end
+		-- 예시 알림은 눌러도 아무 페이지도 열지 않고 닫히기만 한다
+		if btn == "LeftButton" and not self.sample then Toast:OpenLink(self.link) end
 		Toast:Next()
 	end)
 	-- 잠금을 풀면 끌어서 옮길 수 있다
@@ -192,9 +193,17 @@ function Toast:SavePosition()
 	f.place(0)
 end
 
+-- 기본 위치(화면 위쪽 가운데)로 되돌리고, 그 자리에 예시 알림을 잠깐 띄워 보여 준다
 function Toast:ResetPosition()
 	ns.db.toastPos = nil
-	if self.frame then self.frame.place(0) end
+	self:Build()
+	self.frame.place(0)
+	ns.Print("알림 위치를 기본 위치(화면 위쪽 가운데)로 되돌렸습니다.")
+	-- 위치를 옮기는 중이면 예시 알림이 이미 떠 있으니 자리만 옮긴다
+	if self.moving then return end
+	self.queue = self.queue or {}
+	table.insert(self.queue, 1, { title = "알림 위치", body = "기본 위치에 알림이 나타납니다", kind = "species", sample = true })
+	if not self.frame:IsShown() then self:Next() end
 end
 
 -- 잠금을 풀면 예시 알림이 떠서 끌어 옮길 수 있고, 잠그면 사라진다
@@ -247,8 +256,9 @@ function Toast:Next()
 	local room = WIDTH - 86 - 88
 	if (f.body:GetStringWidth() or 0) > room then f.body:SetFontObject(UI.F.small) end
 	f.body:SetTextColor(0.16, 0.10, 0.06)
-	f.link = item.link
-	f.brand:SetText(item.link and (item.link.ach and "눌러서 업적 보기" or "눌러서 도감 보기") or "BIG CHRONICLE")
+	f.link, f.sample = item.link, item.sample
+	f.brand:SetText(item.sample and "BIG CHRONICLE"
+		or (item.link and (item.link.ach and "눌러서 업적 보기" or "눌러서 도감 보기") or "BIG CHRONICLE"))
 	f.hold = style.hold
 	f.t = 0
 	f.pendingFX = item.kind

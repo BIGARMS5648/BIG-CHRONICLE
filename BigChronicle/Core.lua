@@ -5,7 +5,7 @@ local ADDON, ns = ...
 
 ns.TITLE = "BIG CHRONICLE"
 ns.ICON = "Interface\\AddOns\\" .. ADDON .. "\\Media\\Icon"  -- 글자 없는 애드온 아이콘 (64×64 TGA)
-ns.VERSION = "1.10.6"
+ns.VERSION = "1.10.7"
 _G.BigChronicle = ns
 
 do
@@ -518,6 +518,7 @@ local function ShowHelp()
 	P("  |cffffd100/bc 내보내기|r : 일지 전체를 복사 가능한 글로 보기")
 	P("  |cffffd100/bc 미니맵|r : 미니맵 버튼 보이기/숨기기")
 	P("  |cffffd100/bc 알림|r : 알림 위치 잠금 풀기/잠그기 (끌어서 옮기기)")
+	P("  |cffffd100/bc 알림 초기화|r : 알림을 기본 위치(화면 위쪽 가운데)로 되돌리기")
 	P("  Special thanks to 루마 · 절미 · 판초네 콘체타 · KLEROS")
 end
 
@@ -548,6 +549,9 @@ function ns:HandleSlash(msg)
 		if UI then UI:ShowExport() end
 	elseif cmd == "미니맵" or cmd == "minimap" then
 		if ns.Minimap then ns.Minimap:Toggle() end
+	elseif (cmd == "알림" or cmd == "toast") and (rest == "초기화" or rest:lower() == "reset") then
+		-- 알림 위치를 기본 위치로
+		if ns.Toast then ns.Toast:ResetPosition() end
 	elseif cmd == "알림" or cmd == "toast" then
 		-- 알림 위치 잠금 켜고 끄기
 		if ns.Toast then
