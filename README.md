@@ -173,7 +173,7 @@ BigChronicle/
 ├─ Media/              UI/ 화면 그림 조각, FX/ 효과 입자, Sounds/ 효과음, Icon 미니맵 아이콘 (출처: Media/LICENSES.txt)
 └─ UI/                 Atlas(그림 조각 정보), 위젯, 메인 창, 일지/도감/업적/통계/설정 탭, 연출, 알림, 미니맵
 curseforge/            CurseForge 설명글, 변경 내역, 프로젝트 아이콘(PNG)
-art/                   화면 그림 에셋 시트 원본 (PNG 3장)
+art/                   화면 그림 원본 (에셋 시트 3장, 로고 logo.png, 명판 글자 title.png, 미니맵 아이콘 minimap.png)
 tools/                 slice_assets.py: 에셋 시트를 잘라 Media/UI/*.tga 와 UI/Atlas.lua 생성, build_assets.py: 효과 입자·효과음
 tests/
 ├─ mockwow.lua         일반 Lua 5.1에서 돌아가는 최소한의 WoW API 흉내

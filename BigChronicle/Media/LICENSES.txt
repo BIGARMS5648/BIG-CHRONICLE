@@ -1,11 +1,12 @@
 BIG CHRONICLE - assets
 ======================
 
-1) Interface art (UI\*.tga)
+1) Interface art (UI\*.tga, Icon.tga)
    Window frame, plaque, tabs, buttons, parchment panels, scroll, wax
-   seals, medallion icons, scrollbar, check boxes, bars and buckles.
-   Source  : asset sheets provided by the addon author (art\ in the
-             source repository), cut into pieces by tools/slice_assets.py
+   seals, medallion icons, scrollbar, check boxes, bars, the BIG
+   CHRONICLE logo and lettering, and the B.C minimap icon.
+   Source  : art provided by the addon author (art\ in the source
+             repository), cut into pieces by tools/slice_assets.py
    License : part of BIG CHRONICLE; not for reuse outside this addon
              without the author's permission.
 

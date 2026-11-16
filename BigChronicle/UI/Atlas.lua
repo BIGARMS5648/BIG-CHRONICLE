@@ -35,6 +35,7 @@ ns.UI.ATLAS = {
 	IconJournal = { w = 97, h = 98, pad = 4 },
 	IconStats = { w = 96, h = 98, pad = 4 },
 	LeatherTile = { w = 512, h = 512, tile = 512, tileH = 512 },
+	Logo = { w = 857, h = 553 },
 	OrnamentBottom = { w = 288, h = 92 },
 	OrnamentTop = { w = 288, h = 70 },
 	PaperCastle = { w = 330, h = 125 },
@@ -54,4 +55,5 @@ ns.UI.ATLAS = {
 	Slot = { w = 128, h = 126, l = 40, r = 40, t = 40, b = 40, pad = 4 },
 	Tab = { w = 183, h = 60, l = 36, r = 36, pad = 4 },
 	TabActive = { w = 194, h = 61, l = 36, r = 36, pad = 4 },
+	Title = { w = 460, h = 59 },
 }

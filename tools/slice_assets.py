@@ -213,8 +213,17 @@ def erase_text(img, inset):
 
 
 def from_white(path, width, square=False):
-    """흰 바탕 그림에서 바탕을 걷어 내고(밝고 색이 옅은 곳 = 바탕), 가장자리의 흰 기운을 뺀다"""
-    rgb = np.asarray(Image.open(path).convert("RGB")).astype(np.float32)
+    """로고 그림을 투명 바탕으로 다듬는다.
+    그림에 이미 투명 바탕이 있으면 그대로 쓰고, 흰 바탕이면 바탕을 걷어 내고(밝고 색이 옅은 곳 = 바탕)
+    가장자리의 흰 기운을 뺀다."""
+    src = Image.open(path)
+    if src.mode in ("RGBA", "LA") and np.asarray(src.convert("RGBA"))[..., 3].min() < 16:
+        img = src.convert("RGBA")
+        a = np.asarray(img)[..., 3]
+        ys, xs = np.nonzero(a > 8)
+        img = img.crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
+        return fit(img, width, square)
+    rgb = np.asarray(src.convert("RGB")).astype(np.float32)
     mx, mn = rgb.max(axis=2), rgb.min(axis=2)
     bg = np.clip((mn - 205) / 35, 0, 1) * np.clip((45 - (mx - mn)) / 30, 0, 1)
     a = 1 - bg
@@ -232,6 +241,10 @@ def from_white(path, width, square=False):
     img = Image.fromarray(out, "RGBA")
     ys, xs = np.nonzero(a > 0.03)
     img = img.crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
+    return fit(img, width, square)
+
+
+def fit(img, width, square=False):
     if square:
         side = max(img.size)
         sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
@@ -305,7 +318,7 @@ def main():
     if (ART / "logo.png").exists():
         save("Logo", from_white(ART / "logo.png", 857))          # 표지 위에 600px 폭으로 보인다
     if (ART / "title.png").exists():
-        save("Title", from_white(ART / "title.png", 460))        # 명판 위에 높이 30px로 보인다
+        save("Title", from_white(ART / "title.png", 460))        # 명판 위에 높이 27px로 보인다
     if (ART / "minimap.png").exists():
         icon = from_white(ART / "minimap.png", 128, square=True)
         icon.save(MEDIA / "Icon.tga")                             # 미니맵 버튼, 애드온 목록 아이콘

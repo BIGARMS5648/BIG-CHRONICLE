@@ -120,7 +120,7 @@ function UI:Build()
 	local plaqueMidY = -A.Plaque.h * 0.66 * 0.60
 	if A.Title then
 		local word = UI.Sprite(trim, "Title", "OVERLAY", 2)
-		local h = 30
+		local h = 27
 		word:SetSize(h * A.Title.w / A.Title.h, h)
 		word:SetPoint("CENTER", plaque, "TOP", 0, plaqueMidY)
 		f.brand = word
