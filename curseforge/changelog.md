@@ -1,3 +1,15 @@
+## 1.10.0
+
+- **Over 10,000 achievements**: tiered goals for every tribe, habitat, zone, dungeon, raid, battleground, level, class, race and race/class, plus lifetime totals and journal statistics. Several achievements earned at once share one notification and one journal line
+- **Achievements are account-wide**: anything earned on one character counts on every character, with the name of who earned it. Existing per-character achievements merge in when each character logs in
+- Search achievements by name or description; the list now draws only the visible rows, so it stays fast
+- **Research ranks are much harder**: ★★ 150, ★★★ 1,000, ★★★★ 5,000, ★★★★★ 25,000 research points
+- **Movable notifications**: unlock the position in settings or with `/bc 알림`, drag the sample notification, right-click to lock. The position is saved and can be reset
+- Achievement and discovery notifications now play the game's own "achievement earned" chime or quest-complete jingle before the wax stamp
+- The plaque lettering now matches the gold leaf of the frame
+- Fixed the scrollbar art: the thumb no longer looks cut off and stretched, and the track no longer stretches
+- The logo screen when opening the book is gone; the book opens directly
+
 ## 1.9.0
 
 - **New look from hand-made art**: the whole window is rebuilt from the author's own art: a gold-trimmed leather frame, a plaque with gold **BIG CHRONICLE** lettering, trapezoid leather tabs with medallion icons, leather and gold buttons, parchment panels, count badges, check boxes, a gold scrollbar, progress bars and a trophy banner

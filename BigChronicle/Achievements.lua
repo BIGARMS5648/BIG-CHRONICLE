@@ -103,15 +103,28 @@ local function LogStats(db)
 	local key = #log .. ":" .. tostring(log[1] and log[1].t)
 	if A.logCache and A.logCache.key == key then return A.logCache end
 	local st = { key = key, notes = 0, binds = 0, nightEntries = 0, morningEntries = 0, midnightNotes = 0, newYear = 0,
-		weekendLevels = 0, levelsMaxDay = 0, questMaxDay = 0, days = 0, streak = 0, deathZones = 0 }
+		weekendLevels = 0, levelsMaxDay = 0, questMaxDay = 0, days = 0, streak = 0, deathZones = 0,
+		logCat = {}, logHour = {}, logWday = {}, logMonth = {}, zoneDeaths = {}, entries = 0 }
+	local logCat, logHour, logWday, logMonth = st.logCat, st.logHour, st.logWday, st.logMonth
 	local dayLevels, dayQuests, daySet, deathZoneSet = {}, {}, {}, {}
 	for _, e in ipairs(log) do
 		local d = date("*t", e.t)
 		local dayIdx = math.floor(time({ year = d.year, month = d.month, day = d.day, hour = 12 }) / 86400)
 		daySet[dayIdx] = true
+		-- 업적이 남긴 기록은 세지 않는다 (업적이 업적을 부르는 일이 없도록)
+		if e.cat ~= "achievement" then
+			st.entries = st.entries + 1
+			if e.cat then logCat[e.cat] = (logCat[e.cat] or 0) + 1 end
+			logHour[d.hour] = (logHour[d.hour] or 0) + 1
+			logWday[d.wday] = (logWday[d.wday] or 0) + 1
+			logMonth[d.month] = (logMonth[d.month] or 0) + 1
+		end
 		if e.cat == "death" then
 			if not st.firstDeathLvl then st.firstDeathLvl = e.lvl end
-			if e.zone and e.zone ~= "" then deathZoneSet[e.zone] = true end
+			if e.zone and e.zone ~= "" then
+				deathZoneSet[e.zone] = true
+				st.zoneDeaths[e.zone] = (st.zoneDeaths[e.zone] or 0) + 1
+			end
 		elseif e.cat == "note" then
 			st.notes = st.notes + 1
 			if d.hour < 4 then st.midnightNotes = st.midnightNotes + 1 end
@@ -125,8 +138,10 @@ local function LogStats(db)
 			dayQuests[dayIdx] = (dayQuests[dayIdx] or 0) + 1
 			if dayQuests[dayIdx] > st.questMaxDay then st.questMaxDay = dayQuests[dayIdx] end
 		end
-		if d.hour < 4 then st.nightEntries = st.nightEntries + 1 end
-		if d.hour >= 6 and d.hour < 9 then st.morningEntries = st.morningEntries + 1 end
+		if e.cat ~= "achievement" then
+			if d.hour < 4 then st.nightEntries = st.nightEntries + 1 end
+			if d.hour >= 6 and d.hour < 9 then st.morningEntries = st.morningEntries + 1 end
+		end
 		if d.month == 1 and d.day == 1 then st.newYear = 1 end
 	end
 	for _ in pairs(deathZoneSet) do st.deathZones = st.deathZones + 1 end
@@ -149,9 +164,13 @@ function A:Context()
 	local B = ns.Bestiary
 	local ach = db.ach
 	local ctx = { clearCount = {}, clearCountName = {}, tribeKills = {}, tribeFound = {}, tribeRank = {}, bgMaps = {}, bgNames = {},
-		deathless = {}, questZone = db.quests.zones or {}, questMap = db.quests.maps or {}, todSpecies = {} }
+		deathless = {}, questZone = db.quests.zones or {}, questMap = db.quests.maps or {}, todSpecies = {},
+		tribeSpecies = {}, tribeSeen = {}, habitatSpecies = {}, habitatSeen = {}, zoneSpecies = {}, zoneSeen = {},
+		zoneVisits = {}, zoneTime = {}, zoneSub = {}, runCount = {}, runCountName = {}, instBossKills = {}, bestClear = {} }
 
 	ctx.level = ns.PlayerLevel()
+	ctx.classToken = select(2, ns.Call(UnitClass, "player"))
+	ctx.raceToken = select(2, ns.Call(UnitRace, "player"))
 	local money = ns.Call(GetMoney) or 0
 	ach.goldBest = math.max(ach.goldBest or 0, math.floor(money / 10000))
 	ctx.goldBest = ach.goldBest
@@ -160,7 +179,9 @@ function A:Context()
 	-- 탐험
 	ctx.zones, ctx.subzones, ctx.maxZoneTime = 0, count(db.subzones), 0
 	local zoneMaps = {}
-	for _, z in pairs(db.zones) do
+	for name, z in pairs(db.zones) do
+		ctx.zoneVisits[name] = z.visits or 0
+		ctx.zoneTime[name] = z.time or 0
 		ctx.zones = ctx.zones + 1
 		if (z.time or 0) > ctx.maxZoneTime then ctx.maxZoneTime = z.time end
 		if z.map then zoneMaps[z.map] = true end
@@ -177,6 +198,10 @@ function A:Context()
 		end
 	end
 	ctx.allVisited = ctx.ekVisited + ctx.kalVisited
+	for key in pairs(db.subzones) do
+		local zone = key:match("^(.-)|")
+		if zone then ctx.zoneSub[zone] = (ctx.zoneSub[zone] or 0) + 1 end
+	end
 	ctx.loreEK, ctx.loreKal = loreEK, loreKal
 	ctx.loreBoth = (loreEK >= 15 and 1 or 0) + (loreKal >= 12 and 1 or 0)
 
@@ -192,6 +217,12 @@ function A:Context()
 	ctx.runs, ctx.raidClears = 0, 0
 	for name, d in pairs(db.dungeons) do
 		ctx.runs = ctx.runs + (d.runs or 0)
+		ctx.runCountName[name] = d.runs or 0
+		if d.mapID then ctx.runCount[d.mapID] = math.max(ctx.runCount[d.mapID] or 0, d.runs or 0) end
+		local bk = 0
+		for _, n in pairs(d.bosses or {}) do bk = bk + n end
+		ctx.instBossKills[name] = bk
+		if d.best and (d.bestBosses or 0) > 0 then ctx.bestClear[name] = d.best end
 		local cleared = d.cleared or 0
 		if cleared > 0 then
 			ctx.clearCountName[name] = cleared
@@ -216,7 +247,19 @@ function A:Context()
 	local found, _, species, rares, kills, families = B:Completion()
 	ctx.tribes, ctx.species, ctx.rares, ctx.kills, ctx.families = found, species, rares, kills, families
 	ctx.rareKills, ctx.worldBossKills, ctx.critters, ctx.elites = 0, 0, 0, 0
+	local tribeSeen, habSp, habSeen, zoneSp, zoneSeen = ctx.tribeSeen, ctx.habitatSpecies, ctx.habitatSeen, ctx.zoneSpecies, ctx.zoneSeen
 	for _, c in pairs(B.dex.creatures) do
+		local tribe = c.tribe
+		if tribe then tribeSeen[tribe] = (tribeSeen[tribe] or 0) + (c.seen or 0) end
+		for z, n in pairs(c.zones or {}) do
+			zoneSp[z] = (zoneSp[z] or 0) + 1
+			zoneSeen[z] = (zoneSeen[z] or 0) + n
+			if tribe then
+				local k = tribe .. "|" .. z
+				habSp[k] = (habSp[k] or 0) + 1
+				habSeen[k] = (habSeen[k] or 0) + n
+			end
+		end
 		if c.rareKilled then ctx.rareKills = ctx.rareKills + 1 end
 		if c.bossKilled then ctx.worldBossKills = ctx.worldBossKills + 1 end
 		if c.tribe == "critter" then ctx.critters = ctx.critters + 1 end
@@ -226,6 +269,7 @@ function A:Context()
 	ctx.maxRank, ctx.rank4Count, ctx.rank6Count = 0, 0, 0
 	for id, s in pairs(B:CollectAll()) do
 		ctx.tribeKills[id] = s.kills
+		ctx.tribeSpecies[id] = s.species
 		if s.discovered then
 			ctx.tribeFound[id] = 1
 			ctx.tribeRank[id] = s.rank
@@ -248,11 +292,12 @@ function A:Context()
 	ctx.deaths = db.deaths or 0
 	local st = LogStats(db)
 	for k, v in pairs(st) do if k ~= "key" and ctx[k] == nil then ctx[k] = v end end
+	ctx.notes = st.notes
 	local startLvl = (db.meta and db.meta.startLevel) or ctx.level
 	for _, lv in ipairs({ 10, 20, 30, 40, 50, 60 }) do
 		ctx.deathless[lv] = startLvl < lv and ctx.level >= lv and (not st.firstDeathLvl or st.firstDeathLvl >= lv)
 	end
-	ctx.logCount = #db.log
+	ctx.logCount = st.entries   -- 업적 기록을 뺀 전기의 기록 수
 	ctx.exported = db.stats.exported or 0
 	ctx.daysSinceStart = db.started and math.floor((time() - db.started) / 86400) or 0
 	return ctx
@@ -309,6 +354,11 @@ function A:Progress(def, ctx)
 	return math.min(cur, def.goal), def.goal
 end
 
+local function RawProgress(def, ctx)
+	local ok, cur = pcall(def.progress, ctx)
+	return ok and tonumber(cur) or 0
+end
+
 function A:Evaluate()
 	local db = ns.char
 	if not db then return end
@@ -320,42 +370,68 @@ function A:Evaluate()
 	local ach = db.ach
 	local ctx = self:Context()
 	self.ctx = ctx
-	ach.seen = ach.seen or {}
+	-- 처음 켰을 때, 또는 업데이트로 업적 목록이 바뀐 뒤 처음 판정할 때 이미 만족한 것은 '이전에 이룬 업적'으로 조용히 남긴다
+	local quiet = not ach.initialized or ach.sig ~= ns.ACH_SIGNATURE
 	local account = self:Account().done
 	local newly, retro = {}, {}
+	-- 같은 사다리(같은 값)의 단계는 값을 한 번만 읽고, 낮은 단계를 못 넘으면 높은 단계는 건너뛴다
+	local ladderCur, ladderMiss = {}, {}
 	for _, def in ipairs(ns.ACHIEVEMENTS) do
 		-- 다른 캐릭터가 이미 이룬 업적은 이 캐릭터에서도 달성된 것으로 친다 (다시 알리지 않는다)
-		if not ach.done[def.id] and not account[def.id] then
-			local cur = self:Progress(def, ctx)
-			if cur >= def.goal then
-				ach.done[def.id] = time()
-				-- 처음 켰을 때, 또는 업데이트로 새로 생긴 업적을 처음 판정할 때 이미 만족한 것은 '이전에 이룬 업적'
-				if not ach.initialized or not ach.seen[def.id] then
-					retro[#retro + 1] = def
-					ach.retro[def.id] = true
+		local id = def.id
+		if not ach.done[id] and not account[id] then
+			local L = def.ladder
+			if not (L and ladderMiss[L]) then
+				local cur
+				if L then
+					cur = ladderCur[L]
+					if cur == nil then
+						cur = RawProgress(def, ctx)
+						ladderCur[L] = cur
+					end
 				else
-					newly[#newly + 1] = def
+					cur = RawProgress(def, ctx)
 				end
-				self:Record(def.id, ach.done[def.id], ach.retro[def.id])
+				if cur >= def.goal then
+					ach.done[id] = time()
+					if quiet then
+						retro[#retro + 1] = def
+						ach.retro[id] = true
+					else
+						newly[#newly + 1] = def
+					end
+					self:Record(id, ach.done[id], ach.retro[id])
+				elseif L then
+					ladderMiss[L] = true
+				end
 			end
 		end
 	end
-	for _, def in ipairs(ns.ACHIEVEMENTS) do ach.seen[def.id] = true end
+	ach.sig = ns.ACH_SIGNATURE
+	ach.seen = nil   -- 예전 버전의 '본 업적' 목록 (서명으로 바뀌었다)
 
 	if #retro > 0 then
 		local pts = 0
-		for _, def in ipairs(retro) do
-			ach.retro[def.id] = true
-			pts = pts + def.points
-		end
+		for _, def in ipairs(retro) do pts = pts + def.points end
 		local tpl = ach.initialized
 			and "새로 펼친 업적의 페이지를 넘겨 보니, 이미 이룬 것이 {n}개나 있었다. 그 이름들이 조용히 전기에 새겨졌다."
 			or "지난 여정의 발자취를 되짚어 보니, 이미 이룬 업적이 {n}개나 되었다. 그 이름들이 전기의 첫머리에 조용히 새겨졌다."
-		ns.Chronicle:Add("achievement", Format(tpl, { n = #retro }) .. ns.Hex("  — 업적 " .. #retro .. "개 · +" .. pts .. "점", ns.COLOR.dim),
+		ns.Chronicle:Add("achievement", Format(tpl, { n = ns.Comma(#retro) }) .. ns.Hex("  — 업적 " .. ns.Comma(#retro) .. "개 · +" .. ns.Comma(pts) .. "점", ns.COLOR.dim),
 			{ retro = #retro })
 	end
 	ach.initialized = true
-	for _, def in ipairs(newly) do self:Announce(def) end
+	if #newly > 0 then
+		-- 손으로 쓴 업적은 하나하나 알리고, 자동 업적은 한 번에 묶어 알린다 (알림이 쏟아지지 않도록)
+		local minor = {}
+		for _, def in ipairs(newly) do
+			if def.minor then minor[#minor + 1] = def else self:Announce(def) end
+		end
+		if #minor == 1 then
+			self:Announce(minor[1])
+		elseif #minor > 1 then
+			self:AnnounceMany(minor)
+		end
+	end
 	if #newly > 0 or #retro > 0 then ns:Fire("ACH_UPDATED", newly) end
 end
 
@@ -376,6 +452,47 @@ function A:Announce(def)
 	if ns.Toast then
 		ns.Toast:Show("업적 달성!", "「" .. def.name .. "」   +" .. def.points .. "점", def.icon, "achievement", { ach = def.id })
 	end
+end
+
+-- 자동 업적 여러 개를 한 줄, 한 장의 알림으로
+function A:AnnounceMany(defs)
+	local ach = ns.char.ach
+	ach.unseen = ach.unseen or {}
+	local pts, names = 0, {}
+	table.sort(defs, function(a, b) return a.points > b.points end)
+	for i, def in ipairs(defs) do
+		ach.unseen[def.id] = true
+		pts = pts + def.points
+		if i <= 3 then names[#names + 1] = "「" .. def.name .. "」" end
+	end
+	local more = #defs > 3 and (" 외 " .. (#defs - 3) .. "개") or ""
+	ns.Chronicle:Add("achievement", "여러 갈래의 길에서 한꺼번에 이정표를 지났다." ..
+		ns.Hex("  — 업적 " .. table.concat(names, ", ") .. more .. " 달성 · +" .. pts .. "점", ns.COLOR.dim), { ach = defs[1].id, many = #defs })
+	if ns.Toast then
+		ns.Toast:Show("업적 " .. #defs .. "개 달성!", names[1] .. (#defs > 1 and (" 외 " .. (#defs - 1) .. "개") or "") .. "   +" .. pts .. "점",
+			defs[1].icon, "achievement", { ach = defs[1].id })
+	end
+end
+
+-- 분류마다 한 번에 세기 (업적 탭이 열릴 때 쓴다): sums[cat 또는 "all"] = { done, total, pts, maxPts }
+function A:SummaryAll()
+	local sums = { all = { 0, 0, 0, 0 } }
+	local account = self:Account().done
+	local mine = ns.char and ns.char.ach and ns.char.ach.done or {}
+	for _, def in ipairs(ns.ACHIEVEMENTS) do
+		local c = def.cat
+		local s = sums[c]
+		if not s then s = { 0, 0, 0, 0 }; sums[c] = s end
+		local all = sums.all
+		local p = def.points
+		s[2], all[2] = s[2] + 1, all[2] + 1
+		s[4], all[4] = s[4] + p, all[4] + p
+		if account[def.id] or mine[def.id] then
+			s[1], all[1] = s[1] + 1, all[1] + 1
+			s[3], all[3] = s[3] + p, all[3] + p
+		end
+	end
+	return sums
 end
 
 -- 요약: 달성 수, 전체 수, 점수, 전체 점수

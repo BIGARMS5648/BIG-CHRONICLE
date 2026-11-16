@@ -115,7 +115,13 @@ local function add(def)
 	list[#list + 1] = def
 end
 
-local function field(name) return function(ctx) return ctx[name] or 0 end end
+-- 값 이름으로 진행도를 읽는 함수. 자동 생성 업적이 같은 값·같은 목표를 겹쳐 만들지 않도록 이름을 기억해 둔다.
+ns.ACH_FIELD_OF = setmetatable({}, { __mode = "k" })
+local function field(name)
+	local f = function(ctx) return ctx[name] or 0 end
+	ns.ACH_FIELD_OF[f] = name
+	return f
+end
 
 -- 숫자 단계형 업적을 한꺼번에 만든다: steps = { { 값, 이름, 문장, 점수(선택) }, ... }
 local function tiers(prefix, cat, icon, key, descFn, steps, defaultPts)
@@ -522,5 +528,4 @@ add({ id = "midnightnote", cat = "fun", name = "자정의 작가", desc = "자�
 add({ id = "newyear", cat = "fun", name = "새해 첫 모험", desc = "1월 1일에 전기에 기록 남기기", goal = 1, points = 5,
 	icon = I .. "INV_Misc_Gift_02", progress = field("newYear"), flavor = "새해 첫날에도 길 위에 있었다. 올해의 이야기도 이렇게 시작된다." })
 
-ns.ACH_BY_ID = {}
-for _, a in ipairs(list) do ns.ACH_BY_ID[a.id] = a end
+-- ACH_BY_ID 는 자동 생성 업적까지 더한 뒤 Data/AchievementsGen.lua 에서 만든다

@@ -820,7 +820,10 @@ function UI.Scroll(parent)
 	bar:SetMinMaxValues(0, 0)
 	bar:SetValue(0)
 	bar:SetValueStep(1)
-	bar:SetScript("OnValueChanged", function(_, v) sf:SetVerticalScroll(v) end)
+	bar:SetScript("OnValueChanged", function(_, v)
+		sf:SetVerticalScroll(v)
+		if sf.onScroll then sf.onScroll(v) end   -- 보이는 줄만 그리는 목록이 쓴다
+	end)
 	sf.bar = bar
 	local function arrow(name, point, rel, dir)
 		local a = CreateFrame("Button", nil, bar)

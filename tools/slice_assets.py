@@ -244,6 +244,32 @@ def from_white(path, width, square=False):
     return fit(img, width, square)
 
 
+def match_gold(img, refs):
+    """img 의 금빛을 refs(창틀 조각들)의 금박 색에 맞춘다.
+    밝기 순서는 그대로 두고, 각 채널의 분포를 창틀 금박의 분포로 옮긴다 (히스토그램 맞추기)."""
+    def gold_pixels(im):
+        a = np.asarray(im.convert("RGBA")).astype(np.float32)
+        rgb, al = a[..., :3], a[..., 3]
+        mx, mn = rgb.max(axis=2), rgb.min(axis=2)
+        # 금박: 불투명하고, 노랑~주황 계열이며, 어느 정도 밝은 곳
+        m = (al > 230) & (mx > 90) & ((mx - mn) > 40) & (rgb[..., 0] >= rgb[..., 1]) & (rgb[..., 1] >= rgb[..., 2])
+        return rgb[m]
+    ref = np.concatenate([gold_pixels(r) for r in refs])
+    a = np.asarray(img.convert("RGBA")).astype(np.float32)
+    rgb, al = a[..., :3], a[..., 3]
+    m = al > 8
+    out = rgb.copy()
+    for c in range(3):
+        src = rgb[..., c][m]
+        order = np.argsort(src, kind="stable")
+        ranks = np.empty_like(order)
+        ranks[order] = np.arange(len(src))
+        q = ranks / max(1, len(src) - 1)
+        out[..., c][m] = np.quantile(ref[:, c], q)
+    res = np.dstack([np.clip(out, 0, 255), al]).astype(np.uint8)
+    return Image.fromarray(res, "RGBA")
+
+
 def fit(img, width, square=False):
     if square:
         side = max(img.size)
@@ -326,7 +352,9 @@ def main():
 
     # --- 사용자가 따로 준 그림: 명판 글자, 미니맵 아이콘 (art/logo.png 는 소개 페이지용 원본)
     if (ART / "title.png").exists():
-        save("Title", from_white(ART / "title.png", 460))        # 명판 위에 높이 27px로 보인다
+        # 명판 글자는 창틀·장식의 금박과 같은 색으로 맞춘다
+        refs = [Image.open(MEDIA / "UI" / f"{n}.tga") for n in ("FrameTL", "OrnamentTop", "OrnamentBottom", "Plaque")]
+        save("Title", match_gold(from_white(ART / "title.png", 460), refs))   # 명판 위에 높이 27px로 보인다
     if (ART / "minimap.png").exists():
         icon = from_white(ART / "minimap.png", 128, square=True)
         icon.save(MEDIA / "Icon.tga")                             # 미니맵 버튼, 애드온 목록 아이콘

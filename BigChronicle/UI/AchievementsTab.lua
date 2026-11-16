@@ -102,11 +102,30 @@ function T:Create(parent)
 	rule:SetPoint("TOPLEFT", 0, -58)
 	rule:SetPoint("TOPRIGHT", 0, -58)
 
+	-- 업적 이름·설명 검색 (업적이 많아서)
+	local search = UI.EditBox(main, 230, 28, "업적 검색", true)
+	search:SetPoint("TOPRIGHT", -20, -6)
+	search:HookScript("OnTextChanged", function(eb)
+		local q = ns.Trim(eb:GetText() or "")
+		q = q ~= "" and q:lower() or nil
+		if q == T.query then return end
+		T.query = q
+		T:Refresh(true)
+	end)
+	self.search = search
+
 	local scroll = UI.Scroll(main)
 	scroll:SetPoint("TOPLEFT", 0, -66)
 	scroll:SetPoint("BOTTOMRIGHT", -18, 2)
 	self.scroll = scroll
-	self.pool = UI.Pool(function() return T:CreateRow(scroll.child) end)
+	-- 보이는 줄만 만들어 돌려 쓴다 (업적이 1만 개라 줄을 모두 만들 수 없다)
+	self.pool = { items = {} }
+	scroll.onScroll = function() T:Render() end
+	scroll:SetScript("OnSizeChanged", function(sf, w)
+		if w and w > 0 then sf.child:SetWidth(w) end
+		sf:UpdateRange()
+		T:Render()
+	end)
 
 	local empty = UI.Text(main, UI.F.body, col.muted)
 	empty:SetPoint("CENTER", 0, 0)
@@ -207,110 +226,153 @@ function T:Refresh(resetScroll)
 	local ach = ns.char.ach
 	if not A.ctx then A.ctx = A:Context() end
 
-	-- 왼쪽
-	local done, total, pts, maxPts = A:Summary()
+	-- 왼쪽 (분류마다 한 번에 센다)
+	local sums = A:SummaryAll()
+	local all = sums.all
+	local done, total, pts, maxPts = all[1], all[2], all[3], all[4]
 	self.points:SetText(ns.Comma(pts) .. "점")
 	self.bar:SetMinMaxValues(0, total)
 	self.bar:SetValue(done)
-	self.bar.text:SetText(math.floor(done / math.max(1, total) * 100 + 0.5) .. "%")
-	self.summary:SetText(string.format("달성 %d / %d   ·   최대 %s점", done, total, ns.Comma(maxPts)))
+	self.bar.text:SetText(string.format("%.1f%%", done / math.max(1, total) * 100))
+	self.summary:SetText(string.format("달성 %s / %s   ·   최대 %s점", ns.Comma(done), ns.Comma(total), ns.Comma(maxPts)))
 	for _, r in ipairs(self.catRows) do
-		local d, t = A:Summary(r.cat)
-		r.right:SetText(d .. "/" .. t)
+		local s = sums[r.cat or "all"] or { 0, 0 }
+		r.right:SetText(ns.Comma(s[1]) .. "/" .. ns.Comma(s[2]))
 		r:SetSelected(r.cat == self.cat)
 	end
 	for id, b in pairs(self.filterButtons) do b:SetSelected(id == self.filter) end
+
+	-- 고른 분류·필터·검색어에 맞는 업적만 추린다
+	local q = self.query
+	local rows = {}
+	for _, def in ipairs(ns.ACHIEVEMENTS) do
+		if not self.cat or def.cat == self.cat then
+			local isDone = A:Earned(def.id) ~= nil
+			if (self.filter == "all" or (self.filter == "done") == isDone)
+				and (not q or def.name:lower():find(q, 1, true) or def.desc:lower():find(q, 1, true)) then
+				rows[#rows + 1] = def
+			end
+		end
+	end
+	self.rows = rows
 
 	-- 제목
 	local catName = "전체 업적"
 	for _, c in ipairs(ns.ACH_CATS) do if c.id == self.cat then catName = c.name end end
 	self.title:SetText(catName)
-	local d, t, p = A:Summary(self.cat)
-	self.desc:SetText(string.format("달성 %d / %d   ·   %s점", d, t, ns.Comma(p)))
+	local s = sums[self.cat or "all"] or { 0, 0, 0 }
+	self.desc:SetText(string.format("달성 %s / %s   ·   %s점%s", ns.Comma(s[1]), ns.Comma(s[2]), ns.Comma(s[3]),
+		q and ("   ·   검색 결과 " .. ns.Comma(#rows) .. "개") or ""))
 
-	-- 목록
-	self.pool:ReleaseAll()
-	local width = math.max(200, (self.scroll:GetWidth() or 600) - 6)
-	self.scroll.child:SetWidth(width)
-	local y = 0
-	local shown = 0
-	for _, def in ipairs(ns.ACHIEVEMENTS) do
-		local earned = A:Earned(def.id)   -- 계정 공용: 다른 캐릭터가 이룬 것도 달성
-		local isDone = earned ~= nil
-		local pass = (not self.cat or def.cat == self.cat)
-			and (self.filter == "all" or (self.filter == "done") == isDone)
-		if pass then
-			shown = shown + 1
-			local r = self.pool:Acquire()
-			r:ClearAllPoints()
-			r:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 0, -y)
-			r:SetWidth(width)
-			r.def, r.done = def, isDone
-			-- 새로 이룬 업적: 처음 보여 줄 때 3초 동안만 반짝이고, NEW 표시는 탭을 떠날 때까지 남는다
-			local isNewNow = ach.unseen and ach.unseen[def.id]
-			if isNewNow then
-				ach.unseen[def.id] = nil
-				T.sessionNew[def.id] = true
-				ns.Effects.Pulse(r.glow, true, { min = 0.05, max = 0.9, speed = 5, duration = 3, final = 0.35 })
-			elseif T.sessionNew[def.id] then
-				-- 이미 한 번 반짝인 업적은 다시 그릴 때 은은한 바탕만 남긴다
-				ns.Effects.Pulse(r.glow, false)
-				r.glow:Show()
-				r.glow:SetAlpha(0.35)
-			else
-				ns.Effects.Pulse(r.glow, false)
+	self.scroll:SetContentHeight(#rows * ROW_H)
+	if self.focusId then
+		for i, def in ipairs(rows) do
+			if def.id == self.focusId then
+				self.scroll:ScrollTo((i - 1) * ROW_H - 60)
+				break
 			end
-			r.newTag:SetShown(T.sessionNew[def.id] and true or false)
-			if self.focusId == def.id then
-				self.focusRowY = y
-				UI.FadeIn(r, 0.6)
-			end
-			r.icon:SetTexture(def.icon)
-			r.icon:SetDesaturated(not isDone)
-			r.check:SetShown(isDone)
-			r.icon:SetAlpha(isDone and 1 or 0.55)
-			r.name:SetText(def.name)
-			r.desc:SetText(def.desc)
-			r.pts:SetText(def.points .. "점")
-			if isDone then
-				UI.Color(r.bg, col.sel, (col.sel[4] or 0.2) * 0.6)
-				r.name:SetTextColor(Col(col.title))
-				r.pts:SetTextColor(Col(col.accent))
-				r.bar:Hide()
-				r.when:Show()
-				local when = earned.retro and "기록 이전에 달성" or ns.FormatShortDate(earned.t)
-				-- 다른 캐릭터가 이룬 업적은 누가 이뤘는지 덧붙인다
-				if earned.by and earned.by ~= ns.PlayerName() then when = when .. "  ·  " .. earned.by end
-				r.when:SetText(when)
-			else
-				UI.Color(r.bg, col.shade)
-				r.name:SetTextColor(Col(col.sub))
-				r.pts:SetTextColor(Col(col.muted))
-				r.when:Hide()
-				local cur = A:Progress(def, A.ctx)
-				if def.goal > 1 then
-					r.bar:Show()
-					r.bar:SetMinMaxValues(0, def.goal)
-					r.bar:SetValue(cur)
-					r.bar.text:SetText(ValueText(def, cur))
-				else
-					r.bar:Hide()
-				end
-			end
-			y = y + ROW_H
 		end
+	elseif resetScroll then
+		self.scroll:ScrollToTop()
 	end
-	self.scroll:SetContentHeight(y)
-	if resetScroll then self.scroll:ScrollToTop() end
-	if self.focusId and self.focusRowY then
-		self.scroll:ScrollTo(self.focusRowY - 60)
-	end
-	self.focusId, self.focusRowY = nil, nil
-	if shown == 0 then
-		self.empty:SetText(self.filter == "done" and "아직 달성한 업적이 없습니다." or "모든 업적을 달성했습니다!")
+	self:Render()
+	self.focusId = nil
+	if #rows == 0 then
+		self.empty:SetText(q and "찾는 업적이 없습니다." or (self.filter == "done" and "아직 달성한 업적이 없습니다." or "모든 업적을 달성했습니다!"))
 		self.empty:Show()
 	else
 		self.empty:Hide()
+	end
+end
+
+-- 지금 보이는 줄만 채운다
+function T:Render()
+	local rows = self.rows
+	if not rows or not self.scroll then return end
+	local A = ns.Achievements
+	local col = UI.COL
+	local ach = ns.char.ach
+	local width = math.max(200, (self.scroll:GetWidth() or 600) - 6)
+	self.scroll.child:SetWidth(width)
+	local top = self.scroll.bar:GetValue() or 0
+	local first = math.max(1, math.floor(top / ROW_H) + 1)
+	local visible = math.ceil((self.scroll:GetHeight() or 400) / ROW_H) + 1
+	local items = self.pool.items
+	for k = 1, visible do
+		local r = items[k]
+		if not r then
+			r = T:CreateRow(self.scroll.child)
+			items[k] = r
+		end
+		local i = first + k - 1
+		local def = rows[i]
+		if not def then
+			r:Hide()
+			r.def = nil
+		else
+			r:Show()
+			r:ClearAllPoints()
+			r:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 0, -(i - 1) * ROW_H)
+			r:SetWidth(width)
+			self:FillRow(r, def, A, col, ach)
+		end
+	end
+	for k = visible + 1, #items do items[k]:Hide(); items[k].def = nil end
+end
+
+function T:FillRow(r, def, A, col, ach)
+	local earned = A:Earned(def.id)   -- 계정 공용: 다른 캐릭터가 이룬 것도 달성
+	local isDone = earned ~= nil
+	local same = r.def == def
+	r.def, r.done = def, isDone
+	-- 새로 이룬 업적: 처음 보여 줄 때 3초 동안만 반짝이고, NEW 표시는 탭을 떠날 때까지 남는다
+	local isNewNow = ach.unseen and ach.unseen[def.id]
+	if isNewNow then
+		ach.unseen[def.id] = nil
+		T.sessionNew[def.id] = true
+		ns.Effects.Pulse(r.glow, true, { min = 0.05, max = 0.9, speed = 5, duration = 3, final = 0.35 })
+	elseif T.sessionNew[def.id] then
+		if not same then
+			-- 이미 한 번 반짝인 업적은 다시 그릴 때 은은한 바탕만 남긴다
+			ns.Effects.Pulse(r.glow, false)
+			r.glow:Show()
+			r.glow:SetAlpha(0.35)
+		end
+	else
+		ns.Effects.Pulse(r.glow, false)
+	end
+	r.newTag:SetShown(T.sessionNew[def.id] and true or false)
+	r.icon:SetTexture(def.icon)
+	r.icon:SetDesaturated(not isDone)
+	r.check:SetShown(isDone)
+	r.icon:SetAlpha(isDone and 1 or 0.55)
+	r.name:SetText(def.name)
+	r.desc:SetText(def.desc)
+	r.pts:SetText(def.points .. "점")
+	if isDone then
+		UI.Color(r.bg, col.sel, (col.sel[4] or 0.2) * 0.6)
+		r.name:SetTextColor(Col(col.title))
+		r.pts:SetTextColor(Col(col.accent))
+		r.bar:Hide()
+		r.when:Show()
+		local when = earned.retro and "기록 이전에 달성" or ns.FormatShortDate(earned.t)
+		-- 다른 캐릭터가 이룬 업적은 누가 이뤘는지 덧붙인다
+		if earned.by and earned.by ~= ns.PlayerName() then when = when .. "  ·  " .. earned.by end
+		r.when:SetText(when)
+	else
+		UI.Color(r.bg, col.shade)
+		r.name:SetTextColor(Col(col.sub))
+		r.pts:SetTextColor(Col(col.muted))
+		r.when:Hide()
+		local cur = A:Progress(def, A.ctx)
+		if def.goal > 1 then
+			r.bar:Show()
+			r.bar:SetMinMaxValues(0, def.goal)
+			r.bar:SetValue(cur)
+			r.bar.text:SetText(ValueText(def, cur))
+		else
+			r.bar:Hide()
+		end
 	end
 end
 

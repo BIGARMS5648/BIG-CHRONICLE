@@ -6,12 +6,15 @@ local UI = ns.UI
 local Toast = {}
 ns.Toast = Toast
 
+-- 알림이 내려앉을 때 밀랍 인장 소리에 앞서 울리는 '오! 해냈다!' 효과음 (게임에 들어 있는 소리)
+-- 앞에서부터 차례로 시도해 이 클라이언트에 있는 첫 소리를 쓴다. 숫자는 사운드킷 번호.
+--   12891 = 업적 달성 알림음, 878 = 퀘스트 완료 징글, 888 = 레벨 업, 3175 = 지도 핑
 local STYLE = {
-	tribe   = { hold = 5.0, sound = { "UI_EPICLOOT_TOAST", "IG_QUEST_LIST_COMPLETE" } },
-	species = { hold = 3.0, sound = { "IG_QUEST_LOG_OPEN" } },
-	rare    = { hold = 6.0, sound = { "UI_LEGENDARY_LOOT_TOAST", "UI_EPICLOOT_TOAST", "RAID_WARNING" } },
-	rank    = { hold = 5.0, sound = { "UI_EPICLOOT_TOAST", "LEVELUPSOUND" } },
-	achievement = { hold = 5.0, sound = { "UI_ALERT_ACHIEVEMENT", "UI_EPICLOOT_TOAST", "LEVELUPSOUND" } },
+	tribe   = { hold = 5.0, sound = { 878, "IG_QUEST_LIST_COMPLETE", 12891 } },
+	species = { hold = 3.0, sound = { 878, "IG_QUEST_LIST_COMPLETE", 3175 } },
+	rare    = { hold = 6.0, sound = { 12891, 878, "IG_QUEST_LIST_COMPLETE" } },
+	rank    = { hold = 5.0, sound = { 888, "LEVELUPSOUND", 878 } },
+	achievement = { hold = 5.0, sound = { 12891, 888, "LEVELUPSOUND", 878 } },
 }
 
 local OPEN, FADE_OUT = 0.45, 0.8
@@ -159,12 +162,13 @@ function Toast:Build()
 end
 
 local function PlayStyleSound(style)
-	if not (ns.db and ns.db.sound) or not SOUNDKIT or not PlaySound then return end
+	if not (ns.db and ns.db.sound) or not PlaySound then return end
 	for _, key in ipairs(style.sound) do
-		local id = SOUNDKIT[key]
+		local id = type(key) == "number" and key or (SOUNDKIT and SOUNDKIT[key])
 		if id then
-			pcall(PlaySound, id)
-			return
+			-- 이 클라이언트에 없는 소리면 PlaySound가 false를 돌려준다 → 다음 후보
+			local ok, willPlay = pcall(PlaySound, id, "SFX")
+			if ok and willPlay ~= false then return end
 		end
 	end
 end

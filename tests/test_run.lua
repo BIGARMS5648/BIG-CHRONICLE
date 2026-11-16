@@ -187,7 +187,7 @@ M.advance(10)
 M.fire("CHAT_MSG_COMBAT_XP_GAIN", "마그람 약탈자|1을;를; 처치하여 경험치를 450 획득했습니다.")
 check(ns.Bestiary.dex.creatures["마그람 약탈자"].kills == 3, "unresolved grammar code handled")
 -- mass kills to trigger milestone/rank
-for i = 1, 60 do
+for i = 1, 150 do
 	M.advance(5)
 	M.fire("CHAT_MSG_COMBAT_XP_GAIN", "마그람 약탈자를 처치하여 경험치를 450 획득했습니다.")
 end
@@ -234,7 +234,7 @@ M.tick(100) -- > 15 min
 check(db.expedition == nil, "expedition ended after grace")
 print("    " .. ns.StripCodes(db.log[#db.log].text))
 local endedEntry = false
-for i = math.max(1, #db.log - 3), #db.log do if db.log[i].ended then endedEntry = true end end
+for i = math.max(1, #db.log - 10), #db.log do if db.log[i].ended then endedEntry = true end end
 check(endedEntry, "expedition end entry")
 
 -- battleground
@@ -487,6 +487,7 @@ end
 print("== account-wide achievements")
 do
 	local A = ns.Achievements
+	A:Evaluate()   -- 본캐의 판정을 먼저 마친다
 	local acc = A:Account().done
 	local n, anyId = 0, nil
 	for id, e in pairs(acc) do n = n + 1; anyId = anyId or id end
@@ -497,7 +498,7 @@ do
 	local realAch, realName = ns.char.ach, UnitName
 	local seen = {}
 	for k in pairs(realAch.seen or {}) do seen[k] = true end
-	ns.char.ach = { done = {}, retro = {}, flags = {}, seen = seen, initialized = true }
+	ns.char.ach = { done = {}, retro = {}, flags = {}, initialized = true, sig = ns.ACH_SIGNATURE }
 	UnitName = function(u) if u == "player" then return "부캐릭터" end return realName(u) end
 	local logN = #ns.char.log
 	A:Evaluate()

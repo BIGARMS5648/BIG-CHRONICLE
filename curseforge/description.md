@@ -55,7 +55,7 @@ On top of that, **beast families** such as wolves, spiders and raptors each get 
 - **Hidden entries** — undiscovered tribes show only `???` and a one-line hint. Go and find them.
 - **Only real discoveries count** — zones, places and creatures you merely fly over on a flight master's wyvern or gryphon are not discovered. Your landing spot is recorded once you are on the ground.
 - **Unlockable lore** — every tribe has three paragraphs of lore that unlock one by one as your research rank rises.
-  - ★ Encountered → ★★ Observer → ★★★ Researcher → ★★★★ Authority → ★★★★★ Legendary Hunter
+  - ★ Encountered → ★★ Observer (150) → ★★★ Researcher (1,000) → ★★★★ Authority (5,000) → ★★★★★ Legendary Hunter (25,000). The thresholds climb steeply: five stars takes a long hunt
   - Research score = species found ×10 + kills + rare creatures ×50 + bosses ×20
 - **Habitats** — the zones where you actually met each tribe, how often, plus hints about where else they live
 - **Rare collection** — silver-dragon rare spawns are gathered on their own page, marked once you defeat them
@@ -66,7 +66,7 @@ On top of that, **beast families** such as wolves, spiders and raptors each get 
 
 ---
 
-## 🏆 Achievements — 386 of them
+## 🏆 Achievements — over 10,000
 
 Inspired by the Wrath-era achievements for classic (level 1–60) content, focusing on what **Forever's official achievements don't already cover**, plus achievements unique to this addon:
 
@@ -80,13 +80,21 @@ Inspired by the Wrath-era achievements for classic (level 1–60) content, focus
 - **Battlegrounds, Reputation, Trials, Chronicle** — battles joined, exalted factions, your first death and deathless levels, personal notes and exports
 - **Little Joys** — playful achievements based on real-world dates: 7- and 30-day streaks, 100 days together, weekend warrior, night owl, New Year's Day…
 
-Every achievement arrives as a parchment dispatch sealed with red wax and adds a short line of story to your journal.
+- **Over 10,000 tiered achievements** built on everything the addon records:
+  - every tribe: kills (up to 200,000), species, research ranks ★1–★5, sightings, and finds in each known habitat
+  - every one of the 40 classic zones: visits, time spent, quests, places, creatures found, sightings and deaths
+  - every dungeon and raid: entries, clears, boss kills and fast clears (90 to 20 minutes); every battleground
+  - every level from 2 to 60, plus levels **per class, per race and per race/class** (achievements are account-wide, so alts fill these in)
+  - lifetime totals and journal statistics by entry type, hour, weekday and month
+- **Account-wide**: an achievement earned on one character counts on all of them, showing who earned it
+- **Search** achievements by name or description
+
+Every achievement arrives as a parchment dispatch sealed with red wax and adds a short line of story to your journal. When several land at once, they share one notification and one journal line.
 
 ---
 
 ## ✨ Effects
 
-- Opening the book briefly shows the **BIG CHRONICLE logo** on the leather cover, which then fades away
 - Reaching a new chapter **unrolls a parchment scroll** across the screen with the chapter title, with drifting gold dust
 - Every notification is **stamped with a red wax seal** — a ribboned compass-star seal for achievements, a lion seal for bestiary discoveries (new tribes, new creatures, rares and research ranks)
 - The first time you open a newly found tribe, a **wax seal** is pressed onto the page
@@ -119,6 +127,7 @@ An **ornate leather bestiary notebook**. Every frame, plaque, tab, button, parch
 - `/bc note <text>` — add your own entry to the journal
 - `/bc export` — show the whole chronicle as copyable text
 - `/bc minimap` — show or hide the minimap button
+- `/bc toast` (`/bc 알림`) — unlock or lock the notification position
 
 Minimap button: left-click opens the journal · right-click opens the bestiary · drag to move it
 
