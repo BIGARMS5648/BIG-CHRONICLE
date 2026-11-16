@@ -1,3 +1,8 @@
+## 1.10.3
+
+- The chapter scroll is now drawn as one picture turned slightly counterclockwise, so its parchment face is level under the title; chapter titles sit exactly on the middle of the face
+- The scroll unfurls by widening from the middle with its curled ends in place
+
 ## 1.10.2
 
 - Chapter titles now sit in the middle of the scroll's parchment face (higher than before), on the first-page card and on every chapter card

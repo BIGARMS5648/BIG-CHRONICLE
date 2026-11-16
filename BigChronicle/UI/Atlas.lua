@@ -43,7 +43,7 @@ ns.UI.ATLAS = {
 	ParchmentTile = { w = 360, h = 232, tile = 360, tileH = 232 },
 	Plaque = { w = 669, h = 146 },
 	Plate = { w = 240, h = 82, l = 40, r = 40, pad = 4 },
-	Scroll = { w = 249, h = 95, l = 76, r = 100, pad = 4 },
+	ScrollCard = { w = 875, h = 212, band = 870, face = 81.6 },
 	ScrollDown = { w = 64, h = 57, pad = 2 },
 	ScrollThumb = { w = 36, h = 128, pad = 3 },
 	ScrollTrackBottom = { w = 58, h = 26 },

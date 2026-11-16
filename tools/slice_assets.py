@@ -244,6 +244,39 @@ def from_white(path, width, square=False):
     return fit(img, width, square)
 
 
+def scroll_card(src, card_w=620, card_h=124, l=76, r=100, pad=4, tilt=2.7):
+    """장 제목 카드용 두루마리 한 장.
+    게임 화면 비율(620×124)대로 가운데를 늘여 붙인 뒤, 펼쳐진 면이 오른쪽으로 처지지 않도록
+    반시계 방향으로 tilt도 돌려 둔다. 글씨를 놓을 면의 가운데 높이(face)도 함께 적는다."""
+    w, h = src.size
+    k = (card_h) / (h - 2 * pad)                     # 화면 픽셀 / 원본 픽셀
+    band_w = round(card_w / k) + 2 * pad              # 원본 픽셀로 잰 카드 폭
+    mid_w = band_w - l - r
+    up = 2                                            # 돌릴 때 뭉개지지 않도록 두 배로 그린다
+    left = src.crop((0, 0, l, h))
+    mid = src.crop((l, 0, w - r, h)).resize((mid_w, h), Image.LANCZOS)
+    right = src.crop((w - r, 0, w, h))
+    band = Image.new("RGBA", (band_w, h), (0, 0, 0, 0))
+    band.paste(left, (0, 0)); band.paste(mid, (l, 0)); band.paste(right, (l + mid_w, 0))
+    band = band.resize((band_w * up, h * up), Image.LANCZOS)
+    rot = band.rotate(tilt, resample=Image.BICUBIC, expand=True)
+    a = np.asarray(rot)[..., 3]
+    ys, xs = np.nonzero(a > 8)
+    rot = rot.crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
+    a = np.asarray(rot)[..., 3]
+    # 글씨가 놓일 가운데 절반에서 펼쳐진 면의 위·아래 끝을 재어 가운데 높이를 구한다
+    cw = rot.size[0]
+    centers = []
+    for x in range(int(cw * 0.3), int(cw * 0.7), 4):
+        col = np.nonzero(a[:, x] > 200)[0]
+        if len(col):
+            centers.append((col.min() + col.max()) / 2)
+    face = float(np.mean(centers))
+    # 두 배로 그린 그대로 저장한다 (화면 폭 620px보다 촘촘하게)
+    # band: 카드 폭(card_w)에 해당하는 그림 픽셀 수 → 게임에서 이 비율로 크기를 정한다
+    save("ScrollCard", rot, band=(band_w - 2 * pad) * up, face=round(face, 1))
+
+
 def match_gold(img, refs):
     """img 의 금빛을 refs(창틀 조각들)의 금박 색에 맞춘다.
     밝기 순서는 그대로 두고, 각 채널의 분포를 창틀 금박의 분포로 옮긴다 (히스토그램 맞추기)."""
@@ -337,7 +370,8 @@ def main():
     save("ScrollThumb", cut("K", (1262, 338, 1292, 460), pad=3, thr=95, close=3), pad=3)
 
     # --- 인장·막대·아이콘 (시트 R)
-    save("Scroll", cut("R", (1052, 441, 1293, 528)), l=76, r=100, pad=4)
+    # 장 제목 카드의 두루마리 (한 장으로 이어 붙여 살짝 돌린 그림만 쓴다)
+    scroll_card(cut("R", (1052, 441, 1293, 528)))
     save("SealAch", cut("R", (1329, 431, 1429, 560)), pad=4)
     save("SealDex", cut("R", (1329, 677, 1433, 785)), pad=4)
     save("Seal", cut("R", (1330, 566, 1431, 665)), pad=4)
@@ -366,7 +400,7 @@ def main():
              "", "local ADDON, ns = ...", "ns.UI = ns.UI or {}", "ns.UI.ATLAS = {"]
     for name in sorted(atlas):
         e = atlas[name]
-        body = ", ".join(f"{k} = {e[k]}" for k in ("w", "h", "l", "r", "t", "b", "pad", "tile", "tileH", "corner", "top", "bottom", "side") if k in e)
+        body = ", ".join(f"{k} = {e[k]}" for k in ("w", "h", "l", "r", "t", "b", "pad", "tile", "tileH", "corner", "top", "bottom", "side", "band", "face") if k in e)
         lines.append(f"\t{name} = {{ {body} }},")
     lines.append("}")
     UIOUT.write_text("\n".join(lines) + "\n", encoding="utf-8")

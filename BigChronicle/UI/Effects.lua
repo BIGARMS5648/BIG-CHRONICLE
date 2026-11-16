@@ -308,7 +308,7 @@ end
 -- 장 제목 카드: 화면 가운데에 양피지 두루마리가 펼쳐지고 장 제목이 떠오른다
 ------------------------------------------------------------------------
 local card
-local CARD_W, SCROLL_H = 620, 124
+local CARD_W = 620   -- 두루마리 카드 폭 (높이는 그림 비율대로)
 local TITLE_W = CARD_W - 200   -- 두루마리 양 끝의 말린 부분을 뺀, 글씨가 들어갈 폭
 local TITLE_FONTS = { "BigChronicleFontCinematic", "BigChronicleFontCinematicMid", "BigChronicleFontCinematicFit" }
 local function MakeFont(name, base, size, color, shadow)
@@ -341,19 +341,27 @@ local function BuildCard()
 	MakeFont("BigChronicleFontCinematicFit", "GameFontNormalLarge", 21, { 0.22, 0.10, 0.05 }, false)
 	MakeFont("BigChronicleFontCinematicLabel", "GameFontNormal", 13, { 0.55, 0.12, 0.07 }, false)
 	MakeFont("BigChronicleFontCinematicSmall", "GameFontNormal", 13, { 0.95, 0.88, 0.74 }, true)
+	-- 두루마리 그림 한 장 (펼쳐진 면이 수평이 되도록 살짝 돌려 둔 그림)
+	local A = UI.ATLAS.ScrollCard
+	local k = CARD_W / A.band
+	local artW, artH = A.w * k, A.h * k
+	local faceY = A.face * k   -- 그림 위에서부터 펼쳐진 면 가운데까지
 	local f = CreateFrame("Frame", "BigChronicleChapterCard", UIParent)
-	f:SetSize(CARD_W, SCROLL_H + 34)
+	f:SetSize(artW, artH + 30)
 	f:SetPoint("CENTER", UIParent, "CENTER", 0, 170)
 	f:SetFrameStrata("FULLSCREEN_DIALOG")
 	f:EnableMouse(false)
 	f:Hide()
 
-	-- 양 끝이 말린 양피지 두루마리 (가운데만 늘어난다)
+	-- 두루마리: 펼칠 때 가운데에서 양옆으로 넓어진다 (글씨 자리는 band 기준이라 움직이지 않는다)
 	local band = CreateFrame("Frame", nil, f)
 	band:SetPoint("TOP", 0, 0)
-	band:SetSize(CARD_W, SCROLL_H)
-	UI.Slice(band, "Scroll", { layer = "BACKGROUND" })
-	f.band = band
+	band:SetSize(artW, artH)
+	local art = band:CreateTexture(nil, "BACKGROUND")
+	art:SetPoint("CENTER")
+	art:SetSize(artW, artH)
+	art:SetTexture(UI.Tex("ScrollCard"))
+	f.band, f.art, f.bandW, f.faceY = band, art, artW, faceY
 
 	-- 글씨는 두루마리(자식 프레임)보다 위 프레임 레벨에 둔다
 	local ink = CreateFrame("Frame", nil, f)
@@ -361,7 +369,8 @@ local function BuildCard()
 	if ink.SetFrameLevel and f.GetFrameLevel then ink:SetFrameLevel((f:GetFrameLevel() or 0) + 5) end
 
 	local label = ink:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicLabel")
-	label:SetPoint("TOP", band, "TOP", 10, -21)
+	-- 머리글 + 제목 두 줄이 펼쳐진 면 가운데에 오도록
+	label:SetPoint("TOP", band, "TOP", 0, -(faceY - 26))
 	f.label = label
 
 	local titleHolder = CreateFrame("Frame", nil, ink)
@@ -371,7 +380,7 @@ local function BuildCard()
 	f.title, f.titleHolder = title, titleHolder
 
 	local sub = ink:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicSmall")
-	sub:SetPoint("TOP", band, "BOTTOM", 0, -8)
+	sub:SetPoint("TOP", band, "BOTTOM", 0, 2)
 	f.sub = sub
 	card = f
 	return f
@@ -388,7 +397,7 @@ function E.ShowCard(label, title, sub)
 	f.titleHolder:ClearAllPoints()
 	if (label or "") == "" then
 		-- 두루마리 그림의 펼쳐진 면은 그림 높이의 약 39% 지점이 가운데다 (아래로 말린 끝이 매달려 있어서)
-		f.titleHolder:SetPoint("CENTER", f.band, "CENTER", 0, math.floor(SCROLL_H * 0.115 + 0.5))
+		f.titleHolder:SetPoint("CENTER", f.band, "TOP", 0, -f.faceY)
 	else
 		f.titleHolder:SetPoint("TOP", f.label, "BOTTOM", 0, -2)
 	end
@@ -400,13 +409,13 @@ function E.ShowCard(label, title, sub)
 	end
 	f:SetAlpha(1)
 	f:Show()
-	local minW = 230
-	f.band:SetWidth(minW)
+	local minW = f.bandW * 0.35
+	f.art:SetWidth(minW)
 	f.label:SetAlpha(0); f.titleHolder:SetAlpha(0); f.sub:SetAlpha(0)
 	E.Sound("chapter")
 	-- 1) 말려 있던 두루마리가 좌우로 펼쳐진다
 	E.Tween("card-band", 0.65, function(p)
-		f.band:SetWidth(minW + (CARD_W - minW) * E.Ease.outCubic(p))
+		f.art:SetWidth(minW + (f.bandW - minW) * E.Ease.outCubic(p))
 		f:SetAlpha(math.min(1, p * 3))
 	end)
 	-- 2) 머리글과 제목이 잉크가 번지듯 떠오른다
