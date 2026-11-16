@@ -23,7 +23,7 @@ MEDIA = ROOT / "BigChronicle" / "Media"
 CACHE = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/bigchronicle-assets").resolve()
 
 PARTICLES = (("star_06", "Star"), ("light_01", "Glow"), ("dirt_02", "Crumb"), ("magic_05", "Magic"))
-SOUNDS = ("bookOpen", "bookClose", "bookFlip1", "bookFlip2", "bookFlip3", "bookPlace1")
+SOUNDS = ("bookOpen", "bookClose", "bookPlace1")
 
 
 def save_tga(img, rel):

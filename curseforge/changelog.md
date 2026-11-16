@@ -1,11 +1,15 @@
 ## 1.9.0
 
-- **New look from hand-made art**: the whole window is rebuilt from the author's own asset sheets: a gold-trimmed leather frame, the BIG CHRONICLE plaque, trapezoid leather tabs with medallion icons, leather and gold buttons, parchment panels, count badges, check boxes, a gold scrollbar, progress bars, a trophy banner and buckled straps
+- **New look from hand-made art**: the whole window is rebuilt from the author's own art: a gold-trimmed leather frame, a plaque with gold **BIG CHRONICLE** lettering, trapezoid leather tabs with medallion icons, leather and gold buttons, parchment panels, count badges, check boxes, a gold scrollbar, progress bars and a trophy banner
 - The journal, bestiary, achievements, stats and settings sit on parchment inside the leather frame, like a bestiary notebook
+- Opening the book shows the **BIG CHRONICLE logo** on the leather cover for a moment, then it fades away. The cover swing and the page-turn animations are gone
+- New **minimap icon**: a gold-rimmed B.C medallion
+- Tab labels use the game's own **title font**
+- One parchment theme; the theme option is gone. The character summary in the top-right corner and the buckles on the spine are gone too
 - New wax seals: a lion seal for bestiary discoveries and a ribboned compass-star seal for achievements
 - Chapter titles now appear on an **unrolling parchment scroll**
-- The leather cover, page turns, sounds and particles stay, redrawn with the new art
-- Removed the old photo textures and icon files; the download now only contains the new art, the Kenney effects and the minimap icon
+- **Only real discoveries count**: while flying with a flight master, the zones, places and creatures you pass over are no longer discovered (journal, bestiary and discovery achievements). The place you land is recorded once you are on the ground
+- Removed the old photo textures, icon files and page-flip sounds
 
 ## 1.8.0
 

@@ -241,6 +241,7 @@ end
 ------------------------------------------------------------------------
 function B:SafeScan(unit)
 	if not ns.char or not unit then return end
+	if ns.OnTaxi() then return end   -- 날아가며 내려다본 몬스터는 도감에 올리지 않는다
 	local ok, err = pcall(self.ScanUnit, self, unit)
 	if not ok then ns:Error(err) end
 end

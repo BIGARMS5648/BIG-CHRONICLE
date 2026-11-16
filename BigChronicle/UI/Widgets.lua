@@ -36,7 +36,7 @@ UI.LEATHER = {
 }
 
 ------------------------------------------------------------------------
--- 테마: 양피지 칸의 색 (가죽과 금장식은 두 테마 모두 같다)
+-- 테마: 양피지 칸의 색 (양피지 한 가지)
 ------------------------------------------------------------------------
 UI.THEMES = {
 	light = {
@@ -68,29 +68,6 @@ UI.THEMES = {
 			ff5050 = "a02020", f0e6c8 = "4a3520", ffffff = "2a1c0e",
 		},
 	},
-	dark = {
-		name = "그을린 양피지",
-		page   = { 0.36, 0.33, 0.30 },    -- 양피지 그림을 어둡게
-		page2  = { 0.22, 0.19, 0.16 },
-		edge   = { 0.80, 0.68, 0.48 },
-		line   = { 0.85, 0.72, 0.50, 0.35 },
-		shade  = { 1, 1, 1, 0.04 },
-		text   = { 0.93, 0.88, 0.78 },
-		sub    = { 0.78, 0.71, 0.60 },
-		muted  = { 0.60, 0.54, 0.45 },
-		title  = { 0.97, 0.82, 0.52 },
-		accent = { 0.96, 0.58, 0.42 },
-		hover  = { 1, 0.85, 0.5, 0.08 },
-		sel    = { 0.95, 0.72, 0.32, 0.22 },
-		bar    = { 0.75, 0.32, 0.20 },
-		barBg  = { 0, 0, 0, 0.35 },
-		creature = { 0.52, 0.82, 0.86 },
-		rare   = { 0.82, 0.64, 0.98 },
-		good   = { 0.60, 0.87, 0.47 },
-		shadow = { 0, 0, 0, 0.7 },
-		fontShadow = true,
-		remap = {},
-	},
 }
 
 UI.COL = {}
@@ -109,8 +86,13 @@ UI.F = {
 	brandSmall = "BigChronicleFontBrandSmall",
 }
 
+-- 제목을 강조하는 게임 기본 글꼴 (한국어 클라이언트의 '굵은 글꼴'). 다른 언어에서는 퀘스트 제목 글꼴을 쓴다.
+local TITLE_FILE = { koKR = "Fonts\\2002B.TTF" }
+local TITLE_BASE = { "QuestTitleFont", "QuestTitleFontBlackShadow", "GameFontNormalLarge", "GameFontNormal" }
+
 -- 게임 기본 글꼴을 바탕으로 크기와 색만 바꾼 글꼴을 만든다
-local function MakeFont(name, baseNames, size, color, shadow)
+-- file: 먼저 써 볼 게임 글꼴 파일 (못 쓰면 baseNames 글꼴을 그대로 쓴다)
+local function MakeFont(name, baseNames, size, color, shadow, file)
 	local font = _G[name] or (CreateFont and CreateFont(name))
 	if not font then return end
 	local base
@@ -121,6 +103,14 @@ local function MakeFont(name, baseNames, size, color, shadow)
 	if base and base.GetFont and font.SetFont then
 		local ok, p, _, flags = pcall(base.GetFont, base)
 		if ok and p then pcall(font.SetFont, font, p, size, flags or "") end
+	end
+	if file and font.SetFont then
+		local ok, done = pcall(font.SetFont, font, file, size, "")
+		-- 파일을 못 읽으면 SetFont가 false를 돌려준다 → 위에서 정한 글꼴이 그대로 남는다
+		if ok and done == false and base and base.GetFont then
+			local ok2, p, _, flags = pcall(base.GetFont, base)
+			if ok2 and p then pcall(font.SetFont, font, p, size, flags or "") end
+		end
 	end
 	if font.SetTextColor then font:SetTextColor(color[1], color[2], color[3]) end
 	if font.SetShadowOffset then
@@ -137,10 +127,9 @@ end
 function UI:InitTheme()
 	if self.themeReady then return end
 	self.themeReady = true
-	local id = (ns.db and ns.db.theme) or "light"
-	local theme = self.THEMES[id] or self.THEMES.light
+	local theme = self.THEMES.light
 	self.theme = theme
-	self.themeId = self.THEMES[id] and id or "light"
+	self.themeId = "light"
 	for k, v in pairs(theme) do self.COL[k] = v end
 	self.COL.paperTop, self.COL.paperBottom = theme.page, theme.page
 	local C, L, sh = self.COL, self.LEATHER, theme.fontShadow
@@ -149,7 +138,9 @@ function UI:InitTheme()
 	MakeFont(self.F.header,  STRONG, 16, C.title, sh)
 	MakeFont(self.F.heading, BASE, 13.5, C.accent, sh)
 	MakeFont(self.F.button,  BASE, 12.5, L.title, true)
-	MakeFont(self.F.tab,     BASE, 14, L.text, true)
+	-- 탭 이름은 제목 강조 글꼴로
+	local locale = GetLocale and GetLocale() or ""
+	MakeFont(self.F.tab,     TITLE_BASE, 15, L.text, true, TITLE_FILE[locale])
 	MakeFont(self.F.label,   BASE, 11, C.muted, sh)
 	MakeFont(self.F.body,    BASE, 13, C.text, sh)
 	MakeFont(self.F.small,   BASE, 11.5, C.sub, sh)

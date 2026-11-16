@@ -44,20 +44,10 @@ function J:Create(parent)
 		b:SetPoint("TOPLEFT", nav, "TOPLEFT", 8, -36 - i * 29)
 		b:SetPoint("RIGHT", nav, "RIGHT", -8, 0)
 		b.onClick = function()
-			UI:FinishTurn(J.turner)
-			local cur = J.chapter or 0
-			local function apply()
-				J.chapter = i
-				J.page = nil
-				J.scrollPending = true
-				J:Refresh()
-			end
-			if cur == i then
-				apply()
-			else
-				-- 뒤의 장으로 가면 앞으로, 앞의 장으로 가면 뒤로 넘긴다
-				UI:TurnPage(J.turner, i > cur and 1 or -1, apply)
-			end
+			J.chapter = i
+			J.page = nil
+			J.scrollPending = true
+			J:Refresh()
 		end
 		if i > 0 then
 			UI.Tooltip(b, C.CHAPTERS[i].title, function()
@@ -107,8 +97,6 @@ function J:Create(parent)
 	sheet:SetPoint("TOPLEFT", nav, "TOPRIGHT", 12, 0)
 	sheet:SetPoint("BOTTOMRIGHT", 0, 0)
 	self.sheet = sheet
-	-- 장을 바꾸거나 쪽을 넘길 때 이 양피지 위로 한 장이 넘어간다
-	self.turner = ns.Effects.MakePageTurn(sheet)
 	local main = CreateFrame("Frame", nil, sheet)
 	main:SetPoint("TOPLEFT", 20, -14)
 	main:SetPoint("BOTTOMRIGHT", -18, 16)
@@ -197,14 +185,11 @@ function J:Create(parent)
 end
 
 function J:TurnPage(dir)
-	UI:FinishTurn(self.turner)
 	local pages = self.pages or 1
 	local page = math.max(1, math.min(pages, (self.curPage or 1) + dir))
 	if page == self.curPage then return false end
-	UI:TurnPage(self.turner, dir, function()
-		self.page = page
-		self:Refresh(true)
-	end)
+	self.page = page
+	self:Refresh(true)
 	return true
 end
 

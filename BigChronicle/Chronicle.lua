@@ -178,6 +178,8 @@ function C:Init()
 	on("ZONE_CHANGED_NEW_AREA", self.OnZoneChanged)
 	on("ZONE_CHANGED", self.OnSubZoneChanged)
 	on("ZONE_CHANGED_INDOORS", self.OnSubZoneChanged)
+	-- 비행에서 내리면 내린 곳을 다시 살핀다 (날아가는 동안 지난 곳은 발견이 아니다)
+	on("PLAYER_CONTROL_GAINED", self.OnLanded)
 	on("PLAYER_LEVEL_UP", self.OnLevelUp)
 	on("QUEST_ACCEPTED", self.OnQuestAccepted)
 	on("QUEST_DETAIL", self.OnQuestFrame)
@@ -284,6 +286,10 @@ end
 function C:OnZoneChanged()
 	local db = ns.char
 	if not db or not self.started then return end
+	if ns.OnTaxi() then
+		self.flying = true
+		return
+	end
 	self:CheckInstance()
 
 	local zone = ns.Zone()
@@ -311,6 +317,10 @@ end
 function C:OnSubZoneChanged()
 	local db = ns.char
 	if not db or not self.started then return end
+	if ns.OnTaxi() then
+		self.flying = true
+		return
+	end
 	if InWorldInstance() then return end
 	local zone, sub = ns.Zone(), ns.SubZone()
 	if zone == "" or sub == "" or sub == zone then return end
@@ -323,13 +333,19 @@ function C:OnSubZoneChanged()
 	end
 end
 
+function C:OnLanded()
+	if not self.flying or ns.OnTaxi() then return end
+	self.flying = nil
+	self:OnZoneChanged()
+end
+
 function C:Tick()
 	local db = ns.char
 	if not db then return end
 	local now = time()
 	db.stats.tracked = (db.stats.tracked or 0) + 10
 	local zone = self.currentZone
-	if zone and db.zones[zone] then
+	if zone and db.zones[zone] and not ns.OnTaxi() then
 		db.zones[zone].time = (db.zones[zone].time or 0) + 10
 	end
 	local exp = db.expedition

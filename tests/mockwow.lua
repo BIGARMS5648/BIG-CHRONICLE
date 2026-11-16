@@ -216,6 +216,7 @@ function UnitCreatureType(u) local x = U(u); return x and x.ctype end
 function UnitCreatureFamily(u) local x = U(u); return x and x.family end
 function UnitClassification(u) local x = U(u); return x and x.cls or "normal" end
 function UnitIsDead(u) local x = U(u); return x and x.dead end
+function UnitOnTaxi(u) return u == "player" and S.onTaxi or false end
 function UnitIsTapDenied() return false end
 function UnitIsDeadOrGhost(u) if u == "player" then return S.ghost or false end local x = U(u); return x and x.dead end
 function GetZoneText() return S.inInstance and S.instanceName or S.zone end

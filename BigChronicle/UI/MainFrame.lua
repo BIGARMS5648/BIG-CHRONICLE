@@ -108,7 +108,7 @@ function UI:Build()
 	tabRule:SetHeight(2)
 	UI.Gradient(tabRule, "VERTICAL", { 0.30, 0.18, 0.06, 0.9 }, { L.gold[1], L.gold[2], L.gold[3], 0.85 })
 
-	-- ④ 제목 명판, 깃발, 버클, 닫기 버튼 (탭 내용보다 위에)
+	-- ④ 제목 명판, 깃발, 닫기 버튼 (탭 내용보다 위에)
 	local trim = CreateFrame("Frame", nil, f)
 	trim:SetAllPoints(f)
 	trim:SetFrameLevel(body:GetFrameLevel() + 40)
@@ -116,29 +116,26 @@ function UI:Build()
 	local plaque = UI.Sprite(trim, "Plaque", "ARTWORK", 5, 0.66)
 	plaque:SetPoint("TOP", f, "TOP", 0, 20)
 	f.plaque = plaque
-	local brand = trim:CreateFontString(nil, "OVERLAY", UI.F.brand)
-	brand:SetPoint("CENTER", plaque, "TOP", 0, -A.Plaque.h * 0.66 * 0.60)
-	brand:SetText("BIG CHRONICLE")
+	-- 명판 가운데의 금빛 BIG CHRONICLE 글자 (그림이 없으면 글꼴로 대신 쓴다)
+	local plaqueMidY = -A.Plaque.h * 0.66 * 0.60
+	if A.Title then
+		local word = UI.Sprite(trim, "Title", "OVERLAY", 2)
+		local h = 30
+		word:SetSize(h * A.Title.w / A.Title.h, h)
+		word:SetPoint("CENTER", plaque, "TOP", 0, plaqueMidY)
+		f.brand = word
+	else
+		local brand = trim:CreateFontString(nil, "OVERLAY", UI.F.brand)
+		brand:SetPoint("CENTER", plaque, "TOP", 0, plaqueMidY)
+		brand:SetText("BIG CHRONICLE")
+		f.brand = brand
+	end
 	local banner = UI.Sprite(trim, "Banner", "ARTWORK", 4, 0.74)
 	banner:SetPoint("TOP", f, "TOPLEFT", 112, -6)
-	for _, frac in ipairs({ 0.36, 0.57, 0.78 }) do
-		local buckle = UI.Sprite(trim, "Buckle", "ARTWORK", 3, 0.36)
-		buckle:SetPoint("LEFT", f, "TOPLEFT", -14, -HEIGHT * frac)
-	end
 	local close = CloseButton(trim, function() f:Hide() end, 34)
 	close:SetPoint("TOPRIGHT", f, "TOPRIGHT", -40, -38)
 
-	-- ⑤ 명판 오른쪽에 모험 요약, 아래쪽 장식 양옆에 단축키 안내
-	local title = trim:CreateFontString(nil, "OVERLAY", UI.F.small)
-	title:SetPoint("TOPRIGHT", f, "TOPRIGHT", -86, -40)
-	title:SetJustifyH("RIGHT")
-	UI.OnLeather(title, L.title)
-	f.title = title
-	local sub = trim:CreateFontString(nil, "OVERLAY", UI.F.tiny)
-	sub:SetPoint("TOPRIGHT", title, "BOTTOMRIGHT", 0, -5)
-	sub:SetJustifyH("RIGHT")
-	UI.OnLeather(sub, L.sub)
-	f.subtitle = sub
+	-- ⑤ 아래쪽 장식 양옆에 단축키 안내
 	local hints = trim:CreateFontString(nil, "OVERLAY", UI.F.tiny)
 	hints:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 64, 40)
 	UI.OnLeather(hints, L.muted)
@@ -149,99 +146,28 @@ function UI:Build()
 	UI.OnLeather(hints2, L.muted)
 	f.hints2 = hints2
 
-	-- ⑥ 창을 열 때 넘어가는 앞표지
-	-- 책등(왼쪽 끝)을 축으로 돈다. 폭이 cos(각도)만큼 줄며 원근처럼 눌리고,
-	-- 똑바로 선 뒤에는 표지 안쪽(면지)이 책 왼쪽으로 넘어가며 사라진다.
-	local flap = CreateFrame("Frame", nil, f)
-	flap:SetPoint("TOPLEFT", f, "TOPLEFT")
-	flap:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT")
-	flap:SetWidth(WIDTH)
-	flap:SetFrameLevel(trim:GetFrameLevel() + 20)
-	local cover = UI.WindowFrame(flap, { ornament = "both", fixedW = WIDTH })
-	local squish = cover.squish
-	local function Squish(region, w)
-		region:SetWidth(w)
-		squish[#squish + 1] = { region, w }
+	-- ⑥ 창을 열 때 잠깐 보이는 표지: 가죽 위에 BIG CHRONICLE 로고, 곧 스르르 사라진다
+	local cover = CreateFrame("Frame", nil, f)
+	cover:SetAllPoints(f)
+	cover:SetFrameLevel(trim:GetFrameLevel() + 20)
+	cover:EnableMouse(false)
+	UI.WindowFrame(cover, { ornament = "both", fixedW = WIDTH })
+	if A.Logo then
+		local logo = UI.Sprite(cover, "Logo", "ARTWORK", 2)
+		local w = 600
+		logo:SetSize(w, w * A.Logo.h / A.Logo.w)
+		logo:SetPoint("CENTER", 0, 6)
+	else
+		local logo = cover:CreateFontString(nil, "OVERLAY", UI.F.brand)
+		logo:SetPoint("CENTER")
+		logo:SetText("BIG CHRONICLE")
 	end
-	local medal = UI.Sprite(flap, "IconBestiary", "ARTWORK", 0)
-	medal:SetHeight(170)
-	Squish(medal, 170 * A.IconBestiary.w / A.IconBestiary.h)
-	medal:SetPoint("CENTER", 0, 40)
-	local flapTitle = flap:CreateFontString(nil, "OVERLAY", UI.F.brand)
-	flapTitle:SetPoint("TOP", medal, "BOTTOM", 0, -18)
-	flapTitle:SetText("BIG CHRONICLE")
-	local flapRule = UI.Divider(flap, 320)
-	flapRule:SetPoint("TOP", flapTitle, "BOTTOM", 0, -8)
-	-- 들릴수록 표지 끝이 그늘지고, 모서리가 빛을 받는다
-	local flapShade = flap:CreateTexture(nil, "OVERLAY", nil, 6)
-	flapShade:SetPoint("TOPLEFT", 10, -10)
-	flapShade:SetPoint("BOTTOMRIGHT", -10, 10)
-	UI.Gradient(flapShade, "HORIZONTAL", { 0, 0, 0, 0.1 }, { 0, 0, 0, 0.7 })
-	-- 아래 책장 위로 드리우는 그림자
-	local flapCast = flap:CreateTexture(nil, "BACKGROUND", nil, -8)
-	flapCast:SetPoint("TOPLEFT", flap, "TOPRIGHT", -8, -14)
-	flapCast:SetPoint("BOTTOMLEFT", flap, "BOTTOMRIGHT", -8, 14)
-	flapCast:SetWidth(1)
-	UI.Gradient(flapCast, "HORIZONTAL", { 0, 0, 0, 0.6 }, { 0, 0, 0, 0 })
-
-	-- 표지 안쪽: 가죽 테두리 안에 면지(양피지)가 붙어 있다 (책 왼쪽 바깥으로 넘어간다)
-	local inside = CreateFrame("Frame", nil, f)
-	inside:SetPoint("TOPRIGHT", f, "TOPLEFT")
-	inside:SetPoint("BOTTOMRIGHT", f, "BOTTOMLEFT")
-	inside:SetWidth(1)
-	inside:SetFrameLevel(trim:GetFrameLevel() + 20)
-	local insideBg = inside:CreateTexture(nil, "BACKGROUND")
-	insideBg:SetPoint("TOPLEFT", 0, -10)
-	insideBg:SetPoint("BOTTOMRIGHT", 0, 10)
-	insideBg:SetTexture(UI.Tex("LeatherTile"), "REPEAT", "REPEAT")
-	insideBg:SetTexCoord(0, WIDTH / (A.LeatherTile.tile * SC), 0, HEIGHT / (A.LeatherTile.tile * SC))
-	local endpaper = inside:CreateTexture(nil, "BORDER")
-	endpaper:SetTexture(UI.Tex("PageSheet"))
-	endpaper:SetVertexColor(0.85, 0.80, 0.72)
-	local endShade = inside:CreateTexture(nil, "OVERLAY", nil, 6)
-	endShade:SetPoint("TOPLEFT", 0, -10)
-	endShade:SetPoint("BOTTOMRIGHT", 0, 10)
-	UI.Gradient(endShade, "HORIZONTAL", { 0, 0, 0, 0.7 }, { 0, 0, 0, 0.1 })
-	inside:Hide()
-
-	f.flap, f.flapTitle, f.flapRule, f.flapInside = flap, flapTitle, flapRule, inside
-	-- theta: 0 = 덮인 표지, pi/2 = 책등 위에 곧게 선 표지, pi = 왼쪽으로 완전히 펼친 표지
-	function f:PoseCover(theta)
-		local c, sn = math.cos(theta), math.sin(theta)
-		if c >= 0 then
-			inside:Hide()
-			flap:Show()
-			flap:SetWidth(math.max(1, WIDTH * c))
-			for _, it in ipairs(squish) do it[1]:SetWidth(math.max(1, it[2] * c)) end
-			-- 글씨는 눌릴 수 없으니, 표지가 들리기 시작하면 금방 흐려진다
-			local textA = math.max(0, 1 - theta / 0.55)
-			flapTitle:SetAlpha(textA)
-			flapRule:SetAlpha(textA)
-			flapShade:SetAlpha(0.1 + 0.9 * sn)
-			flapCast:SetWidth(math.max(1, 140 * sn * c * 2))
-			flapCast:SetAlpha(math.min(1, c * 3))
-			-- 창 위로 솟은 명판과 옆으로 나온 버클은 표지가 들리면서 나타난다
-			trim:SetAlpha(math.min(1, theta / 0.9))
-		else
-			flap:Hide()
-			inside:Show()
-			trim:SetAlpha(1)
-			local k = -c
-			inside:SetWidth(math.max(1, WIDTH * k))
-			endpaper:ClearAllPoints()
-			endpaper:SetPoint("TOPLEFT", 30 * k, -34)
-			endpaper:SetPoint("BOTTOMRIGHT", -30 * k, 34)
-			endShade:SetAlpha(0.1 + 0.9 * sn)
-			-- 왼쪽으로 눕기 시작하면 서서히 사라진다
-			inside:SetAlpha(math.max(0, 1 - (theta - math.pi / 2) / (math.pi * 0.38)))
-		end
-	end
-	flap:Hide()
+	cover:Hide()
+	f.cover = cover
 
 	f:SetScript("OnShow", function(self)
 		UI:Unroll()
 		if ns.Minimap and ns.Minimap.ClearNews then ns.Minimap:ClearNews() end
-		UI:RefreshHeader()
 		UI:RefreshCurrent()
 		UI:UpdateKeyboard()
 	end)
@@ -267,44 +193,26 @@ end
 ------------------------------------------------------------------------
 -- 단축키 (전투 중에는 꺼진다)
 ------------------------------------------------------------------------
--- 창을 열 때 무거운 앞표지가 책등을 축으로 넘어가며 책이 펼쳐진다
+-- 창을 열 때 표지 로고를 잠깐 보여 준 뒤 스르르 걷어 낸다
 function UI:Unroll()
 	local f = self.frame
 	if not f then return end
 	local E = ns.Effects
 	if not (ns.db and ns.db.effects) or not E then
 		if E then E.Stop("main-open") end
-		f.flap:Hide()
-		f.flapInside:Hide()
-		f.trim:SetAlpha(1)
+		f.cover:Hide()
 		UI.FadeIn(f, 0.2)
 		return
 	end
 	f:SetAlpha(1)
-	f:PoseCover(0)
-	-- 잠깐 표지를 보여 준 뒤, 묵직하게 넘긴다 (끝까지 펼쳐지기 직전에 사라진다)
-	E.Tween("main-open", 0.95, function(p)
-		f:PoseCover(math.pi * 0.88 * E.Ease.inOut(p))
+	f.cover:SetAlpha(1)
+	f.cover:Show()
+	E.Tween("main-open", 0.45, function(p)
+		f.cover:SetAlpha(1 - E.Ease.inOut(p))
 	end, function()
-		f.flap:Hide()
-		f.flapInside:Hide()
-		f.trim:SetAlpha(1)
-	end, 0.25)
+		f.cover:Hide()
+	end, 0.55)
 	E.Sound("open")
-end
-
--- 책장을 넘기며 내용을 바꾼다. sheet: 넘어갈 양피지(탭이 만든 것), apply: 내용을 바꾸는 함수
-function UI:TurnPage(sheet, dir, apply)
-	local f = self.frame
-	if not f or not f:IsShown() or not ns.Effects or not sheet then
-		if apply then apply() end
-		return
-	end
-	ns.Effects.TurnPage(sheet, dir, apply)
-end
-
-function UI:FinishTurn(sheet)
-	if sheet and ns.Effects then ns.Effects.FinishTurn(sheet) end
 end
 
 function UI:UpdateKeyboard(entering)
@@ -338,20 +246,6 @@ function UI:HandleKey(key)
 end
 
 ------------------------------------------------------------------------
-function UI:RefreshHeader()
-	local f = self.frame
-	if not f or not ns.char then return end
-	local meta = ns.char.meta or {}
-	local name = ns.PlayerName()
-	local race = ns.Call(UnitRace, "player") or meta.race or ""
-	local class = ns.Call(UnitClass, "player") or meta.class or ""
-	f.title:SetText(string.format("%s  ·  %d레벨 %s", name, ns.PlayerLevel(), ns.Trim(race .. " " .. class)))
-	local found, total, species = ns.Bestiary:Completion()
-	local aDone, aTotal, aPts = ns.Achievements:Summary()
-	f.subtitle:SetText(string.format("기록 %s개  ·  도감 %d/%d 종족\n업적 %d/%d (%s점)",
-		ns.Comma(#ns.char.log), found, total, aDone, aTotal, ns.Comma(aPts)))
-end
-
 function UI:SelectTab(id)
 	self:Build()
 	local changed = self.current ~= id
@@ -393,7 +287,6 @@ function UI:QueueRefresh(kind)
 		UI.refreshPending = false
 		local kinds = UI.pendingKinds
 		UI.pendingKinds = {}
-		UI:RefreshHeader()
 		for k in pairs(kinds) do
 			if RELEVANT[k] and RELEVANT[k][UI.current] then
 				UI:RefreshCurrent(k)

@@ -1,6 +1,5 @@
 -- Scenario test for BIG CHRONICLE in the WoW mock
 -- 사용법 (저장소 루트에서):  lua5.1 tests/test_run.lua
---        테마별로:            THEME=dark lua5.1 tests/test_run.lua
 local here = (arg and arg[0] or ""):match("^(.*)[/\\]") or "."
 local scratch = arg[1] or here
 local addonDir = arg[2] or (here .. "/../BigChronicle")
@@ -16,8 +15,8 @@ end
 local ns = M.load(addonDir)
 local S = M.state
 
--- login
-if os.getenv("THEME") then BigChronicleDB = { settings = { theme = os.getenv("THEME") } } end
+-- login (예전에 저장된 테마 설정은 지워진다)
+BigChronicleDB = { settings = { theme = "dark" } }
 M.fire("ADDON_LOADED", "BigChronicle")
 M.fire("PLAYER_LOGIN")
 M.fire("PLAYER_ENTERING_WORLD", true, false)
@@ -139,6 +138,32 @@ M.setUnit("target", rare); M.fire("PLAYER_TARGET_CHANGED")
 local gotRare=false; for i=math.max(1,#db.log-3),#db.log do if db.log[i].cat=="rare" then gotRare=true end end
 check(gotRare, "rare journal entry")
 print("    " .. ns.StripCodes(db.log[#db.log].text))
+
+-- 비행 조련사로 날아가는 동안에는 지역도 몬스터도 발견되지 않는다
+print("== flight path")
+do
+	local logN = #db.log
+	local homeZone, homeSub = S.zone, S.sub
+	S.onTaxi = true
+	S.zone, S.sub = "버섯구름 봉우리", "얼음바람 야영지"
+	M.fire("ZONE_CHANGED_NEW_AREA"); M.fire("ZONE_CHANGED")
+	check(db.zones["버섯구름 봉우리"] == nil, "no zone discovered while flying")
+	check(db.subzones["버섯구름 봉우리|얼음바람 야영지"] == nil, "no subzone discovered while flying")
+	local wyvernView = M.mob("하늘에서 본 켄타우로스", 4000, "인간형", { level = 30 })
+	M.setUnit("target", wyvernView); M.fire("PLAYER_TARGET_CHANGED")
+	M.setUnit("mouseover", wyvernView); M.fire("UPDATE_MOUSEOVER_UNIT")
+	check(ns.Bestiary.dex.creatures["하늘에서 본 켄타우로스"] == nil, "no creature discovered while flying")
+	check(#db.log == logN, "nothing written to the journal while flying")
+	-- 내린 곳은 직접 밟은 땅이니 기록된다
+	S.zone, S.sub = "잊혀진 땅", "그림자 그늘 마을"
+	S.onTaxi = false
+	M.fire("PLAYER_CONTROL_GAINED")
+	check(db.subzones["잊혀진 땅|그림자 그늘 마을"] ~= nil, "landing spot is recorded after the flight")
+	check(db.zones["버섯구름 봉우리"] == nil, "zones flown over stay undiscovered")
+	M.setUnit("mouseover", nil)
+	S.zone, S.sub = homeZone, homeSub
+	M.fire("ZONE_CHANGED_NEW_AREA")
+end
 
 -- kills: death detection + xp dedupe
 print("== kills")
@@ -318,7 +343,6 @@ local ok, err = pcall(function()
 	f:Fire("OnKeyDown", "3"); assert(ns.UI.current == "achievements", "key 3 -> achievements")
 	f:Fire("OnKeyDown", "4"); assert(ns.UI.current == "stats", "key 4 -> stats")
 	f:Fire("OnKeyDown", "5"); assert(ns.UI.current == "settings", "key 5 -> settings")
-	ns.SettingsTab:SetTheme(ns.UI.themeId == "light" and "dark" or "light")
 	M.inCombat = true; f:Fire("OnKeyDown", "2"); assert(ns.UI.current == "settings", "no hotkeys in combat"); M.inCombat = false
 	for i = 1, 40 do M.runOnUpdate(0.1) end
 	-- new entry while journal open fades in
@@ -350,15 +374,12 @@ local okFx, errFx = pcall(function()
 	assert((ns.Minimap.news or 0) >= 1 and ns.Minimap.button.glow:IsShown(), "minimap glows for news")
 	ns.UI:Open("journal")
 	assert((ns.Minimap.news or 0) == 0 and not ns.Minimap.button.glow:IsShown(), "opening clears news")
-	assert(f.flap:IsShown() and f.flap:GetWidth() > 900, "book starts with the front cover closed")
+	-- 표지 로고가 잠깐 보였다가 스르르 사라진다 (넘어가는 연출은 없다)
+	assert(f.cover:IsShown() and f.cover:GetAlpha() == 1, "the logo cover shows when the book opens")
 	run(0.7)
-	local w1 = f.flap:GetWidth()
-	assert(f.flap:IsShown() and w1 > 1 and w1 < 900, "the cover narrows as it swings up (" .. tostring(w1) .. ")")
-	run(0.3)
-	assert(not f.flap:IsShown() and f.flapInside:IsShown() and f.flapInside:GetWidth() > 1,
-		"past upright, the inside of the cover swings out to the left")
+	assert(f.cover:IsShown() and f.cover:GetAlpha() < 1, "the logo cover fades")
 	run(0.6)
-	assert(not f.flap:IsShown() and not f.flapInside:IsShown(), "cover flips open")
+	assert(not f.cover:IsShown(), "the logo cover is gone")
 	-- 장 제목 카드
 	ns:Fire("CHAPTER_STARTED", 2)
 	local card = _G.BigChronicleChapterCard
@@ -392,35 +413,14 @@ local okFx, errFx = pcall(function()
 	assert(ns.BestiaryTab.stamp:IsShown() and B.dex.tribes.centaur.viewed, "first view stamps the page")
 	run(3)
 	assert(not ns.BestiaryTab.stamp:IsShown(), "stamp fades")
-	-- 일지: 책장 넘김 (장을 바꾸면 한 장이 넘어간다)
+	-- 일지: 장을 바꾸면 곧바로 바뀐다 (책장 넘김 연출 없음)
 	ns.UI:SelectTab("journal")
-	local J, sheet = ns.JournalTab, ns.JournalTab.turner
+	local J = ns.JournalTab
 	J.chapter = 0; J:Refresh()
 	J.chapterButtons[2].onClick()
-	assert(sheet:IsShown() and J.chapter == 2, "forward turn: new chapter drawn under the turning page")
-	assert(sheet:GetWidth() > 600, "the page starts flat over the parchment")
-	run(0.3)
-	local midW = sheet:GetWidth()
-	assert(midW > 1 and midW < 600, "the page narrows as it lifts (" .. tostring(midW) .. ")")
-	run(0.5)
-	assert(not sheet:IsShown(), "forward turn ends")
-	-- 앞의 장으로: 앞 쪽이 넘어와 덮은 뒤에 내용이 바뀐다
-	J.chapterButtons[1].onClick()
-	assert(sheet:IsShown() and J.chapter == 2, "backward turn keeps the old page until covered")
-	run(0.6)
-	assert(J.chapter == 1, "backward turn applies after the page lands")
-	run(0.4)
-	assert(not sheet:IsShown(), "backward turn ends")
-	-- 연달아 넘겨도 어긋나지 않는다
+	assert(J.chapter == 2, "chapter switches at once")
 	J.chapterButtons[3].onClick(); J.chapterButtons[4].onClick(); J.chapterButtons[0].onClick()
-	assert(J.chapter == 4, "rapid turns finish the previous one first")
-	run(1)
-	assert(J.chapter == 0 and not sheet:IsShown(), "rapid turns settle on the last chapter")
-	-- 연출을 끄면 바로 바뀐다
-	ns.db.effects = false
-	J.chapterButtons[5].onClick()
-	assert(J.chapter == 5 and not sheet:IsShown(), "no page turn when effects are off")
-	ns.db.effects = true
+	assert(J.chapter == 0, "rapid chapter clicks settle on the last one")
 	J.chapter = 0; J:Refresh()
 	-- 업적 NEW: 3초만 반짝이고 멈춘다, 다시 그려도 다시 깜빡이지 않는다
 	ns.char.ach.unseen = { level10 = true }
@@ -441,7 +441,7 @@ local okFx, errFx = pcall(function()
 	-- 연출을 끄면 바로 펼쳐진다
 	ns.db.effects = false
 	f:Hide(); ns.UI:Open("journal")
-	assert(not f.flap:IsShown() and not f.flapInside:IsShown(), "no animation when effects are off")
+	assert(not f.cover:IsShown(), "no logo cover when effects are off")
 	ns:Fire("CHAPTER_STARTED", 3)
 	ns.db.effects = true
 end)
@@ -450,7 +450,8 @@ check(okFx, "effects run without error " .. tostring(errFx))
 print("== theme: " .. tostring(ns.UI.themeId))
 local themed = ns.UI:Themed("|cffe6c27a잊혀진 땅|r")
 print("    themed: " .. themed)
-if ns.UI.themeId == "light" then check(themed:find("8a5a12") ~= nil, "light theme remaps colors") else check(themed:find("e6c27a") ~= nil, "dark keeps colors") end
+check(ns.UI.themeId == "light" and ns.db.theme == nil, "parchment is the only theme")
+check(themed:find("8a5a12") ~= nil, "parchment theme remaps colors")
 
 -- reset
 print("== reset")

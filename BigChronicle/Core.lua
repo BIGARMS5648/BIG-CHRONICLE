@@ -296,6 +296,12 @@ function ns.SubZone()
 	return ns.Call(GetSubZoneText) or ""
 end
 
+-- 비행 조련사의 와이번·그리핀을 타고 날아가는 중인가
+-- (하늘에서 내려다본 곳과 몬스터는 '발견'으로 치지 않는다 — 직접 찾아가야 진짜 발견이다)
+function ns.OnTaxi()
+	return ns.Call(UnitOnTaxi, "player") and true or false
+end
+
 function ns.PlayerName()
 	return ns.Call(UnitName, "player") or "모험가"
 end
@@ -387,7 +393,6 @@ ns.DEFAULTS = {
 	nameplates = true,    -- 이름표로도 몬스터 발견
 	tooltip = true,       -- 몬스터 툴팁에 도감 정보 표시
 	newestFirst = false,  -- 일지 정렬
-	theme = "light",      -- 두루마리 테마: light(양피지) / dark(어둠)
 	typewriter = true,    -- 배경 이야기가 한 자씩 써지는 연출
 	hotkeys = true,       -- 창이 열려 있을 때 키보드 단축키
 	effects = true,       -- 화면 연출 (두루마리 펼침, 장 제목, 반짝이, 도장)
@@ -447,6 +452,7 @@ ns:On("ADDON_LOADED", function(_, name)
 	BigChronicleDB = BigChronicleDB or {}
 	BigChronicleDB.settings = Merge(BigChronicleDB.settings or {}, ns.DEFAULTS)
 	ns.db = BigChronicleDB.settings
+	ns.db.theme = nil   -- 테마 선택은 없어졌다 (양피지 한 가지)
 
 	BigChronicleCharDB = Merge(BigChronicleCharDB or {}, CharDefaults())
 	ns.char = BigChronicleCharDB

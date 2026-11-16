@@ -462,19 +462,10 @@ if pdir then
 		end
 	end
 	local function dump(name) clean(); M.Dump(pdir .. "/" .. name .. ".json") end
-	-- PREVIEW_THEME=dark 이면 테마를 바꾸고 다시 접속해서 찍는다
-	local theme = os.getenv("PREVIEW_THEME")
-	if theme then
-		ns.db.theme = theme
-		relog(5)
-	end
 	clean()
 	ns.UI:Open("journal")
 	local f = ns.UI.frame
 	f:Hide(); ns.UI:Open("journal"); settle(); dump("journal")
-	-- 책장 넘김 중간 모습 (앞으로 / 뒤로)
-	ns.JournalTab.chapterButtons[3].onClick(); step(5); dump("turn"); settle()
-	ns.JournalTab.chapterButtons[1].onClick(); step(5); dump("turnback"); settle()
 	ns.JournalTab.chapterButtons[#ns.JournalTab.chapterButtons].onClick(); settle()
 	ns.UI:SelectTab("bestiary")
 	ns.BestiaryTab:SelectTribe("centaur")

@@ -1,6 +1,7 @@
 """BIG CHRONICLE :: 에셋 시트 자르기
 
 art/ 폴더의 에셋 시트 3장(사용자가 제공한 그림)에서 UI 조각을 잘라
+(그리고 로고 그림 logo.png · title.png · minimap.png 가 있으면 바탕을 걷어 내)
 투명 배경 TGA(2의 거듭제곱 크기)로 저장하고, 조각의 크기와 늘림 여백을
 BigChronicle/UI/Atlas.lua 로 내보낸다.
 
@@ -211,6 +212,35 @@ def erase_text(img, inset):
     return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGBA")
 
 
+def from_white(path, width, square=False):
+    """흰 바탕 그림에서 바탕을 걷어 내고(밝고 색이 옅은 곳 = 바탕), 가장자리의 흰 기운을 뺀다"""
+    rgb = np.asarray(Image.open(path).convert("RGB")).astype(np.float32)
+    mx, mn = rgb.max(axis=2), rgb.min(axis=2)
+    bg = np.clip((mn - 205) / 35, 0, 1) * np.clip((45 - (mx - mn)) / 30, 0, 1)
+    a = 1 - bg
+    # 바탕 쪽에 흩어진 작은 얼룩은 지운다
+    solid = ndi.binary_opening(a > 0.5, iterations=2)
+    lab, n = ndi.label(solid)
+    if n:
+        sizes = ndi.sum(solid, lab, range(1, n + 1))
+        keep = np.isin(lab, [i + 1 for i, v in enumerate(sizes) if v > solid.sum() * 0.002])
+        a = a * ndi.binary_dilation(keep, iterations=3)
+    # 흰색과 섞인 가장자리 색을 되돌린다: c = (c - (1 - a) * 255) / a
+    k = np.maximum(a, 0.05)[..., None]
+    col = np.clip((rgb - (1 - k) * 255) / k, 0, 255)
+    out = np.dstack([col, a[..., None] * 255]).astype(np.uint8)
+    img = Image.fromarray(out, "RGBA")
+    ys, xs = np.nonzero(a > 0.03)
+    img = img.crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
+    if square:
+        side = max(img.size)
+        sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+        sq.paste(img, ((side - img.size[0]) // 2, (side - img.size[1]) // 2))
+        return sq.resize((width, width), Image.LANCZOS)
+    h = round(img.size[1] * width / img.size[0])
+    return img.resize((width, h), Image.LANCZOS)
+
+
 def main():
     window_frame()
 
@@ -270,39 +300,16 @@ def main():
     save("IconAchievements", cut("R", (869, 936, 958, 1026)), pad=4)
     save("IconStats", cut("R", (1154, 936, 1242, 1026)), pad=4)
     save("Banner", cut("R", (869, 450, 943, 552)), pad=4)
-    save("Buckle", cut("R", (926, 803, 1087, 897)), pad=4)
 
-    # --- 책장 넘김에 쓰는 양피지 한 장 (가장자리 + 반복 무늬를 미리 합쳐 둔다)
-    sheet_w, sheet_h = 980, 720
-    pt = img
-    page = Image.new("RGBA", (sheet_w, sheet_h), (0, 0, 0, 0))
-    for x in range(0, sheet_w, pt.size[0]):
-        for y in range(0, sheet_h, pt.size[1]):
-            page.paste(pt, (x, y))
-    ea = np.asarray(cut("P", (29, 513, 385, 631)))
-    eh, ew = ea.shape[:2]
-    L, T = 38, 34
-    full = np.asarray(page).copy()
-    alpha = np.zeros((sheet_h, sheet_w), np.float32)
-    alpha[10:-10, 10:-10] = 255
-    full[..., 3] = alpha.astype(np.uint8)
-    canvas = Image.fromarray(full, "RGBA")
-    edge_img = feather_inner(Image.fromarray(ea, "RGBA"), L, L, T, T, 14)
-
-    def blit(sx0, sy0, sx1, sy1, dx0, dy0, dx1, dy1):
-        piece = edge_img.crop((sx0, sy0, sx1, sy1)).resize((dx1 - dx0, dy1 - dy0), Image.LANCZOS)
-        canvas.alpha_composite(piece, (dx0, dy0))
-
-    # 가운데 바탕은 가장자리 조각의 알파가 0인 바깥쪽에서 비치지 않도록 먼저 지운다
-    cl = Image.new("RGBA", (sheet_w, sheet_h), (0, 0, 0, 0))
-    inner = canvas.crop((L - 14, T - 14, sheet_w - L + 14, sheet_h - T + 14))
-    cl.paste(inner, (L - 14, T - 14))
-    canvas = cl
-    blit(0, 0, L, T, 0, 0, L, T); blit(ew - L, 0, ew, T, sheet_w - L, 0, sheet_w, T)
-    blit(0, eh - T, L, eh, 0, sheet_h - T, L, sheet_h); blit(ew - L, eh - T, ew, eh, sheet_w - L, sheet_h - T, sheet_w, sheet_h)
-    blit(L, 0, ew - L, T, L, 0, sheet_w - L, T); blit(L, eh - T, ew - L, eh, L, sheet_h - T, sheet_w - L, sheet_h)
-    blit(0, T, L, eh - T, 0, T, L, sheet_h - T); blit(ew - L, T, ew, eh - T, sheet_w - L, T, sheet_w, sheet_h - T)
-    save("PageSheet", canvas)
+    # --- 사용자가 따로 준 로고 그림 (흰 바탕): 표지 로고, 명판 글자, 미니맵 아이콘
+    if (ART / "logo.png").exists():
+        save("Logo", from_white(ART / "logo.png", 857))          # 표지 위에 600px 폭으로 보인다
+    if (ART / "title.png").exists():
+        save("Title", from_white(ART / "title.png", 460))        # 명판 위에 높이 30px로 보인다
+    if (ART / "minimap.png").exists():
+        icon = from_white(ART / "minimap.png", 128, square=True)
+        icon.save(MEDIA / "Icon.tga")                             # 미니맵 버튼, 애드온 목록 아이콘
+        preview.append(("Icon", icon))
 
     # --- Atlas.lua
     lines = ["-- BIG CHRONICLE :: 에셋 조각 정보 (tools/slice_assets.py 가 만든 파일 — 직접 고치지 마세요)",

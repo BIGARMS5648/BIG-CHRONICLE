@@ -14,7 +14,7 @@ local OPTIONS = {
 	{ key = "nameplates",   label = "이름표로도 몬스터 발견",      desc = "적 이름표가 보이는 거리의 몬스터도 도감에 등록합니다." },
 	{ key = "tooltip",      label = "툴팁에 도감 정보 표시",       desc = "몬스터 툴팁에 도감 번호, 종족, 처치 수를 붙입니다." },
 	{ key = "typewriter",   label = "한 글자씩 써지는 연출",       desc = "배경 이야기가 차례로 써집니다. 클릭·Space로 건너뜁니다." },
-	{ key = "effects",      label = "화면 연출",                   desc = "표지 넘김, 새 장 제목, 금가루, 밀랍 인장, 책장 넘김 효과를 보여 줍니다." },
+	{ key = "effects",      label = "화면 연출",                   desc = "표지 로고, 새 장 두루마리, 금가루, 밀랍 인장 효과를 보여 줍니다." },
 	{ key = "hotkeys",      label = "키보드 단축키",               desc = "창이 열려 있을 때 1~4, 방향키, Space를 씁니다. (전투 중 꺼짐)" },
 }
 
@@ -82,33 +82,14 @@ function O:Create(parent)
 	mm.desc:SetWidth(430)
 	self.checks[#self.checks + 1] = mm
 
-	-- 오른쪽: 테마 / 데이터 관리 / 정보
+	-- 오른쪽: 데이터 관리 / 정보
 	local right = UI.Section(p)
 	right:SetPoint("TOPRIGHT", 0, 0)
 	right:SetPoint("BOTTOMRIGHT", 0, 0)
 	right:SetWidth(354)
 
-	local h0 = right:CreateFontString(nil, "OVERLAY", UI.F.header)
-	h0:SetPoint("TOP", 0, -18)
-	h0:SetText("장정 테마")
-	local themeNote = UI.Text(right, UI.F.small)
-	themeNote:SetPoint("TOP", h0, "BOTTOM", 0, -6)
-	themeNote:SetWidth(290)
-	themeNote:SetJustifyH("CENTER")
-	themeNote:SetText("테마를 바꾸면 UI를 다시 불러옵니다.")
-
-	self.themeButtons = {}
-	local tb1 = UI.Button(right, "양피지", 138, 28, function() O:SetTheme("light") end)
-	tb1:SetPoint("TOPRIGHT", themeNote, "BOTTOM", -4, -10)
-	local tb2 = UI.Button(right, "그을린 양피지", 138, 28, function() O:SetTheme("dark") end)
-	tb2:SetPoint("TOPLEFT", themeNote, "BOTTOM", 4, -10)
-	self.themeButtons.light, self.themeButtons.dark = tb1, tb2
-
-	local div = UI.Divider(right, 290, nil, "Divider2", 0.5)
-	div:SetPoint("TOP", themeNote, "BOTTOM", 0, -48)
-
 	local h = right:CreateFontString(nil, "OVERLAY", UI.F.header)
-	h:SetPoint("TOP", div, "BOTTOM", 0, -8)
+	h:SetPoint("TOP", 0, -18)
 	h:SetText("데이터 관리")
 	local note = UI.Text(right, UI.F.small)
 	note:SetPoint("TOP", h, "BOTTOM", 0, -6)
@@ -151,17 +132,7 @@ function O:Create(parent)
 	return p
 end
 
-function O:SetTheme(id)
-	if id == (ns.db.theme or "light") then return end
-	Confirm("BIGCHRONICLE_THEME", "BIG CHRONICLE\n\n테마를 바꾸려면 UI를 다시 불러와야 합니다.\n지금 다시 불러올까요?", function()
-		ns.db.theme = id
-		if ReloadUI then ReloadUI() end
-	end)
-end
-
 function O:Refresh()
 	if not self.checks then return end
 	for _, cb in ipairs(self.checks) do cb:Sync() end
-	local cur = ns.db.theme or "light"
-	for id, b in pairs(self.themeButtons) do b:SetSelected(id == cur) end
 end

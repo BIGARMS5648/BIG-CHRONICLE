@@ -15,22 +15,19 @@ function M:Init()
 	b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	b:RegisterForDrag("LeftButton")
 	b:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
+	local hl = b.GetHighlightTexture and b:GetHighlightTexture()
+	if hl then
+		hl:ClearAllPoints()
+		hl:SetPoint("CENTER")
+		hl:SetSize(34, 34)
+	end
 
-	local bg = b:CreateTexture(nil, "BACKGROUND")
-	bg:SetSize(20, 20)
-	bg:SetPoint("TOPLEFT", 7, -5)
-	bg:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
+	-- 금테를 두른 B.C 메달 (테두리가 그림에 들어 있어서 기본 미니맵 테두리는 쓰지 않는다)
 	local icon = b:CreateTexture(nil, "ARTWORK")
-	icon:SetSize(20, 20)
-	icon:SetPoint("TOPLEFT", 6, -5)
+	icon:SetSize(30, 30)
+	icon:SetPoint("CENTER")
 	icon:SetTexture(ns.ICON)
-	-- 두루마리가 잘 보이도록 바깥 테두리를 잘라 내고 둥글게 가린다
-	icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-	if icon.SetMask then pcall(icon.SetMask, icon, "Interface\\CharacterFrame\\TempPortraitAlphaMask") end
-	local border = b:CreateTexture(nil, "OVERLAY")
-	border:SetSize(53, 53)
-	border:SetPoint("TOPLEFT")
-	border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
+	b.icon = icon
 	-- 새 소식이 있으면 은은하게 빛난다
 	local glow = b:CreateTexture(nil, "OVERLAY", nil, 2)
 	glow:SetSize(34, 34)
