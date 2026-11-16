@@ -376,6 +376,7 @@ function Obj:SetTexCoord(...) self.__tc = { ... } end
 function Obj:SetGradient(orient, c1, c2) self.__grad = { orient, { c1.r, c1.g, c1.b, c1.a }, { c2.r, c2.g, c2.b, c2.a } } end
 function Obj:SetRotation(r) self.__rot = r end
 function Obj:SetDesaturated(v) self.__desat = v end
+function Obj:SetBlendMode(m) self.__blend = m end
 function Obj:SetFontObject(f) self.__font = f end
 function Obj:SetTextColor(r, g, b, a) self.__tcolor = { r, g, b, a or 1 } end
 function Obj:SetJustifyH(j) self.__jh = j end
@@ -430,7 +431,7 @@ function M.Dump(path)
 			l = r.l, b = r.b, w = r.w, h = r.h, anchored = (#o.__points > 0) or o == UIParent,
 			tex = rawget(o, "__tex") or "", wrap = rawget(o, "__wrap") or "", color = rawget(o, "__color") or {},
 			vc = rawget(o, "__vc") or {}, tc = rawget(o, "__tc") or {}, grad = rawget(o, "__grad") or {},
-			rot = rawget(o, "__rot") or 0, desat = rawget(o, "__desat") and true or false,
+			rot = rawget(o, "__rot") or 0, desat = rawget(o, "__desat") and true or false, blend = rawget(o, "__blend") or "",
 			text = (o.__kind == "FontString" or o.__kind == "EditBox") and tostring(o.__text or "") or "",
 			fsize = fsize, fpath = fpath, fcolor = (fo and rawget(fo, "__tcolor")) or {}, tcolor = rawget(o, "__tcolor") or {},
 			fixw = ((rawget(o, "__w") or 0) > 0) or (function()

@@ -8,6 +8,7 @@ tests/mockwow.lua 의 M.Dump() 가 남긴 장면(JSON)을 그림으로 그린다
 """
 import json
 import math
+import os
 import pathlib
 import re
 import sys
@@ -162,6 +163,19 @@ def draw_texture(canvas, n, alpha):
         img = img.rotate(math.degrees(n["rot"]), resample=Image.BICUBIC, expand=True)
         cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
         x0, y0 = cx - img.size[0] / 2, cy - img.size[1] / 2
+    if n.get("blend") == "ADD":
+        # 더하기 섞기: 아래 그림에 (색 × 알파)를 더한다
+        x, y = int(round(x0)), int(round(y0))
+        box = (max(0, x), max(0, y), min(canvas.size[0], x + img.size[0]), min(canvas.size[1], y + img.size[1]))
+        if box[2] > box[0] and box[3] > box[1]:
+            src = img.crop((box[0] - x, box[1] - y, box[2] - x, box[3] - y))
+            import numpy as _np
+            base = _np.asarray(canvas.crop(box)).astype(_np.float32)
+            add = _np.asarray(src).astype(_np.float32)
+            k = add[..., 3:4] / 255.0
+            base[..., :3] = _np.clip(base[..., :3] + add[..., :3] * k, 0, 255)
+            canvas.paste(Image.fromarray(base.astype(_np.uint8), "RGBA"), (box[0], box[1]))
+        return
     canvas.alpha_composite(img, (int(round(x0)), int(round(y0))))
 
 
@@ -253,7 +267,8 @@ def draw_node(canvas, n, alpha):
         return
     kind = n["kind"]
     if kind == "Texture":
-        if n["anchored"] and n["layer"] != "HIGHLIGHT":
+        # PREVIEW_HL=1 이면 마우스를 올린 상태(HIGHLIGHT 층)도 그린다
+        if n["anchored"] and (n["layer"] != "HIGHLIGHT" or os.environ.get("PREVIEW_HL")):
             draw_texture(canvas, n, a)
         return
     if kind == "FontString":

@@ -31,11 +31,10 @@ local function CloseButton(parent, onClick, size)
 	t:SetPoint("TOPLEFT", -2, 2)
 	t:SetPoint("BOTTOMRIGHT", 2, -2)
 	t:SetTexture(UI.Tex("Close"))
-	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 5, -5)
-	hl:SetPoint("BOTTOMRIGHT", -5, 5)
-	hl:SetColorTexture(1, 0.8, 0.5, 0.25)
-	pcall(hl.SetBlendMode, hl, "ADD")
+	-- 닫기 단추 모양 그대로 밝아진다
+	local hl = UI.GlowTexture(b, UI.Tex("Close"), 0.5)
+	hl:SetPoint("TOPLEFT", -2, 2)
+	hl:SetPoint("BOTTOMRIGHT", 2, -2)
 	b:SetScript("OnClick", onClick)
 	return b
 end

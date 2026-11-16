@@ -1,3 +1,7 @@
+## 1.10.13
+
+- Mouse-over highlights now follow each control's real shape instead of a plain rectangle: the trapezoid tabs, leather and gold buttons, chapter and category buttons, check boxes, the close button and the scrollbar arrows light up in a warm glow of their own art
+
 ## 1.10.12
 
 - Bestiary portrait frame: the small ornaments in the middle of the top and bottom edges were stretched across the whole frame. They now keep their original size, centered on a clean gold bar

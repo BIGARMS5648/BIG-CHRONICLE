@@ -542,6 +542,25 @@ end
 UI.Badge = UI.KeyBadge
 
 ------------------------------------------------------------------------
+-- 마우스를 올렸을 때의 강조: 버튼 그림 자체를 한 번 더 밝게 더해 그린다
+-- (네모 상자가 아니라 사다리꼴 탭, 둥근 버튼 같은 실제 모양을 그대로 따라간다)
+------------------------------------------------------------------------
+local GLOW = { 1, 0.86, 0.58 }
+function UI.GlowSlice(frame, name, alpha)
+	local hl = UI.Slice(frame, name, { layer = "HIGHLIGHT" })
+	for _, t in pairs(hl.parts) do pcall(t.SetBlendMode, t, "ADD") end
+	hl:SetVertexColor(GLOW[1], GLOW[2], GLOW[3], alpha or 0.45)
+	return hl
+end
+function UI.GlowTexture(frame, path, alpha)
+	local hl = frame:CreateTexture(nil, "HIGHLIGHT")
+	hl:SetTexture(path)
+	pcall(hl.SetBlendMode, hl, "ADD")
+	hl:SetVertexColor(GLOW[1], GLOW[2], GLOW[3], alpha or 0.45)
+	return hl
+end
+
+------------------------------------------------------------------------
 -- 버튼: 금테 두른 가죽 버튼. 선택되면(또는 style "primary") 금빛 버튼이 된다.
 ------------------------------------------------------------------------
 function UI.Button(parent, text, w, h, onClick, key, style)
@@ -551,11 +570,8 @@ function UI.Button(parent, text, w, h, onClick, key, style)
 	local primary = style == "primary" or style == "red"
 	local bg = UI.Slice(b, primary and "ButtonGold" or "Button", { layer = "BACKGROUND" })
 	b.bg = bg
-	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 4, -4)
-	hl:SetPoint("BOTTOMRIGHT", -4, 4)
-	hl:SetColorTexture(1, 0.85, 0.5, 0.12)
-	pcall(hl.SetBlendMode, hl, "ADD")
+	local hl = UI.GlowSlice(b, primary and "ButtonGold" or "Button", primary and 0.3 or 0.45)
+	b.hl = hl
 	local fs = b:CreateFontString(nil, "OVERLAY", UI.F.button)
 	fs:SetPoint("CENTER", key and 10 or 0, 0)
 	b:SetFontString(fs)
@@ -571,6 +587,7 @@ function UI.Button(parent, text, w, h, onClick, key, style)
 		self.selected = on
 		local gold = on or primary
 		bg:SetSprite(gold and "ButtonGold" or "Button")
+		hl:SetSprite(gold and "ButtonGold" or "Button")
 		UI.OnLeather(fs, gold and L.bright or L.title)
 	end
 	b:SetSelected(false)
@@ -586,11 +603,9 @@ function UI.Tab(parent, text, key, onClick, _, icon)
 	b:SetSize(170, 36)
 	local bg = UI.Slice(b, "Tab", { layer = "BACKGROUND" })
 	b.bg = bg
-	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 18, -4)
-	hl:SetPoint("BOTTOMRIGHT", -18, 2)
-	hl:SetColorTexture(1, 0.85, 0.5, 0.10)
-	pcall(hl.SetBlendMode, hl, "ADD")
+	-- 사다리꼴 탭 모양 그대로 밝아진다
+	local hl = UI.GlowSlice(b, "Tab", 0.5)
+	b.hl = hl
 	local fs = b:CreateFontString(nil, "OVERLAY", UI.F.tab)
 	fs:SetPoint("CENTER", icon and 13 or 0, 0)
 	fs:SetText(text)
@@ -606,6 +621,8 @@ function UI.Tab(parent, text, key, onClick, _, icon)
 	function b:SetSelected(on)
 		self.selected = on
 		bg:SetSprite(on and "TabActive" or "Tab")
+		hl:SetSprite(on and "TabActive" or "Tab")
+		hl:SetAlpha(on and 0.25 or 1)   -- 이미 금빛인 선택된 탭은 살짝만
 		if on then UI.OnGold(fs) else UI.OnLeather(fs, L.text) end
 	end
 	b:SetSelected(false)
@@ -664,11 +681,8 @@ function UI.NavRow(parent, height, opts)
 	b:SetHeight(height or 28)
 	local bg = UI.Slice(b, "Button", { layer = "BACKGROUND" })
 	b.bg = bg
-	local hl = b:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetPoint("TOPLEFT", 4, -4)
-	hl:SetPoint("BOTTOMRIGHT", -4, 4)
-	hl:SetColorTexture(1, 0.85, 0.5, 0.12)
-	pcall(hl.SetBlendMode, hl, "ADD")
+	local hl = UI.GlowSlice(b, "Button", 0.45)
+	b.hl = hl
 	local label = UI.Text(b, UI.F.body)
 	label:SetPoint("LEFT", 14, 0)
 	label:SetJustifyV("MIDDLE")
@@ -703,6 +717,8 @@ function UI.NavRow(parent, height, opts)
 	function b:SetSelected(on)
 		self.selected = on
 		bg:SetSprite(on and "ButtonGold" or "Button")
+		hl:SetSprite(on and "ButtonGold" or "Button")
+		hl:SetAlpha(on and 0.6 or 1)
 		UI.OnLeather(label, on and L.bright or L.text)
 		if not badge then UI.OnLeather(right, on and L.bright or L.accent) end
 	end
@@ -739,10 +755,9 @@ function UI.Check(parent, label, get, set, desc, light)
 	box:SetPoint("TOPLEFT", -3, 3)
 	box:SetPoint("BOTTOMRIGHT", 3, -3)
 	box:SetTexture(Tex("CheckBox"))
-	local hl = cb:CreateTexture(nil, "HIGHLIGHT")
-	hl:SetAllPoints()
-	hl:SetColorTexture(1, 0.85, 0.5, 0.2)
-	pcall(hl.SetBlendMode, hl, "ADD")
+	local hl = UI.GlowTexture(cb, Tex("CheckBox"), 0.5)
+	hl:SetPoint("TOPLEFT", -3, 3)
+	hl:SetPoint("BOTTOMRIGHT", 3, -3)
 	local fs = UI.Text(cb, UI.F.body)
 	fs:SetPoint("LEFT", cb, "RIGHT", 8, 0)
 	fs:SetJustifyV("MIDDLE")
@@ -837,11 +852,8 @@ function UI.Scroll(parent)
 		local t = a:CreateTexture(nil, "ARTWORK")
 		t:SetAllPoints()
 		t:SetTexture(Tex(name))
-		local hl = a:CreateTexture(nil, "HIGHLIGHT")
-		hl:SetPoint("TOPLEFT", 3, -3)
-		hl:SetPoint("BOTTOMRIGHT", -3, 3)
-		hl:SetColorTexture(1, 0.85, 0.5, 0.2)
-		pcall(hl.SetBlendMode, hl, "ADD")
+		local hl = UI.GlowTexture(a, Tex(name), 0.5)
+		hl:SetAllPoints()
 		a:SetScript("OnClick", function() sf:ScrollBy(dir * 60) end)
 		return a
 	end
