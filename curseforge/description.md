@@ -77,7 +77,7 @@ Inspired by the Wrath-era achievements for classic (level 1–60) content, focus
 - **Bestiary** — tribes, species, rare creatures, kill counts, research ranks, beast families, 100 kills of iconic tribes
 - **Tribe research** — a first meeting, a Researcher rank and 100 kills for every one of the 34 tribes
 - **Storytellers** — complete quests in each of the 40 classic zones, then earn the Eastern Kingdoms, Kalimdor and Azeroth titles
-- **Battlegrounds, Reputation, Trials, Chronicle** — battles joined, exalted factions, your first death and deathless levels, personal notes and exports
+- **Battlegrounds, Reputation, Trials, Chronicle** — battles joined, exalted factions, your first death, personal notes and exports (no hardcore "never die" achievements)
 - **Little Joys** — playful achievements based on real-world dates: 7- and 30-day streaks, 100 days together, weekend warrior, night owl, New Year's Day…
 
 - **About 10,000 tiered achievements** built on everything the addon records (nothing is counted twice):

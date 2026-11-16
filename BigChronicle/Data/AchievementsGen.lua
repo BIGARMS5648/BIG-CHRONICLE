@@ -102,7 +102,7 @@ for _, t in ipairs(ns.TRIBES) do
 	local short = t.short or t.name
 	local unit = t.unit or "마리"
 	-- 첫 만남(조우), ★★★ 연구자, 100마리 처치는 손으로 쓴 종족 업적이 있다
-	Ladder({ id = "tk_" .. id, cat = "tribe", icon = t.icon, goals = Nice(1, 200000), skip = { [100] = true },
+	Ladder({ id = "tk_" .. id, cat = "tribe", icon = t.icon, goals = Nice(1, 50000), skip = { [100] = true },
 		name = function(g) return short .. " " .. Band(g, KILL_BANDS) .. " " .. Comma(g) end,
 		desc = function(g) return Josa(tname, "을") .. " " .. Comma(g) .. unit .. " 처치하기" end,
 		progress = function(ctx) return ctx.tribeKills[id] or 0 end,
@@ -210,8 +210,8 @@ local function Instance(d, cat, icon)
 		progress = function(ctx) return ctx.instBossKills[name] or 0 end,
 		flavor = name .. "의 주인들이 내 이름을 두려워한다." })
 	if cat == "dungeon" then
-		for _, m in ipairs({ 90, 60, 45, 30, 20 }) do
-			add({ id = "if_" .. map .. "_" .. m, cat = cat, icon = I .. "Spell_Nature_Lightning", goal = 1, points = m <= 30 and 10 or 5,
+		for _, m in ipairs({ 90, 60, 45 }) do   -- 30·20분은 너무 하드코어해서 뺐다
+			add({ id = "if_" .. map .. "_" .. m, cat = cat, icon = I .. "Spell_Nature_Lightning", goal = 1, points = m <= 45 and 10 or 5,
 				name = name .. " 질주 " .. m .. "분", desc = name .. " 원정을 " .. m .. "분 안에 마치기 (보스 1명 이상)",
 				progress = function(ctx)
 					local best = ctx.bestClear[name]
@@ -271,12 +271,12 @@ for _, c in ipairs(CLASSES) do
 		progress = function(ctx) return ctx.classToken == token and ctx.level or 0 end,
 		flavor = cname .. "의 길도 이제 손에 익었다." })
 	-- 직업마다 한 캐릭터로 쌓은 처치·퀘스트·도감 (계정 공용이라 여러 직업을 키울수록 채워진다)
-	Ladder({ id = "ck_" .. token, cat = "growth", icon = I .. c[3], goals = { 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000 },
+	Ladder({ id = "ck_" .. token, cat = "growth", icon = I .. c[3], goals = { 100, 250, 500, 1000, 2500, 5000, 10000, 25000, 50000 },
 		name = function(g) return cname .. "의 칼끝 " .. Comma(g) end,
 		desc = function(g) return cname .. " 캐릭터로 몬스터 " .. Comma(g) .. "마리 처치하기" end,
 		progress = function(ctx) return ctx.classToken == token and ctx.kills or 0 end,
 		flavor = cname .. "의 손에 쓰러진 적이 산을 이룬다." })
-	Ladder({ id = "cq_" .. token, cat = "growth", icon = I .. c[3], goals = { 10, 25, 50, 100, 250, 500, 1000, 2500 },
+	Ladder({ id = "cq_" .. token, cat = "growth", icon = I .. c[3], goals = { 10, 25, 50, 100, 250, 500, 1000, 2000 },
 		name = function(g) return cname .. "의 해결사 " .. Comma(g) end,
 		desc = function(g) return cname .. " 캐릭터로 퀘스트 " .. Comma(g) .. "개 완료하기" end,
 		progress = function(ctx) return ctx.classToken == token and ctx.quests or 0 end,
@@ -314,30 +314,30 @@ end
 ------------------------------------------------------------------------
 local TOTALS = {
 	-- 값 이름, 분류, 아이콘, 범위, 이름, 설명(목표), 단위
-	{ "kills", "dex", "Ability_Warrior_BattleShout", 1, 2000000, "처치", "몬스터 %s마리 처치하기" },
-	{ "species", "dex", "Ability_EyeOfTheOwl", 1, 3000, "도감", "서로 다른 몬스터 %s종 발견하기" },
+	{ "kills", "dex", "Ability_Warrior_BattleShout", 1, 500000, "처치", "몬스터 %s마리 처치하기" },
+	{ "species", "dex", "Ability_EyeOfTheOwl", 1, 2000, "도감", "서로 다른 몬스터 %s종 발견하기" },
 	{ "rares", "dex", "INV_Misc_Gem_Ruby_01", 1, 300, "희귀 개체", "희귀 개체 %s종 발견하기" },
 	{ "rareKills", "dex", "INV_Misc_Gem_Ruby_01", 1, 300, "희귀 사냥", "희귀 개체 %s종 쓰러뜨리기" },
 	{ "elites", "dex", "Ability_Warrior_Challange", 1, 1000, "정예 도감", "정예 몬스터 %s종 발견하기" },
-	{ "critters", "dex", "Ability_Hunter_Pet_Bear", 1, 300, "작은 동물 도감", "작은 동물 %s종 발견하기" },
-	{ "families", "dex", "Ability_Hunter_BeastTaming", 1, 50, "야수 계통", "야수 계통 %s가지 발견하기" },
-	{ "quests", "quest", "INV_Misc_Note_01", 1, 20000, "퀘스트", "퀘스트 %s개 완료하기" },
+	{ "critters", "dex", "Ability_Hunter_Pet_Bear", 1, 150, "작은 동물 도감", "작은 동물 %s종 발견하기" },
+	{ "families", "dex", "Ability_Hunter_BeastTaming", 1, 30, "야수 계통", "야수 계통 %s가지 발견하기" },
+	{ "quests", "quest", "INV_Misc_Note_01", 1, 5000, "퀘스트", "퀘스트 %s개 완료하기" },
 	{ "questZones", "quest", "INV_Misc_Map_01", 1, 45, "여러 땅의 해결사", "서로 다른 지역 %s곳에서 퀘스트 완료하기" },
-	{ "subzones", "explore", "Ability_Hunter_Pathfinding", 1, 2000, "장소 발견", "세부 장소 %s곳 발견하기" },
-	{ "zones", "explore", "INV_Misc_Map_01", 1, 60, "지역 방문", "서로 다른 지역 %s곳 방문하기" },
-	{ "deaths", "trial", "Spell_Shadow_DeathScream", 1, 10000, "쓰러짐", "%s번 쓰러지기" },
+	{ "subzones", "explore", "Ability_Hunter_Pathfinding", 1, 1000, "장소 발견", "세부 장소 %s곳 발견하기" },
+	{ "zones", "explore", "INV_Misc_Map_01", 1, 50, "지역 방문", "서로 다른 지역 %s곳 방문하기" },
+	{ "deaths", "trial", "Spell_Shadow_DeathScream", 1, 2000, "쓰러짐", "%s번 쓰러지기" },
 	{ "deathZones", "trial", "Spell_Shadow_DeathScream", 1, 45, "곳곳의 무덤", "서로 다른 지역 %s곳에서 쓰러지기" },
-	{ "goldBest", "growth", "INV_Misc_Coin_01", 1, 200000, "재산", "%s골드 모으기" },
-	{ "days", "fun", "INV_Misc_PocketWatch_02", 1, 3000, "기록한 날", "기록이 남은 날 %s일" },
-	{ "logCount", "chronicle", "INV_Misc_Book_09", 1, 200000, "전기의 두께", "전기에 기록 %s개 남기기 (업적 기록 제외)" },
+	{ "goldBest", "growth", "INV_Misc_Coin_01", 1, 50000, "재산", "%s골드 모으기" },
+	{ "days", "fun", "INV_Misc_PocketWatch_02", 1, 1000, "기록한 날", "기록이 남은 날 %s일" },
+	{ "logCount", "chronicle", "INV_Misc_Book_09", 1, 50000, "전기의 두께", "전기에 기록 %s개 남기기 (업적 기록 제외)" },
 	{ "notes", "chronicle", "INV_Scroll_03", 1, 5000, "나의 기록", "나만의 기록 %s개 남기기" },
-	{ "bossKills", "dungeon", "INV_Misc_Bone_HumanSkull_01", 1, 20000, "보스 처치", "던전·공격대 보스 %s번 쓰러뜨리기" },
-	{ "runs", "dungeon", "INV_Misc_Key_03", 1, 10000, "원정", "던전·공격대 원정 %s번 떠나기" },
-	{ "raidClears", "raid", "INV_Misc_Head_Dragon_01", 1, 2000, "공격대 정복", "공격대 원정 %s번 마치기" },
-	{ "bgTotal", "pvp", "Ability_DualWield", 1, 10000, "전장", "전장에 %s번 참전하기" },
+	{ "bossKills", "dungeon", "INV_Misc_Bone_HumanSkull_01", 1, 5000, "보스 처치", "던전·공격대 보스 %s번 쓰러뜨리기" },
+	{ "runs", "dungeon", "INV_Misc_Key_03", 1, 2000, "원정", "던전·공격대 원정 %s번 떠나기" },
+	{ "raidClears", "raid", "INV_Misc_Head_Dragon_01", 1, 500, "공격대 정복", "공격대 원정 %s번 마치기" },
+	{ "bgTotal", "pvp", "Ability_DualWield", 1, 5000, "전장", "전장에 %s번 참전하기" },
 	{ "binds", "explore", "INV_Misc_Rune_01", 1, 300, "귀환석", "귀환 장소를 %s번 바꾸기" },
-	{ "questMaxDay", "fun", "INV_Misc_Note_01", 1, 200, "바쁜 하루", "하루에 퀘스트 %s개 완료하기" },
-	{ "exalted", "rep", "Spell_Holy_HolyBolt", 1, 30, "확고한 동맹", "평판 '확고한 동맹' 세력 %s곳" },
+	{ "questMaxDay", "fun", "INV_Misc_Note_01", 1, 40, "바쁜 하루", "하루에 퀘스트 %s개 완료하기" },
+	{ "exalted", "rep", "Spell_Holy_HolyBolt", 1, 15, "확고한 동맹", "평판 '확고한 동맹' 세력 %s곳" },
 }
 for _, tdef in ipairs(TOTALS) do
 	local key, cat, icon, lo, hi, title, descFmt = tdef[1], tdef[2], I .. tdef[3], tdef[4], tdef[5], tdef[6], tdef[7]
@@ -349,20 +349,20 @@ for _, tdef in ipairs(TOTALS) do
 end
 do
 	local goals = {}
-	for _, h in ipairs(Nice(1, 20000, { 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5 })) do goals[#goals + 1] = h * 3600 end
+	for _, h in ipairs(Nice(1, 5000, { 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7.5 })) do goals[#goals + 1] = h * 3600 end
 	Ladder({ id = "t_tracked", cat = "growth", icon = I .. "INV_Misc_PocketWatch_01", goals = goals, key = "tracked", format = "hours",
 		name = function(g) return "모험의 시간 " .. Comma(g / 3600) .. "시간" end,
 		desc = function(g) return "전기가 기록된 모험 시간 " .. Comma(g / 3600) .. "시간" end,
 		progress = function(ctx) return ctx.tracked or 0 end,
 		flavor = "시간은 흘러도 이야기는 남는다." })
 	Ladder({ id = "t_streak", cat = "fun", icon = I .. "INV_Misc_PocketWatch_01", key = "streak",
-		goals = { 2, 3, 4, 5, 6, 7, 10, 14, 21, 30, 45, 60, 90, 120, 180, 270, 365, 500, 730, 1000 },
+		goals = { 2, 3, 4, 5, 6, 7, 10, 14, 21, 30, 45, 60, 90, 100 },   -- 몇 년씩 이어지는 연속 기록은 뺐다
 		name = function(g) return "연속 기록 " .. g .. "일" end,
 		desc = function(g) return g .. "일 연속으로 전기에 기록 남기기" end,
 		progress = function(ctx) return ctx.streak or 0 end,
 		flavor = "오늘도 펜을 들었다." })
 	Ladder({ id = "t_lvday", cat = "fun", icon = I .. "Spell_Nature_Lightning", key = "levelsMaxDay",
-		goals = { 1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 15, 20, 25, 30 },
+		goals = { 1, 2, 3, 4, 6, 7, 8, 9, 10 },   -- 하루에 그 이상은 너무 하드코어해서 뺐다
 		name = function(g) return "하루에 " .. g .. "레벨" end,
 		desc = function(g) return "하루에 레벨 " .. g .. "번 올리기" end,
 		progress = function(ctx) return ctx.levelsMaxDay or 0 end,

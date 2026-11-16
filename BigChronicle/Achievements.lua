@@ -164,7 +164,7 @@ function A:Context()
 	local B = ns.Bestiary
 	local ach = db.ach
 	local ctx = { clearCount = {}, clearCountName = {}, tribeKills = {}, tribeFound = {}, tribeRank = {}, bgMaps = {}, bgNames = {},
-		deathless = {}, questZone = db.quests.zones or {}, questMap = db.quests.maps or {}, todSpecies = {},
+		questZone = db.quests.zones or {}, questMap = db.quests.maps or {}, todSpecies = {},
 		tribeSpecies = {}, tribeSeen = {}, habitatSpecies = {}, habitatSeen = {}, zoneSpecies = {}, zoneSeen = {},
 		zoneVisits = {}, zoneTime = {}, zoneSub = {}, runCount = {}, runCountName = {}, instBossKills = {}, bestClear = {} }
 
@@ -293,10 +293,6 @@ function A:Context()
 	local st = LogStats(db)
 	for k, v in pairs(st) do if k ~= "key" and ctx[k] == nil then ctx[k] = v end end
 	ctx.notes = st.notes
-	local startLvl = (db.meta and db.meta.startLevel) or ctx.level
-	for _, lv in ipairs({ 10, 20, 30, 40, 50, 60 }) do
-		ctx.deathless[lv] = startLvl < lv and ctx.level >= lv and (not st.firstDeathLvl or st.firstDeathLvl >= lv)
-	end
 	ctx.logCount = st.entries   -- 업적 기록을 뺀 전기의 기록 수
 	ctx.exported = db.stats.exported or 0
 	ctx.daysSinceStart = db.started and math.floor((time() - db.started) / 86400) or 0

@@ -416,13 +416,9 @@ for _, id in ipairs({ "dg389", "rd409", "tribes34", "quest1000" }) do
 	if db.ach.done[id] then issue("달성하면 안 되는 업적이 달성됨: " .. id) end
 end
 -- 무사 업적은 첫 죽음의 레벨과 맞아야 한다
-local firstDeath
-for _, e in ipairs(db.log) do if e.cat == "death" then firstDeath = e.lvl break end end
-for _, lv in ipairs({ 10, 20, 30, 40, 50, 60 }) do
-	local should = (not firstDeath) or firstDeath >= lv
-	if (db.ach.done["deathless" .. lv] ~= nil) ~= should then
-		issue(string.format("무사 업적 %d 판정 이상 (첫 죽음 %s레벨)", lv, tostring(firstDeath)))
-	end
+-- 너무 하드코어한 업적(한 번도 쓰러지지 않고 레벨 도달 등)은 없어야 한다
+for _, a in ipairs(ns.ACHIEVEMENTS) do
+	if a.id:find("^deathless") then issue("하드코어 업적이 남아 있다: " .. a.id) end
 end
 -- 전기에는 손으로 쓴 업적만 남는다 (자동 업적은 같은 줄의 '외 N개'에만 더해진다). 이전에 이룬 업적은 한 줄로 묶인다.
 local loggedMajor, loggedRetro, loggedAll = 0, 0, 0

@@ -471,12 +471,6 @@ add({ id = "deathzones", cat = "trial", name = "곳곳에 남긴 묘비", desc =
 	icon = I .. "INV_Misc_Bone_Skull_01", progress = field("deathZones"), flavor = "아제로스 곳곳의 영혼의 치유사가 내 얼굴을 안다." })
 add({ id = "dgdeaths", cat = "trial", name = "던전의 희생양", desc = "던전·공격대 안에서 10번 쓰러지기", goal = 10, points = 5,
 	icon = I .. "INV_Misc_Bone_HumanSkull_01", progress = field("dungeonDeaths"), flavor = "던전 입구까지 영혼으로 달리는 길이 지름길처럼 익숙하다." })
-for _, lv in ipairs({ 10, 20, 30, 40, 50, 60 }) do
-	add({ id = "deathless" .. lv, cat = "trial", name = "흔들림 없는 발걸음 " .. lv, desc = "기록이 시작된 뒤 한 번도 쓰러지지 않고 " .. lv .. "레벨 도달",
-		goal = 1, points = lv >= 40 and 25 or 10, icon = I .. "Spell_Holy_DivineIntervention",
-		progress = function(ctx) return ctx.deathless[lv] and 1 or 0 end,
-		flavor = lv .. "레벨이 될 때까지 단 한 번도 무릎 꿇지 않았다." })
-end
 
 ------------------------------------------------------------------------
 -- 연대기

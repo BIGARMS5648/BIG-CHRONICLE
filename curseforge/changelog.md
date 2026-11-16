@@ -1,3 +1,7 @@
+## 1.10.9
+
+- Removed the hardcore achievements: "reach level N without ever dying" (levels 10–60), dungeon clears under 30 and 20 minutes, 11 or more levels in one day, and goals no single character can realistically reach (exalted with 20–30 factions, 1,000-day streaks, 200,000 kills of one tribe, 2,000,000 kills, 200,000 gold, 20,000 quests, 20,000 hours, 200 quests in a day and similar). About 9,800 achievements remain
+
 ## 1.10.8
 
 - Opening a newly found tribe's bestiary page no longer stamps a wax seal on it; the seal is pressed only on the discovery notification. The NEW tag in the list still clears when you open the page
