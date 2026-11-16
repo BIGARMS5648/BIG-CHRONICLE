@@ -1,3 +1,7 @@
+## 1.10.12
+
+- Bestiary portrait frame: the small ornaments in the middle of the top and bottom edges were stretched across the whole frame. They now keep their original size, centered on a clean gold bar
+
 ## 1.10.11
 
 - Discovery notifications put the creature's name front and center: it is shown large in the game's title font, with "새로운 생물 발견!" / "새로운 종족 발견!" / "희귀 개체 발견!" above it and the bestiary number and tribe below. Long names shrink to fit

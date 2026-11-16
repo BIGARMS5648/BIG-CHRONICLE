@@ -54,6 +54,8 @@ ns.UI.ATLAS = {
 	SealAch = { w = 108, h = 137, pad = 4 },
 	SealDex = { w = 112, h = 116, pad = 4 },
 	Slot = { w = 128, h = 126, l = 40, r = 40, t = 40, b = 40, pad = 4 },
+	SlotOrnBottom = { w = 28, h = 24 },
+	SlotOrnTop = { w = 28, h = 24 },
 	Tab = { w = 183, h = 60, l = 36, r = 36, pad = 4 },
 	TabActive = { w = 194, h = 61, l = 36, r = 36, pad = 4 },
 	Title = { w = 460, h = 59 },

@@ -106,6 +106,14 @@ function D:Create(parent)
 	polaroid:SetHeight(222)
 	-- 모서리 장식이 달린 금테 액자
 	UI.Slice(polaroid, "Slot", { layer = "BACKGROUND", scale = 0.6 })
+	-- 액자 위·아래 가운데 장식은 늘리지 않고 원래 크기로 가운데에 얹는다
+	do
+		local p = (UI.ATLAS.Slot.pad or 0) * 0.6
+		local ornT = UI.Sprite(polaroid, "SlotOrnTop", "BORDER", 2, 0.6)
+		ornT:SetPoint("TOP", polaroid, "TOP", 0, p)
+		local ornB = UI.Sprite(polaroid, "SlotOrnBottom", "BORDER", 2, 0.6)
+		ornB:SetPoint("BOTTOM", polaroid, "BOTTOM", 0, -p)
+	end
 	self.polaroid = polaroid
 
 	local stage = CreateFrame("Frame", nil, polaroid)

@@ -277,6 +277,36 @@ def scroll_card(src, card_w=620, card_h=124, l=76, r=100, pad=4, tilt=2.7):
     save("ScrollCard", rot, band=(band_w - 2 * pad) * up, face=round(face, 1))
 
 
+def plain_edge_middles(img, l, r, band, strip):
+    """위·아래 가장자리의 가운데 부분(장식이 있는 곳)을 무늬 없는 금테 조각을 이어 붙여 채운다.
+    band: 가장자리 두께(원본 픽셀), strip: 이어 붙일 무늬 없는 구간 (x0, x1)"""
+    a = np.asarray(img.convert("RGBA")).copy()
+    h, w = a.shape[:2]
+    x0, x1 = strip
+    piece_w = x1 - x0
+    for rows in (slice(0, band), slice(h - band, h)):
+        src = a[rows, x0:x1].copy()
+        x = l
+        while x < w - r:
+            n = min(piece_w, w - r - x)
+            a[rows, x:x + n] = src[:, :n]
+            x += n
+    return Image.fromarray(a, "RGBA")
+
+
+def feather_sides(img, width):
+    """조각의 왼쪽·오른쪽 끝을 부드럽게 투명하게 (겹쳐 놓았을 때 이음매가 보이지 않도록)"""
+    a = np.asarray(img.convert("RGBA")).astype(np.float32)
+    w = a.shape[1]
+    ramp = np.ones(w, np.float32)
+    for i in range(width):
+        k = (i + 1) / (width + 1)
+        ramp[i] = min(ramp[i], k)
+        ramp[w - 1 - i] = min(ramp[w - 1 - i], k)
+    a[..., 3] *= ramp[None, :]
+    return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGBA")
+
+
 def match_gold(img, refs):
     """img 의 금빛을 refs(창틀 조각들)의 금박 색에 맞춘다.
     밝기 순서는 그대로 두고, 각 채널의 분포를 창틀 금박의 분포로 옮긴다 (히스토그램 맞추기)."""
@@ -351,7 +381,13 @@ def main():
     plain.paste(right.transpose(Image.FLIP_LEFT_RIGHT), (0, 0))
     plain.paste(right, (right.size[0], 0))
     save("Field", plain, l=26, r=26, pad=4)
-    save("Slot", cut("K", (507, 584, 627, 702)), l=40, r=40, t=40, b=40, pad=4)
+    # 3D 모습 액자: 위·아래 가장자리 가운데의 장식은 늘어나지 않도록 따로 떼어 내고,
+    # 액자 자체는 그 자리를 무늬 없는 금테로 채워 늘려도 자연스럽게 한다
+    slot = cut("K", (507, 584, 627, 702))
+    save("Slot", plain_edge_middles(slot, l=40, r=40, band=22, strip=(42, 50)), l=40, r=40, t=40, b=40, pad=4)
+    sw, sh = slot.size
+    save("SlotOrnTop", feather_sides(slot.crop((50, 0, 78, 24)), 4))
+    save("SlotOrnBottom", feather_sides(slot.crop((50, sh - 24, 78, sh)), 4))
     save("Plate", cut("K", (323, 765, 555, 839)), l=40, r=40, pad=4)
     save("Badge", erase_text(cut("K", (802, 780, 880, 826), pad=3), 9), l=24, r=24, pad=3)
     # 스크롤바: 시트의 큰 스크롤바 하나에서 위·아래 버튼, 홈(위 끝 · 반복되는 가운데 · 아래 끝), 손잡이를 모두 딴다
