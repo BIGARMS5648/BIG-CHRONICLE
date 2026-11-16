@@ -307,6 +307,28 @@ def feather_sides(img, width):
     return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGBA")
 
 
+def wax_only(img, pad=4):
+    """붉은 밀랍 덩어리와 그 안(문양)만 남기고 바깥의 금빛 리본 등은 지운다"""
+    a = np.asarray(img.convert("RGBA")).astype(np.float32)
+    r, g, b = a[..., 0], a[..., 1], a[..., 2]
+    mx, mn = np.maximum(np.maximum(r, g), b), np.minimum(np.minimum(r, g), b)
+    # 색상(hue): 밀랍의 빨강은 0~15도, 리본의 금빛·주황은 25~45도
+    hue = np.where(mx > mn, 60.0 * (g - b) / np.maximum(mx - mn, 1e-3), 0.0)
+    red = (a[..., 3] > 40) & (r >= g) & (r >= b) & (r > 35) & (hue < 15) & ((mx - mn) / np.maximum(mx, 1) > 0.35)
+    m = ndi.binary_closing(red, iterations=2)
+    m = ndi.binary_fill_holes(m)
+    lab, n = ndi.label(m)
+    if n > 1:
+        sizes = ndi.sum(m, lab, range(1, n + 1))
+        m = lab == (int(np.argmax(sizes)) + 1)
+    soft = ndi.gaussian_filter(m.astype(np.float32), 0.8)
+    a[..., 3] = a[..., 3] * np.clip(soft, 0, 1)
+    ys, xs = np.nonzero(a[..., 3] > 8)
+    x0, y0 = max(0, xs.min() - pad), max(0, ys.min() - pad)
+    x1, y1 = min(a.shape[1], xs.max() + 1 + pad), min(a.shape[0], ys.max() + 1 + pad)
+    return Image.fromarray(np.clip(a, 0, 255).astype(np.uint8), "RGBA").crop((x0, y0, x1, y1))
+
+
 def match_gold(img, refs):
     """img 의 금빛을 refs(창틀 조각들)의 금박 색에 맞춘다.
     밝기 순서는 그대로 두고, 각 채널의 분포를 창틀 금박의 분포로 옮긴다 (히스토그램 맞추기)."""
@@ -408,7 +430,8 @@ def main():
     # --- 인장·막대·아이콘 (시트 R)
     # 장 제목 카드의 두루마리 (한 장으로 이어 붙여 살짝 돌린 그림만 쓴다)
     scroll_card(cut("R", (1052, 441, 1293, 528)))
-    save("SealAch", cut("R", (1329, 431, 1429, 560)), pad=4)
+    # 업적 인장은 아래에 달린 금빛 리본을 떼어 내고 둥근 밀랍만 쓴다 (도감 인장과 같은 모양으로)
+    save("SealAch", wax_only(cut("R", (1329, 431, 1429, 560)), pad=4), pad=4)
     save("SealDex", cut("R", (1329, 677, 1433, 785)), pad=4)
     save("Seal", cut("R", (1330, 566, 1431, 665)), pad=4)
     save("BarFill", cut("R", (436, 579, 774, 624)), l=18, r=18, pad=4)

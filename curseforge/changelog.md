@@ -1,3 +1,7 @@
+## 1.10.15
+
+- The achievement wax seal lost its hanging ribbons: it is now a round seal like the bestiary one, with a compass star instead of the lion
+
 ## 1.10.14
 
 - Achievement notifications now look like discovery notifications: a small "업적 달성!" header, the achievement name large in the game's title font, and the points (and "N more" when several land at once) on the bottom line

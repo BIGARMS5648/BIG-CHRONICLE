@@ -51,7 +51,7 @@ ns.UI.ATLAS = {
 	ScrollTrackTop = { w = 58, h = 24 },
 	ScrollUp = { w = 64, h = 57, pad = 2 },
 	Seal = { w = 109, h = 107, pad = 4 },
-	SealAch = { w = 108, h = 137, pad = 4 },
+	SealAch = { w = 108, h = 107, pad = 4 },
 	SealDex = { w = 112, h = 116, pad = 4 },
 	Slot = { w = 128, h = 126, l = 40, r = 40, t = 40, b = 40, pad = 4 },
 	SlotOrnBottom = { w = 28, h = 24 },
