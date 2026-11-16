@@ -374,12 +374,8 @@ local okFx, errFx = pcall(function()
 	assert((ns.Minimap.news or 0) >= 1 and ns.Minimap.button.glow:IsShown(), "minimap glows for news")
 	ns.UI:Open("journal")
 	assert((ns.Minimap.news or 0) == 0 and not ns.Minimap.button.glow:IsShown(), "opening clears news")
-	-- 표지 로고가 잠깐 보였다가 스르르 사라진다 (넘어가는 연출은 없다)
-	assert(f.cover:IsShown() and f.cover:GetAlpha() == 1, "the logo cover shows when the book opens")
-	run(0.7)
-	assert(f.cover:IsShown() and f.cover:GetAlpha() < 1, "the logo cover fades")
-	run(0.6)
-	assert(not f.cover:IsShown(), "the logo cover is gone")
+	-- 표지 로고 화면은 없다: 창이 바로 열린다
+	assert(f.cover == nil and f:IsShown(), "the book opens without a logo cover")
 	-- 장 제목 카드
 	ns:Fire("CHAPTER_STARTED", 2)
 	local card = _G.BigChronicleChapterCard
@@ -441,7 +437,7 @@ local okFx, errFx = pcall(function()
 	-- 연출을 끄면 바로 펼쳐진다
 	ns.db.effects = false
 	f:Hide(); ns.UI:Open("journal")
-	assert(not f.cover:IsShown(), "no logo cover when effects are off")
+	assert(f:IsShown(), "opens when effects are off")
 	ns:Fire("CHAPTER_STARTED", 3)
 	ns.db.effects = true
 end)
@@ -454,6 +450,78 @@ check(ns.UI.themeId == "light" and ns.db.theme == nil, "parchment is the only th
 check(themed:find("8a5a12") ~= nil, "parchment theme remaps colors")
 
 -- reset
+-- 알림 위치: 잠금을 풀면 예시 알림을 끌어 옮기고, 오른쪽 클릭으로 잠근다
+print("== toast position")
+do
+	local T = ns.Toast
+	ns.db.toast = true
+	T.queue = {}
+	if T.frame then T.frame:Hide() end
+	check(ns.db.toastLocked == true, "toast position starts locked")
+	T:SetLocked(false)
+	check(T.moving and T.frame:IsShown() and T.frame.title:GetText() == "알림 위치", "unlocking shows a sample toast to drag")
+	T:Show("업적 달성!", "「테스트」", nil, "achievement")
+	check(#T.queue == 1 and T.frame.title:GetText() == "알림 위치", "real toasts wait while moving")
+	T.frame:Fire("OnUpdate", 30)
+	check(T.frame:IsShown(), "the sample toast stays until locked")
+	T.frame:Fire("OnDragStart")
+	T.frame:Fire("OnDragStop")
+	local pos = ns.db.toastPos
+	check(type(pos) == "table" and pos.x and pos.y, "dragging saves the position")
+	T.frame:Fire("OnMouseUp", "LeftButton")    -- 끌기를 마친 왼쪽 버튼
+	T.frame:Fire("OnMouseUp", "RightButton")   -- 오른쪽 클릭으로 잠그기
+	check(not T.moving and ns.db.toastLocked == true, "right click locks the position")
+	check(T.frame:IsShown() and T.frame.title:GetText() == "업적 달성!", "queued toast shows after locking")
+	local p = T.frame.__points[#T.frame.__points]
+	check(p and p[1] == "TOP" and p[4] == pos.x, "toast uses the saved position")
+	T:ResetPosition()
+	check(ns.db.toastPos == nil, "position reset")
+	ns:HandleSlash("알림")
+	check(T.moving, "/bc 알림 unlocks")
+	ns:HandleSlash("알림")
+	check(not T.moving, "/bc 알림 locks again")
+	T.frame:Hide(); T.queue = {}
+end
+
+-- 업적은 계정 공용: 본캐가 이룬 업적은 부캐에서도 달성으로 보인다
+print("== account-wide achievements")
+do
+	local A = ns.Achievements
+	local acc = A:Account().done
+	local n, anyId = 0, nil
+	for id, e in pairs(acc) do n = n + 1; anyId = anyId or id end
+	check(n > 0 and acc[anyId].by == "테스트용사", "earned achievements are stored for the account with who earned them")
+	local mainDone = A:Summary()
+	check(mainDone == n, "summary counts the account record")
+	-- 부캐릭터로 접속한 것처럼: 이 캐릭터의 업적 기록을 비우고 이름을 바꾼다
+	local realAch, realName = ns.char.ach, UnitName
+	local seen = {}
+	for k in pairs(realAch.seen or {}) do seen[k] = true end
+	ns.char.ach = { done = {}, retro = {}, flags = {}, seen = seen, initialized = true }
+	UnitName = function(u) if u == "player" then return "부캐릭터" end return realName(u) end
+	local logN = #ns.char.log
+	A:Evaluate()
+	check(#ns.char.log == logN, "the alt does not re-announce achievements the main already earned")
+	check(A:Summary() == n and A:Earned(anyId) ~= nil, "the alt sees the main's achievements as earned")
+	check(ns.char.ach.done[anyId] == nil, "the alt's own record stays empty")
+	ns.UI:SelectTab("achievements")
+	ns.AchievementsTab.cat = nil; ns.AchievementsTab.filter = "done"; ns.AchievementsTab:Refresh(true)
+	local tagged = false
+	for _, r in ipairs(ns.AchievementsTab.pool.items) do
+		if r:IsShown() and r.done and (r.when:GetText() or ""):find("테스트용사", 1, true) then tagged = true end
+	end
+	check(tagged, "rows show which character earned it")
+	ns.AchievementsTab.filter = "all"
+	-- 예전 버전의 캐릭터별 기록은 접속할 때 계정 기록에 합쳐진다
+	UnitName = realName
+	ns.char.ach = realAch
+	BigChronicleDB.ach = nil
+	A:MergeCharacter()
+	local m = 0
+	for _ in pairs(A:Account().done) do m = m + 1 end
+	check(m == n, "old per-character achievements merge into the account record")
+end
+
 print("== reset")
 M.autoAccept = true
 ns:ResetData("all")

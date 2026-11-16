@@ -146,25 +146,6 @@ function UI:Build()
 	UI.OnLeather(hints2, L.muted)
 	f.hints2 = hints2
 
-	-- ⑥ 창을 열 때 잠깐 보이는 표지: 가죽 위에 BIG CHRONICLE 로고, 곧 스르르 사라진다
-	local cover = CreateFrame("Frame", nil, f)
-	cover:SetAllPoints(f)
-	cover:SetFrameLevel(trim:GetFrameLevel() + 20)
-	cover:EnableMouse(false)
-	UI.WindowFrame(cover, { ornament = "both", fixedW = WIDTH })
-	if A.Logo then
-		local logo = UI.Sprite(cover, "Logo", "ARTWORK", 2)
-		local w = 600
-		logo:SetSize(w, w * A.Logo.h / A.Logo.w)
-		logo:SetPoint("CENTER", 0, 6)
-	else
-		local logo = cover:CreateFontString(nil, "OVERLAY", UI.F.brand)
-		logo:SetPoint("CENTER")
-		logo:SetText("BIG CHRONICLE")
-	end
-	cover:Hide()
-	f.cover = cover
-
 	f:SetScript("OnShow", function(self)
 		UI:Unroll()
 		if ns.Minimap and ns.Minimap.ClearNews then ns.Minimap:ClearNews() end
@@ -193,26 +174,13 @@ end
 ------------------------------------------------------------------------
 -- 단축키 (전투 중에는 꺼진다)
 ------------------------------------------------------------------------
--- 창을 열 때 표지 로고를 잠깐 보여 준 뒤 스르르 걷어 낸다
+-- 창을 열면 책이 살짝 떠오르듯 나타난다 (표지 연출 없음)
 function UI:Unroll()
 	local f = self.frame
 	if not f then return end
-	local E = ns.Effects
-	if not (ns.db and ns.db.effects) or not E then
-		if E then E.Stop("main-open") end
-		f.cover:Hide()
-		UI.FadeIn(f, 0.2)
-		return
-	end
-	f:SetAlpha(1)
-	f.cover:SetAlpha(1)
-	f.cover:Show()
-	E.Tween("main-open", 0.45, function(p)
-		f.cover:SetAlpha(1 - E.Ease.inOut(p))
-	end, function()
-		f.cover:Hide()
-	end, 0.55)
-	E.Sound("open")
+	f.trim:SetAlpha(1)
+	UI.FadeIn(f, 0.2)
+	if ns.db and ns.db.effects and ns.Effects then ns.Effects.Sound("open") end
 end
 
 function UI:UpdateKeyboard(entering)

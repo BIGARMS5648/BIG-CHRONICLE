@@ -141,6 +141,7 @@ function CreateFrame(kind, name, parent, template)
 end
 
 UIParent = New("Frame", "UIParent")
+UIParent.__w, UIParent.__h = 1600, 900
 Minimap = New("Frame", "Minimap"); Minimap.__w = 140
 GameTooltip = New("GameTooltip", "GameTooltip")
 GameTooltip.lines = {}
@@ -358,6 +359,10 @@ end
 function Obj:GetCenter()
 	local r = M.Resolve(self)
 	return r.l + r.w / 2, r.b + r.h / 2
+end
+function Obj:GetTop()
+	local r = M.Resolve(self)
+	return r.b + r.h
 end
 function Obj:SetAllPoints(rel)
 	self.__points = { { "TOPLEFT", rel or self.__parent, "TOPLEFT", 0, 0 }, { "BOTTOMRIGHT", rel or self.__parent, "BOTTOMRIGHT", 0, 0 } }

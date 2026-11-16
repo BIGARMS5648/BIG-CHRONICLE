@@ -42,6 +42,7 @@ end
 -- 초기화
 ------------------------------------------------------------------------
 function A:Init()
+	self:MergeCharacter()
 	local on = function(ev, fn) ns:On(ev, function(...) fn(self, ...) end) end
 	ns:Listen("LOG_ADDED", function() A:Queue() end)
 	ns:Listen("DEX_UPDATED", function() A:Queue() end)
@@ -258,6 +259,47 @@ function A:Context()
 end
 
 ------------------------------------------------------------------------
+-- 계정 공용 업적: 한 캐릭터가 이룬 업적은 같은 계정의 모든 캐릭터에서 달성으로 보인다
+--   BigChronicleDB.ach.done[id] = { t = 달성 시각, by = 이룬 캐릭터, retro = 기록 이전에 이룬 것 }
+------------------------------------------------------------------------
+function A:Account()
+	BigChronicleDB = BigChronicleDB or {}
+	local acc = BigChronicleDB.ach
+	if type(acc) ~= "table" then
+		acc = {}
+		BigChronicleDB.ach = acc
+	end
+	acc.done = acc.done or {}
+	return acc
+end
+
+-- 가장 먼저 이룬 기록을 남긴다
+function A:Record(id, t, retro)
+	local all = self:Account().done
+	local e = all[id]
+	if not e or (t and e.t and t < e.t) then
+		all[id] = { t = t, by = ns.PlayerName(), retro = retro and true or nil }
+	end
+end
+
+-- 이 캐릭터가 이미 이룬 업적을 계정 기록에 합친다 (예전 버전의 캐릭터별 기록 포함)
+function A:MergeCharacter()
+	local ach = ns.char and ns.char.ach
+	if not ach then return end
+	for id, t in pairs(ach.done) do self:Record(id, t, ach.retro[id]) end
+end
+
+-- 달성 기록 (계정 공용). 없으면 nil
+function A:Earned(id)
+	local e = self:Account().done[id]
+	if e then return e end
+	local ach = ns.char and ns.char.ach
+	if ach and ach.done[id] then
+		return { t = ach.done[id], by = ns.PlayerName(), retro = ach.retro[id] }
+	end
+end
+
+------------------------------------------------------------------------
 -- 판정
 ------------------------------------------------------------------------
 function A:Progress(def, ctx)
@@ -279,18 +321,22 @@ function A:Evaluate()
 	local ctx = self:Context()
 	self.ctx = ctx
 	ach.seen = ach.seen or {}
+	local account = self:Account().done
 	local newly, retro = {}, {}
 	for _, def in ipairs(ns.ACHIEVEMENTS) do
-		if not ach.done[def.id] then
+		-- 다른 캐릭터가 이미 이룬 업적은 이 캐릭터에서도 달성된 것으로 친다 (다시 알리지 않는다)
+		if not ach.done[def.id] and not account[def.id] then
 			local cur = self:Progress(def, ctx)
 			if cur >= def.goal then
 				ach.done[def.id] = time()
 				-- 처음 켰을 때, 또는 업데이트로 새로 생긴 업적을 처음 판정할 때 이미 만족한 것은 '이전에 이룬 업적'
 				if not ach.initialized or not ach.seen[def.id] then
 					retro[#retro + 1] = def
+					ach.retro[def.id] = true
 				else
 					newly[#newly + 1] = def
 				end
+				self:Record(def.id, ach.done[def.id], ach.retro[def.id])
 			end
 		end
 	end
@@ -323,6 +369,8 @@ function A:Announce(def)
 	if (cat == "dungeon" or cat == "raid") and self.lastExpStop and time() - self.lastExpStop < 3600 then
 		data.t = self.lastExpStop
 		ns.char.ach.done[def.id] = self.lastExpStop
+		local e = self:Account().done[def.id]
+		if e and e.by == ns.PlayerName() then e.t = self.lastExpStop end
 	end
 	ns.Chronicle:Add("achievement", flavor .. ns.Hex("  — 업적 「" .. def.name .. "」 달성 · +" .. def.points .. "점", ns.COLOR.dim), data)
 	if ns.Toast then
@@ -333,12 +381,11 @@ end
 -- 요약: 달성 수, 전체 수, 점수, 전체 점수
 function A:Summary(cat)
 	local done, total, pts, maxPts = 0, 0, 0, 0
-	local ach = ns.char and ns.char.ach
 	for _, def in ipairs(ns.ACHIEVEMENTS) do
 		if not cat or def.cat == cat then
 			total = total + 1
 			maxPts = maxPts + def.points
-			if ach and ach.done[def.id] then
+			if self:Earned(def.id) then
 				done = done + 1
 				pts = pts + def.points
 			end

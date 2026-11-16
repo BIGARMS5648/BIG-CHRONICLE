@@ -14,7 +14,7 @@ local OPTIONS = {
 	{ key = "nameplates",   label = "이름표로도 몬스터 발견",      desc = "적 이름표가 보이는 거리의 몬스터도 도감에 등록합니다." },
 	{ key = "tooltip",      label = "툴팁에 도감 정보 표시",       desc = "몬스터 툴팁에 도감 번호, 종족, 처치 수를 붙입니다." },
 	{ key = "typewriter",   label = "한 글자씩 써지는 연출",       desc = "배경 이야기가 차례로 써집니다. 클릭·Space로 건너뜁니다." },
-	{ key = "effects",      label = "화면 연출",                   desc = "표지 로고, 새 장 두루마리, 금가루, 밀랍 인장 효과를 보여 줍니다." },
+	{ key = "effects",      label = "화면 연출",                   desc = "새 장 두루마리, 금가루, 밀랍 인장 효과를 보여 줍니다." },
 	{ key = "hotkeys",      label = "키보드 단축키",               desc = "창이 열려 있을 때 1~4, 방향키, Space를 씁니다. (전투 중 꺼짐)" },
 }
 
@@ -88,8 +88,28 @@ function O:Create(parent)
 	right:SetPoint("BOTTOMRIGHT", 0, 0)
 	right:SetWidth(354)
 
+	-- 알림 위치: 잠금을 풀면 예시 알림을 끌어 옮길 수 있다
+	local h0 = right:CreateFontString(nil, "OVERLAY", UI.F.header)
+	h0:SetPoint("TOP", 0, -18)
+	h0:SetText("알림 위치")
+	local lock = UI.Check(right, "알림 위치 잠금",
+		function() return ns.db.toastLocked ~= false end,
+		function(v) if ns.Toast then ns.Toast:SetLocked(v) end end,
+		"끄면 예시 알림이 떠서 끌어 옮길 수 있습니다.\n오른쪽 클릭하거나 다시 켜면 고정됩니다.")
+	lock:SetPoint("TOPLEFT", right, "TOPLEFT", 34, -50)
+	lock.desc:SetWidth(270)
+	self.checks[#self.checks + 1] = lock
+	self.lockCheck = lock
+	local resetPos = UI.Button(right, "알림 위치 초기화", 290, 26, function()
+		if ns.Toast then ns.Toast:ResetPosition() end
+	end)
+	resetPos:SetPoint("TOP", right, "TOP", 0, -118)
+
+	local div0 = UI.Divider(right, 290, nil, "Divider2", 0.5)
+	div0:SetPoint("TOP", resetPos, "BOTTOM", 0, -12)
+
 	local h = right:CreateFontString(nil, "OVERLAY", UI.F.header)
-	h:SetPoint("TOP", 0, -18)
+	h:SetPoint("TOP", div0, "BOTTOM", 0, -8)
 	h:SetText("데이터 관리")
 	local note = UI.Text(right, UI.F.small)
 	note:SetPoint("TOP", h, "BOTTOM", 0, -6)
@@ -124,10 +144,7 @@ function O:Create(parent)
 	info:SetJustifyH("CENTER")
 	info:SetSpacing(2)
 	info:SetText(UI:Themed("|cffd4af37BIG CHRONICLE|r  v" .. ns.VERSION .. "\n" ..
-		"|cffffd100/bc|r 창 열기   ·   |cffffd100/도감|r 도감 열기\n" ..
-		"|cffffd100/bc 업적|r 업적 보기\n" ..
-		"|cffffd100/일지 <내용>|r 나만의 기록 남기기\n" ..
-		"|cffffd100/bc 내보내기|r 일지 전체 복사\n\n" ..
+		"|cffffd100/bc|r 창 열기   ·   |cffffd100/bc 도움말|r 명령어 보기\n\n" ..
 		"|cffd4af37Special thanks to|r\n루마  ·  절미  ·  판초네 콘체타  ·  KLEROS"))
 	return p
 end

@@ -38,6 +38,15 @@ local WIDTH, HEIGHT = 400, 96
 
 function Toast:Init()
 	self.queue = {}
+	-- 위치 옮기기는 그때그때 켜는 것: 접속할 때는 항상 잠긴 상태로 시작한다
+	if ns.db then ns.db.toastLocked = true end
+end
+
+-- 알림이 놓일 자리 (화면 위쪽 가운데 기준, 옮겼다면 저장된 자리)
+local function Anchor()
+	local p = ns.db and ns.db.toastPos
+	if type(p) == "table" and tonumber(p.x) and tonumber(p.y) then return p.x, p.y end
+	return 0, TOP_Y
 end
 
 function Toast:Build()
@@ -45,8 +54,9 @@ function Toast:Build()
 	UI:InitTheme()
 	local f = CreateFrame("Frame", "BigChronicleToast", UIParent)
 	f:SetSize(WIDTH, HEIGHT)
-	f:SetPoint("TOP", UIParent, "TOP", 0, TOP_Y)
+	f:SetPoint("TOP", UIParent, "TOP", Anchor())
 	f:SetFrameStrata("DIALOG")
+	f:SetClampedToScreen(true)
 	f:Hide()
 
 	-- 금 모서리 가죽 액자에 든 양피지 한 장
@@ -85,16 +95,38 @@ function Toast:Build()
 	f:EnableMouse(true)
 	-- 누르면 알림에 나온 몬스터(또는 업적)의 페이지로 바로 간다
 	f:SetScript("OnMouseUp", function(self, btn)
+		if Toast.moving then
+			-- 위치를 옮기는 중: 오른쪽 클릭으로 잠근다
+			if btn == "RightButton" and not self.dragged then Toast:SetLocked(true) end
+			self.dragged = nil
+			return
+		end
 		if btn == "LeftButton" then Toast:OpenLink(self.link) end
 		Toast:Next()
 	end)
+	-- 잠금을 풀면 끌어서 옮길 수 있다
+	f:RegisterForDrag("LeftButton")
+	f:SetScript("OnDragStart", function(self)
+		if not Toast.moving then return end
+		self.dragged = true
+		self:SetMovable(true)
+		self:StartMoving()
+	end)
+	f:SetScript("OnDragStop", function(self)
+		self:StopMovingOrSizing()
+		if not Toast.moving then return end
+		Toast:SavePosition()
+	end)
 
 	local function place(dy)
+		local x, y = Anchor()
 		f:ClearAllPoints()
-		f:SetPoint("TOP", UIParent, "TOP", 0, TOP_Y + dy)
+		f:SetPoint("TOP", UIParent, "TOP", x, y + dy)
 	end
+	f.place = place
 	-- 위에서 천천히 내려앉았다가, 잠시 뒤 조용히 사라진다
 	f:SetScript("OnUpdate", function(self, elapsed)
+		if Toast.moving then return end
 		self.t = (self.t or 0) + elapsed
 		local hold = self.hold or 3
 		local E = ns.Effects
@@ -159,9 +191,55 @@ function Toast:Show(title, body, icon, kind, link)
 	if not self.frame:IsShown() then self:Next() end
 end
 
+-- 옮긴 자리를 화면 위쪽 가운데 기준으로 저장한다 (해상도나 UI 크기가 바뀌어도 비슷한 곳에 오도록)
+function Toast:SavePosition()
+	local f = self.frame
+	local top, cx = f:GetTop(), f:GetCenter()
+	local pw, ph = UIParent:GetWidth(), UIParent:GetHeight()
+	if top and cx and pw and ph then
+		ns.db.toastPos = { x = math.floor(cx - pw / 2 + 0.5), y = math.floor(top - ph + 0.5) }
+	end
+	f.place(0)
+end
+
+function Toast:ResetPosition()
+	ns.db.toastPos = nil
+	if self.frame then self.frame.place(0) end
+end
+
+-- 잠금을 풀면 예시 알림이 떠서 끌어 옮길 수 있고, 잠그면 사라진다
+function Toast:SetLocked(locked)
+	ns.db.toastLocked = locked and true or false
+	self:Build()
+	local f = self.frame
+	if not locked then
+		self.moving = true
+		f.t, f.pendingFX, f.link = 0, nil, nil
+		f.icon:SetTexture(ns.ICON)
+		f.title:SetText("알림 위치")
+		f.title:SetTextColor(INK.rank[1], INK.rank[2], INK.rank[3])
+		f.body:SetText("끌어서 원하는 곳에 놓으세요")
+		f.brand:SetText("오른쪽 클릭하거나 설정에서 잠그면 고정됩니다")
+		ns.Effects.SetSeal(f.seal, "dex")
+		f.seal:SetAlpha(1)
+		f.seal:Show()
+		f.place(0)
+		f:SetAlpha(1)
+		f:Show()
+	else
+		self.moving = false
+		f:StopMovingOrSizing()
+		f:Hide()
+		-- 옮기는 동안 쌓인 알림을 이어서 보여 준다
+		if self.queue and #self.queue > 0 then self:Next() end
+	end
+	if ns.SettingsTab and ns.SettingsTab.Refresh then ns.SettingsTab:Refresh() end
+end
+
 function Toast:Next()
 	local f = self.frame
 	if not f then return end
+	if self.moving then return end
 	local item = table.remove(self.queue, 1)
 	if not item then
 		f:Hide()

@@ -295,9 +295,19 @@ def main():
     save("Slot", cut("K", (507, 584, 627, 702)), l=40, r=40, t=40, b=40, pad=4)
     save("Plate", cut("K", (323, 765, 555, 839)), l=40, r=40, pad=4)
     save("Badge", erase_text(cut("K", (802, 780, 880, 826), pad=3), 9), l=24, r=24, pad=3)
-    save("ScrollUp", cut("K", (1338, 227, 1372, 262), pad=2), pad=2)
-    save("ScrollDown", cut("K", (1338, 668, 1372, 705), pad=2), pad=2)
-    save("ScrollTrack", SHEET["K"].crop((1340, 276, 1371, 420)).convert("RGBA"))
+    # 스크롤바: 시트의 큰 스크롤바 하나에서 위·아래 버튼, 홈(위 끝 · 반복되는 가운데 · 아래 끝), 손잡이를 모두 딴다
+    # (홈은 손잡이가 없는 깨끗한 부분만 쓰고, 가운데는 위아래로 뒤집어 붙여 이음매 없이 반복시킨다)
+    save("ScrollUp", cut("K", (1247, 217, 1307, 270), pad=2), pad=2)
+    save("ScrollDown", cut("K", (1247, 654, 1307, 707), pad=2), pad=2)
+    K = SHEET["K"]
+    tx0, tx1 = 1248, 1306
+    save("ScrollTrackTop", K.crop((tx0, 268, tx1, 292)).convert("RGBA"))
+    save("ScrollTrackBottom", K.crop((tx0, 628, tx1, 654)).convert("RGBA"))
+    mid = K.crop((tx0, 470, tx1, 628)).convert("RGBA")
+    tile = Image.new("RGBA", (mid.size[0], mid.size[1] * 2))
+    tile.paste(mid, (0, 0))
+    tile.paste(mid.transpose(Image.FLIP_TOP_BOTTOM), (0, mid.size[1]))
+    save("ScrollTrackMid", tile, tileH=tile.size[1])
     save("ScrollThumb", cut("K", (1262, 338, 1292, 460), pad=3, thr=95, close=3), pad=3)
 
     # --- 인장·막대·아이콘 (시트 R)
@@ -314,9 +324,7 @@ def main():
     save("IconStats", cut("R", (1154, 936, 1242, 1026)), pad=4)
     save("Banner", cut("R", (869, 450, 943, 552)), pad=4)
 
-    # --- 사용자가 따로 준 로고 그림 (흰 바탕): 표지 로고, 명판 글자, 미니맵 아이콘
-    if (ART / "logo.png").exists():
-        save("Logo", from_white(ART / "logo.png", 857))          # 표지 위에 600px 폭으로 보인다
+    # --- 사용자가 따로 준 그림: 명판 글자, 미니맵 아이콘 (art/logo.png 는 소개 페이지용 원본)
     if (ART / "title.png").exists():
         save("Title", from_white(ART / "title.png", 460))        # 명판 위에 높이 27px로 보인다
     if (ART / "minimap.png").exists():

@@ -235,7 +235,8 @@ function T:Refresh(resetScroll)
 	local y = 0
 	local shown = 0
 	for _, def in ipairs(ns.ACHIEVEMENTS) do
-		local isDone = ach.done[def.id] ~= nil
+		local earned = A:Earned(def.id)   -- 계정 공용: 다른 캐릭터가 이룬 것도 달성
+		local isDone = earned ~= nil
 		local pass = (not self.cat or def.cat == self.cat)
 			and (self.filter == "all" or (self.filter == "done") == isDone)
 		if pass then
@@ -277,7 +278,10 @@ function T:Refresh(resetScroll)
 				r.pts:SetTextColor(Col(col.accent))
 				r.bar:Hide()
 				r.when:Show()
-				r.when:SetText(ach.retro[def.id] and "기록 이전에 달성" or ns.FormatShortDate(ach.done[def.id]))
+				local when = earned.retro and "기록 이전에 달성" or ns.FormatShortDate(earned.t)
+				-- 다른 캐릭터가 이룬 업적은 누가 이뤘는지 덧붙인다
+				if earned.by and earned.by ~= ns.PlayerName() then when = when .. "  ·  " .. earned.by end
+				r.when:SetText(when)
 			else
 				UI.Color(r.bg, col.shade)
 				r.name:SetTextColor(Col(col.sub))

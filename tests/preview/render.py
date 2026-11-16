@@ -271,6 +271,19 @@ def draw_node(canvas, n, alpha):
         target = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
     for r in regions:
         draw_node(target, r, a)
+    if kind == "Slider":
+        # 손잡이는 값에 맞춰 놓는다 (게임에서는 슬라이더가 직접 옮긴다)
+        x0, y0, x1, y1 = screen_box(n)
+        span = n["smax"] - n["smin"]
+        frac = 0 if span <= 0 else max(0, min(1, (n["sval"] - n["smin"]) / span))
+        for r in regions:
+            if not r["anchored"] and r["tex"].endswith("Thumb"):
+                r = dict(r)
+                r["l"] = (x0 + x1) / 2 - r["w"] / 2
+                top = y0 + (y1 - y0 - r["h"]) * frac
+                r["b"] = SH - top - r["h"]
+                r["anchored"] = True
+                draw_texture(target, r, a)
     if kind == "StatusBar" and n["smax"] > n["smin"]:
         frac = max(0, min(1, (n["sval"] - n["smin"]) / (n["smax"] - n["smin"])))
         x0, y0, x1, y1 = screen_box(n)
@@ -290,7 +303,12 @@ def draw_node(canvas, n, alpha):
             if r["kind"] == "FontString":
                 draw_node(target, r, a)
     frames.sort(key=lambda f: (STRATA.get(f["strata"], 2), f["level"], f["id"]))
+    # 스크롤 프레임은 스크롤 자식만 잘라 보이고, 바깥에 붙은 스크롤바 같은 다른 자식은 그대로 보인다
+    outside = []
     for fr in frames:
+        if kind == "ScrollFrame" and fr["id"] != n["scrollChild"]:
+            outside.append(fr)
+            continue
         if kind == "ScrollFrame" and fr["id"] == n["scrollChild"]:
             # 스크롤 자식은 스크롤 프레임 왼쪽 위에 붙고, 스크롤한 만큼 올라간다
             x0, y0, _, _ = screen_box(n)
@@ -306,6 +324,8 @@ def draw_node(canvas, n, alpha):
         box = (max(0, x0), max(0, y0), min(canvas.size[0], x1), min(canvas.size[1], y1))
         if box[2] > box[0] and box[3] > box[1]:
             canvas.alpha_composite(target.crop(box), (box[0], box[1]))
+    for fr in outside:
+        draw_node(canvas, fr, a)
 
 
 def shift_subtree(nid, dx, dy):

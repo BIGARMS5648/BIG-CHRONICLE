@@ -1,7 +1,7 @@
 -- BIG CHRONICLE :: 화면 연출
 -- OnUpdate로 움직이는 작은 연출들:
 --   Tween(움직임) · Burst(금가루) · Pulse(은은한 빛) · Stamp(밀랍 인장)
---   ChapterCard(화면 가운데 장 제목) · Logo(창을 열 때 표지 로고)
+--   ChapterCard(화면 가운데 장 제목)
 
 local ADDON, ns = ...
 local UI = ns.UI

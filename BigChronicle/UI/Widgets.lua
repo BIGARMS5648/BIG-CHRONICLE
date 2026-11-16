@@ -781,17 +781,41 @@ function UI.Scroll(parent)
 	sf:SetScrollChild(child)
 	sf.child = child
 
+	-- 금테 스크롤바: 홈은 위 끝 · 반복되는 가운데 · 아래 끝으로 나눠 늘이지 않고 이어 붙인다
+	local A = ATLAS
+	local W = 18
+	local k = W / A.ScrollTrackMid.w
+	local arrowW = W * A.ScrollUp.w / A.ScrollTrackMid.w
+	local arrowH = arrowW * A.ScrollUp.h / A.ScrollUp.w
 	local bar = CreateFrame("Slider", nil, sf)
 	bar:SetOrientation("VERTICAL")
-	bar:SetWidth(14)
-	bar:SetPoint("TOPLEFT", sf, "TOPRIGHT", 4, -16)
-	bar:SetPoint("BOTTOMLEFT", sf, "BOTTOMRIGHT", 4, 16)
+	bar:SetWidth(W)
+	bar:SetPoint("TOPLEFT", sf, "TOPRIGHT", 4, -(arrowH - 2))
+	bar:SetPoint("BOTTOMLEFT", sf, "BOTTOMRIGHT", 4, arrowH - 2)
+	local capTop = bar:CreateTexture(nil, "BACKGROUND", nil, 1)
+	capTop:SetTexture(Tex("ScrollTrackTop"))
+	capTop:SetPoint("TOPLEFT"); capTop:SetPoint("TOPRIGHT")
+	capTop:SetHeight(A.ScrollTrackTop.h * k)
+	local capBottom = bar:CreateTexture(nil, "BACKGROUND", nil, 1)
+	capBottom:SetTexture(Tex("ScrollTrackBottom"))
+	capBottom:SetPoint("BOTTOMLEFT"); capBottom:SetPoint("BOTTOMRIGHT")
+	capBottom:SetHeight(A.ScrollTrackBottom.h * k)
 	local track = bar:CreateTexture(nil, "BACKGROUND")
-	track:SetPoint("TOP", 0, 1); track:SetPoint("BOTTOM", 0, -1); track:SetWidth(13)
-	track:SetTexture(Tex("ScrollTrack"))
+	track:SetTexture(Tex("ScrollTrackMid"), "CLAMP", "REPEAT")
+	track:SetPoint("TOPLEFT", capTop, "BOTTOMLEFT")
+	track:SetPoint("BOTTOMRIGHT", capBottom, "TOPRIGHT")
+	local tileH = A.ScrollTrackMid.tileH * k
+	local function FitTrack()
+		local h = (bar:GetHeight() or 0) - capTop:GetHeight() - capBottom:GetHeight()
+		track:SetTexCoord(0, 1, 0, math.max(0.01, h / tileH))
+	end
+	bar:SetScript("OnSizeChanged", FitTrack)
+	FitTrack()
+	-- 손잡이는 원래 비율 그대로 (늘이지 않는다)
 	local thumb = bar:CreateTexture(nil, "OVERLAY")
 	thumb:SetTexture(Tex("ScrollThumb"))
-	thumb:SetSize(14, 48)
+	local thumbW = W * A.ScrollThumb.w / A.ScrollTrackMid.w
+	thumb:SetSize(thumbW, thumbW * A.ScrollThumb.h / A.ScrollThumb.w)
 	bar:SetThumbTexture(thumb)
 	bar:SetMinMaxValues(0, 0)
 	bar:SetValue(0)
@@ -800,14 +824,15 @@ function UI.Scroll(parent)
 	sf.bar = bar
 	local function arrow(name, point, rel, dir)
 		local a = CreateFrame("Button", nil, bar)
-		a:SetSize(16, 16)
+		a:SetSize(arrowW, arrowW * A[name].h / A[name].w)
 		a:SetPoint(point, bar, rel, 0, 0)
 		local t = a:CreateTexture(nil, "ARTWORK")
 		t:SetAllPoints()
 		t:SetTexture(Tex(name))
 		local hl = a:CreateTexture(nil, "HIGHLIGHT")
-		hl:SetAllPoints()
-		hl:SetColorTexture(1, 0.85, 0.5, 0.25)
+		hl:SetPoint("TOPLEFT", 3, -3)
+		hl:SetPoint("BOTTOMRIGHT", -3, 3)
+		hl:SetColorTexture(1, 0.85, 0.5, 0.2)
 		pcall(hl.SetBlendMode, hl, "ADD")
 		a:SetScript("OnClick", function() sf:ScrollBy(dir * 60) end)
 		return a

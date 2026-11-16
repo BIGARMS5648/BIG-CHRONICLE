@@ -387,6 +387,8 @@ end)
 ns.DEFAULTS = {
 	chat = true,          -- 새 기록을 채팅창에 알림
 	toast = true,         -- 도감 등록 알림 팝업
+	toastLocked = true,   -- 알림 위치 잠금 (풀면 끌어서 옮길 수 있다)
+	-- toastPos = { x, y }: 옮긴 알림 위치 (화면 위쪽 가운데 기준)
 	sound = true,         -- 알림 효과음
 	logSubzones = true,   -- 세부 장소 발견도 일지에 기록
 	questRewards = true,  -- 퀘스트 기록에 보상 표시
@@ -515,6 +517,7 @@ local function ShowHelp()
 	P("  |cffffd100/bc 기록 <내용>|r : 나만의 기록을 일지에 남기기  (|cffffd100/일지 <내용>|r 도 가능)")
 	P("  |cffffd100/bc 내보내기|r : 일지 전체를 복사 가능한 글로 보기")
 	P("  |cffffd100/bc 미니맵|r : 미니맵 버튼 보이기/숨기기")
+	P("  |cffffd100/bc 알림|r : 알림 위치 잠금 풀기/잠그기 (끌어서 옮기기)")
 	P("  Special thanks to 루마 · 절미 · 판초네 콘체타 · KLEROS")
 end
 
@@ -545,6 +548,13 @@ function ns:HandleSlash(msg)
 		if UI then UI:ShowExport() end
 	elseif cmd == "미니맵" or cmd == "minimap" then
 		if ns.Minimap then ns.Minimap:Toggle() end
+	elseif cmd == "알림" or cmd == "toast" then
+		-- 알림 위치 잠금 켜고 끄기
+		if ns.Toast then
+			local unlock = ns.db.toastLocked ~= false
+			ns.Toast:SetLocked(not unlock)
+			ns.Print(unlock and "알림 위치 잠금을 풀었습니다. 예시 알림을 끌어 옮긴 뒤 오른쪽 클릭으로 잠그세요." or "알림 위치를 잠갔습니다.")
+		end
 	elseif cmd == "debug" then
 		ns.db.debug = not ns.db.debug
 		ns.Print("디버그 모드: " .. (ns.db.debug and "켜짐" or "꺼짐"))
