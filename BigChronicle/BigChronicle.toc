@@ -2,7 +2,7 @@
 ## Title: |cffd4af37BIG CHRONICLE|r
 ## Notes: Records your adventures as an RPG biography and collects monsters in a bestiary.
 ## Notes-koKR: 나의 모험을 RPG 전기처럼 기록하고, 만난 몬스터를 종족별 도감에 수집합니다.
-## Version: 1.10.5
+## Version: 1.10.6
 ## SavedVariables: BigChronicleDB
 ## SavedVariablesPerCharacter: BigChronicleCharDB
 ## IconTexture: Interface\AddOns\BigChronicle\Media\Icon

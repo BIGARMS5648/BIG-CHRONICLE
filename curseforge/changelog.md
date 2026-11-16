@@ -1,3 +1,7 @@
+## 1.10.6
+
+- Achievement and discovery notifications play only the wax stamp sound again (the extra chime is gone)
+
 ## 1.10.5
 
 Fixes from a full simulated playthrough (levels 1–60 on five different runs):
