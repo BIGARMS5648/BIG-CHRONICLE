@@ -189,10 +189,6 @@ function D:Create(parent)
 	mid:EnableMouse(true)
 	mid:SetScript("OnMouseDown", function() UI.FinishTyping() end) -- 클릭하면 글을 바로 끝까지 보여 준다
 	self.mid = mid
-	local stamp = ns.Effects.MakeSeal(mid, 76, "dex")
-	stamp:SetPoint("TOPRIGHT", -22, -2)
-	stamp:SetFrameLevel(mid:GetFrameLevel() + 30)
-	self.stamp = stamp
 	local scroll = UI.Scroll(mid)
 	scroll:SetPoint("TOPLEFT", 2, -4)
 	scroll:SetPoint("BOTTOMRIGHT", -18, 4)
@@ -544,12 +540,9 @@ function D:DrawTribe(id)
 		UI.FadeIn(head, 0.3)
 		UI.FadeIn(sub, 0.3, 0.1)
 	end
-	-- 발견한 뒤 처음 펼쳐 보는 페이지라면 도장을 쾅
+	-- 발견한 뒤 처음 펼쳐 본 페이지 (목록의 NEW 표시가 꺼진다. 밀랍 인장은 발견 알림에서만 찍힌다)
 	if found and not tribeData.viewed then
 		tribeData.viewed = time()
-		ns.Effects.Stamp(self.stamp, "dex-stamp", 1.4)
-	elseif not found or firstView then
-		self.stamp:Hide()
 	end
 	-- 명조 제목은 줄 높이가 커서, 실제 글자 높이로 다음 줄 위치를 잡는다
 	local headH = (no:GetStringHeight() or 12) + 3 + (head:GetStringHeight() or 30) + 4 + (sub:GetStringHeight() or 14)

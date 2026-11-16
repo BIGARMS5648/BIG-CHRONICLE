@@ -97,7 +97,6 @@ Every achievement arrives as a parchment dispatch sealed with red wax. Story ach
 
 - Reaching a new chapter **unrolls a parchment scroll** across the screen with the chapter title, with drifting gold dust
 - Every notification is **stamped with a red wax seal** — a ribboned compass-star seal for achievements, a lion seal for bestiary discoveries (new tribes, new creatures, rares and research ranks)
-- The first time you open a newly found tribe, a **wax seal** is pressed onto the page
 - Newly earned achievements glow gold for three seconds when you first see them, then keep a quiet NEW tag until you leave the tab
 - The **minimap button glows** when something new happened while the window was closed
 - Every effect can be turned off in the settings

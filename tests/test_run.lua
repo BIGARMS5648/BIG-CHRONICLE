@@ -401,14 +401,12 @@ local okFx, errFx = pcall(function()
 		assert(ns.Toast.frame.seal.kind == "dex", kind .. " toast uses the bestiary seal")
 		run(8)
 	end
-	-- 도감: 처음 펼치는 종족 페이지에 도장
+	-- 도감: 처음 펼치면 '본 페이지'가 되지만, 도장은 찍지 않는다 (인장은 발견 알림에서만)
 	local B = ns.Bestiary
 	B.dex.tribes.centaur.viewed = nil
 	ns.UI:SelectTab("bestiary")
 	ns.BestiaryTab:SelectTribe("centaur")
-	assert(ns.BestiaryTab.stamp:IsShown() and B.dex.tribes.centaur.viewed, "first view stamps the page")
-	run(3)
-	assert(not ns.BestiaryTab.stamp:IsShown(), "stamp fades")
+	assert(B.dex.tribes.centaur.viewed and ns.BestiaryTab.stamp == nil, "first view marks the page seen without a stamp")
 	-- 일지: 장을 바꾸면 곧바로 바뀐다 (책장 넘김 연출 없음)
 	ns.UI:SelectTab("journal")
 	local J = ns.JournalTab

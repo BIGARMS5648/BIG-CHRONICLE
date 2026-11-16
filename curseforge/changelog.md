@@ -1,3 +1,7 @@
+## 1.10.8
+
+- Opening a newly found tribe's bestiary page no longer stamps a wax seal on it; the seal is pressed only on the discovery notification. The NEW tag in the list still clears when you open the page
+
 ## 1.10.7
 
 - Settings: the reset button is now called "알림 위치를 기본 위치로" (back to the default position). It moves notifications back to the top center of the screen, confirms in chat and drops a sample notification there so you can see the spot
