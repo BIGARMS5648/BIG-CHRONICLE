@@ -4,7 +4,7 @@ BIG CHRONICLE - assets
 1) Interface art (UI\*.tga, Icon.tga)
    Window frame, plaque, tabs, buttons, parchment panels, scroll, wax
    seals, medallion icons, scrollbar, check boxes, bars, the BIG
-   CHRONICLE logo and lettering, and the B.C minimap icon.
+   CHRONICLE logo and lettering, and the leather-book minimap icon.
    Source  : art provided by the addon author (art\ in the source
              repository), cut into pieces by tools/slice_assets.py
    License : part of BIG CHRONICLE; not for reuse outside this addon

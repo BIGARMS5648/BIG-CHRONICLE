@@ -22,7 +22,7 @@ function M:Init()
 		hl:SetSize(34, 34)
 	end
 
-	-- 금테를 두른 B.C 메달 (테두리가 그림에 들어 있어서 기본 미니맵 테두리는 쓰지 않는다)
+	-- 금테를 두른 가죽 책 아이콘 (테두리가 그림에 들어 있어서 기본 미니맵 테두리는 쓰지 않는다)
 	local icon = b:CreateTexture(nil, "ARTWORK")
 	icon:SetSize(30, 30)
 	icon:SetPoint("CENTER")

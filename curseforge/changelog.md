@@ -1,3 +1,7 @@
+## 1.10.4
+
+- New minimap icon: a gold-rimmed leather book with a compass star (also used in the addon list)
+
 ## 1.10.3
 
 - The chapter scroll is now drawn as one picture turned slightly counterclockwise, so its parchment face is level under the title; chapter titles sit exactly on the middle of the face
