@@ -19,11 +19,11 @@ local TOP_Y, DROP = -120, 22
 
 -- 알림 종류별 제목 잉크와 왼쪽 띠 색
 local INK = {
-	species     = { 0.10, 0.085, 0.07 },
+	species     = { 0.19, 0.09, 0.04 },
 	tribe       = { 0.16, 0.30, 0.12 },
 	rare        = { 0.38, 0.14, 0.46 },
-	rank        = { 0.66, 0.30, 0.10 },
-	achievement = { 0.66, 0.30, 0.10 },
+	rank        = { 0.52, 0.11, 0.07 },
+	achievement = { 0.52, 0.11, 0.07 },
 }
 -- 알림 종류별로 피어오르는 빛 (금가루 / 보랏빛 불티)
 local BURST = {
@@ -34,7 +34,7 @@ local BURST = {
 	species     = { count = 6 },
 }
 local MAX_QUEUE = 4
-local WIDTH, HEIGHT = 380, 88
+local WIDTH, HEIGHT = 400, 96
 
 function Toast:Init()
 	self.queue = {}
@@ -49,37 +49,32 @@ function Toast:Build()
 	f:SetFrameStrata("DIALOG")
 	f:Hide()
 
-	-- 가장자리가 그을린 양피지 한 장
-	UI.Paper(f, { tint = UI.THEMES.light.page })   -- 알림은 테마와 상관없이 밝은 종이
-	local stripe = f:CreateTexture(nil, "BORDER", nil, 3)
-	stripe:SetPoint("TOPLEFT", 0, 0)
-	stripe:SetPoint("BOTTOMLEFT", 0, 0)
-	stripe:SetWidth(3)
-	f.stripe = stripe
+	-- 금 모서리 가죽 액자에 든 양피지 한 장
+	UI.Slice(f, "Card", { layer = "BACKGROUND", scale = 0.55 })
 
 	local icon = f:CreateTexture(nil, "ARTWORK")
 	icon:SetSize(42, 42)
-	icon:SetPoint("LEFT", 16, 0)
+	icon:SetPoint("LEFT", 30, 0)
 	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	f.icon = icon
 	UI.FrameIcon(icon, 4)
 
 	local title = UI.Text(f, UI.F.heading)
 	title:SetPoint("TOPLEFT", icon, "TOPRIGHT", 14, 3)
-	title:SetPoint("RIGHT", -74, 0)
+	title:SetPoint("RIGHT", -88, 0)
 	title:SetWordWrap(false)
 	f.title = title
 
 	local body = UI.Text(f, UI.F.body)
 	body:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -4)
-	body:SetPoint("RIGHT", -74, 0)
+	body:SetPoint("RIGHT", -88, 0)
 	body:SetWordWrap(false)
 	body:SetTextColor(0.16, 0.10, 0.06)
 	f.body = body
 
-	-- 붉은 밀랍 인장: 업적은 월계관, 도감(종족·개체·희귀·연구 등급)은 용 문장
-	local seal = ns.Effects.MakeSeal(f, 64, "ach")
-	seal:SetPoint("TOPRIGHT", -8, -3)
+	-- 붉은 밀랍 인장: 업적은 나침반 별, 도감(종족·개체·희귀·연구 등급)은 사자 문장
+	local seal = ns.Effects.MakeSeal(f, 62, "ach")
+	seal:SetPoint("RIGHT", -22, 0)
 	f.seal = seal
 
 	local brand = UI.Text(f, UI.F.tiny)
@@ -175,7 +170,6 @@ function Toast:Next()
 	local style = STYLE[item.kind] or STYLE.species
 	-- 양피지 위의 글씨는 테마와 상관없이 잉크 색
 	local ink = INK[item.kind] or INK.species
-	f.stripe:SetColorTexture(ink[1], ink[2], ink[3], 0.85)
 	f.icon:SetTexture(item.icon or ns.ICON)
 	f.title:SetText(item.title)
 	f.title:SetTextColor(ink[1], ink[2], ink[3])
@@ -187,7 +181,7 @@ function Toast:Next()
 	f.pendingFX = item.kind
 	f.seal:Hide()
 	f.seal.kind = item.kind == "achievement" and "ach" or "dex"
-	f.seal.tex:SetTexture(f.seal.kind == "ach" and UI.TEX.sealAch or UI.TEX.sealDex)
+	ns.Effects.SetSeal(f.seal, f.seal.kind)
 	f:SetAlpha(0)
 	f:Show()
 	PlayStyleSound(style)

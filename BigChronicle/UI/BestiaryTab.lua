@@ -5,8 +5,8 @@ local UI = ns.UI
 local D = {}
 ns.BestiaryTab = D
 
-local LIST_W, CARD_W = 224, 232
-local ROW_H = 26
+local LIST_W, CARD_W = 236, 232
+local ROW_H = 23
 local QUESTION = "Interface\\Icons\\INV_Misc_QuestionMark"
 
 D.sel = { kind = "recent" }
@@ -50,29 +50,28 @@ function D:Create(parent)
 	p:SetAllPoints()
 	self.panel = p
 
-	-- 왼쪽: 완성도 + 검색 + 종족 목록
-	local left = CreateFrame("Frame", nil, p)
+	-- 왼쪽: 양피지 칸에 완성도 + 검색 + 목록
+	local L = UI.LEATHER
+	local left = UI.Section(p)
 	left:SetPoint("TOPLEFT", 0, 0)
 	left:SetPoint("BOTTOMLEFT", 0, 0)
-	left:SetWidth(LIST_W)
+	left:SetWidth(LIST_W + 12)
 
-	local compLabel = UI.Label(left, "발견한 종족")
-	compLabel:SetPoint("TOPLEFT", 0, -6)
-	local comp = left:CreateFontString(nil, "OVERLAY", UI.F.big)
-	comp:SetPoint("TOPLEFT", compLabel, "BOTTOMLEFT", 0, -6)
+	local comp = left:CreateFontString(nil, "OVERLAY", UI.F.heading)
+	comp:SetPoint("TOPLEFT", 16, -14)
 	comp:SetJustifyH("LEFT")
 	self.compText = comp
-	local bar = UI.Bar(left, LIST_W - 26, 4)
-	bar:SetPoint("TOPLEFT", comp, "BOTTOMLEFT", 0, -12)
+	local bar = UI.Bar(left, LIST_W - 22, 11)
+	bar:SetPoint("TOPLEFT", comp, "BOTTOMLEFT", 1, -8)
 	self.compBar = bar
 	local compSub = UI.Text(left, UI.F.small)
-	compSub:SetPoint("TOPLEFT", bar, "BOTTOMLEFT", 0, -9)
-	compSub:SetWidth(LIST_W - 26)
-	compSub:SetSpacing(3)
+	compSub:SetPoint("TOPLEFT", bar, "BOTTOMLEFT", 0, -7)
+	compSub:SetWidth(LIST_W - 20)
+	compSub:SetSpacing(2)
 	self.compSub = compSub
 
-	local search = UI.EditBox(left, LIST_W - 26, 28, "개체·종족 이름 검색")
-	search:SetPoint("TOPLEFT", compSub, "BOTTOMLEFT", 0, -14)
+	local search = UI.EditBox(left, LIST_W - 20, 28, "개체·종족 이름 검색", true)
+	search:SetPoint("TOPLEFT", compSub, "BOTTOMLEFT", -1, -10)
 	search:HookScript("OnTextChanged", function(self)
 		local t = ns.Trim(self:GetText() or "")
 		if t ~= D.search then
@@ -89,39 +88,35 @@ function D:Create(parent)
 	self.searchBox = search
 
 	local listScroll = UI.Scroll(left)
-	listScroll:SetPoint("TOPLEFT", search, "BOTTOMLEFT", -12, -10)
-	listScroll:SetPoint("BOTTOMRIGHT", -22, 0)
+	listScroll:SetPoint("TOPLEFT", search, "BOTTOMLEFT", -6, -8)
+	listScroll:SetPoint("BOTTOMRIGHT", -24, 12)
 	self.listScroll = listScroll
 	self.listPool = UI.Pool(function() return D:CreateListRow(listScroll.child) end)
 
-	local sepL = UI.VRule(p)
-	sepL:SetPoint("TOPLEFT", left, "TOPRIGHT", 0, 0)
-	sepL:SetPoint("BOTTOMLEFT", left, "BOTTOMRIGHT", 0, 0)
-
-	-- 오른쪽: 고른 개체의 모습과 기록
-	local card = CreateFrame("Frame", nil, p)
+	-- 오른쪽 카드: 양피지 칸에 금테 두른 가죽 액자 초상 + 금박 명판 + 개체 기록 (아래쪽에 잉크 삽화)
+	local card = UI.Section(p)
 	card:SetPoint("TOPRIGHT", 0, 0)
 	card:SetPoint("BOTTOMRIGHT", 0, 0)
-	card:SetWidth(CARD_W)
+	card:SetWidth(CARD_W + 10)
 	self.card = card
-	local sepR = UI.VRule(p)
-	sepR:SetPoint("TOPRIGHT", card, "TOPLEFT", -24, 0)
-	sepR:SetPoint("BOTTOMRIGHT", card, "BOTTOMLEFT", -24, 0)
 
 	local polaroid = CreateFrame("Frame", nil, card)
-	polaroid:SetPoint("TOPLEFT", 0, -6)
-	polaroid:SetPoint("TOPRIGHT", 0, -6)
-	polaroid:SetHeight(252)
+	polaroid:SetPoint("TOPLEFT", 16, -16)
+	polaroid:SetPoint("TOPRIGHT", -16, -16)
+	polaroid:SetHeight(222)
+	-- 모서리 장식이 달린 금테 액자
+	UI.Slice(polaroid, "Slot", { layer = "BACKGROUND", scale = 0.6 })
 	self.polaroid = polaroid
 
 	local stage = CreateFrame("Frame", nil, polaroid)
-	stage:SetPoint("TOPLEFT", 0, 0)
-	stage:SetPoint("TOPRIGHT", 0, 0)
-	stage:SetHeight(214)
+	stage:SetPoint("TOPLEFT", 13, -13)
+	stage:SetPoint("TOPRIGHT", -13, -13)
+	stage:SetHeight(166)
 	local stageBg = stage:CreateTexture(nil, "BACKGROUND")
 	stageBg:SetAllPoints()
-	UI.Gradient(stageBg, "VERTICAL", { 0.07, 0.06, 0.055, 1 }, { 0.20, 0.18, 0.16, 1 })
-	UI.Outline(stage, { 0, 0, 0, 0.6 }, 0)
+	UI.Gradient(stageBg, "VERTICAL", { 0.06, 0.05, 0.04, 1 }, { 0.22, 0.19, 0.15, 1 })
+	UI.Outline(stage, { L.gold[1], L.gold[2], L.gold[3], 0.8 }, -1)
+	UI.Outline(stage, { 0, 0, 0, 0.8 }, -2)
 	stage.bg = stageBg
 	self.stage = stage
 
@@ -163,41 +158,44 @@ function D:Create(parent)
 	rotateHint:SetTextColor(0.85, 0.82, 0.76)
 	self.rotateHint = rotateHint
 
-	-- 모습 아래 이름
+	-- 초상 아래 금박 명판
 	local cardName = polaroid:CreateFontString(nil, "OVERLAY", UI.F.header)
-	cardName:SetPoint("TOPLEFT", stage, "BOTTOMLEFT", 0, -14)
-	cardName:SetPoint("TOPRIGHT", stage, "BOTTOMRIGHT", 0, -14)
-	cardName:SetJustifyH("LEFT")
+	cardName:SetPoint("TOPLEFT", stage, "BOTTOMLEFT", 2, -12)
+	cardName:SetPoint("TOPRIGHT", stage, "BOTTOMRIGHT", -2, -12)
+	cardName:SetJustifyH("CENTER")
 	cardName:SetWordWrap(false)
 	self.cardName = cardName
 
-	local reassign = UI.Button(card, "종족 다시 분류", CARD_W, 28, function()
+	local reassign = UI.Button(card, "종족 다시 분류", CARD_W - 22, 28, function()
 		if D.species then D:ShowReassign(D.species) end
 	end)
-	reassign:SetPoint("BOTTOM", 0, 0)
+	reassign:SetPoint("BOTTOM", 0, 14)
 	UI.Tooltip(reassign, "종족 다시 분류", "자동 분류가 틀렸다면 이 개체가 속한 종족을 직접 정할 수 있습니다.\n(목록에서 개체를 오른쪽 클릭해도 됩니다)")
 	self.reassignBtn = reassign
 
 	local cardInfo = UI.Text(card, UI.F.small, col.text)
-	cardInfo:SetPoint("TOPLEFT", polaroid, "BOTTOMLEFT", 0, -8)
-	cardInfo:SetPoint("BOTTOMRIGHT", reassign, "TOPRIGHT", 0, 10)
-	cardInfo:SetSpacing(5)
+	cardInfo:SetPoint("TOPLEFT", polaroid, "BOTTOMLEFT", 4, -12)
+	cardInfo:SetPoint("BOTTOMRIGHT", reassign, "TOPRIGHT", -2, 8)
+	cardInfo:SetSpacing(3)
 	self.cardInfo = cardInfo
 
-	-- 가운데: 종족 상세
-	local mid = CreateFrame("Frame", nil, p)
-	mid:SetPoint("TOPLEFT", left, "TOPRIGHT", 24, 0)
-	mid:SetPoint("BOTTOMRIGHT", card, "BOTTOMLEFT", -36, 0)
+	-- 가운데: 양피지 칸에 상세
+	local midPanel = UI.Section(p)
+	midPanel:SetPoint("TOPLEFT", left, "TOPRIGHT", 10, 0)
+	midPanel:SetPoint("BOTTOMRIGHT", card, "BOTTOMLEFT", -10, 0)
+	local mid = CreateFrame("Frame", nil, midPanel)
+	mid:SetPoint("TOPLEFT", 18, -12)
+	mid:SetPoint("BOTTOMRIGHT", -12, 12)
 	mid:EnableMouse(true)
 	mid:SetScript("OnMouseDown", function() UI.FinishTyping() end) -- 클릭하면 글을 바로 끝까지 보여 준다
 	self.mid = mid
 	local stamp = ns.Effects.MakeSeal(mid, 76, "dex")
-	stamp:SetPoint("TOPRIGHT", -8, 0)
+	stamp:SetPoint("TOPRIGHT", -22, -2)
 	stamp:SetFrameLevel(mid:GetFrameLevel() + 30)
 	self.stamp = stamp
 	local scroll = UI.Scroll(mid)
-	scroll:SetPoint("TOPLEFT", 0, -4)
-	scroll:SetPoint("BOTTOMRIGHT", 0, 0)
+	scroll:SetPoint("TOPLEFT", 2, -4)
+	scroll:SetPoint("BOTTOMRIGHT", -18, 4)
 	self.scroll = scroll
 
 	local child = scroll.child
@@ -214,8 +212,8 @@ function D:Create(parent)
 		t:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 		return t
 	end)
-	self.dividerPool = UI.Pool(function() return UI.Divider(child, 300) end)
-	self.detailBar = UI.Bar(child, 200, 4)
+	self.dividerPool = UI.Pool(function() return UI.Divider(child, 300, nil, "Divider2", 0.5) end)
+	self.detailBar = UI.Bar(child, 200, 12)
 	self.detailBar:Hide()
 
 	return p
@@ -225,10 +223,10 @@ end
 -- 왼쪽 목록 행
 ------------------------------------------------------------------------
 function D:CreateListRow(parent)
-	local b = UI.NavRow(parent, ROW_H)
+	local b = UI.NavRow(parent, ROW_H, { flat = true })
 	local icon = b:CreateTexture(nil, "ARTWORK")
 	icon:SetSize(18, 18)
-	icon:SetPoint("LEFT", 12, 0)
+	icon:SetPoint("LEFT", 8, 0)
 	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	b.icon = icon
 	local no = UI.Text(b, UI.F.tiny)
@@ -236,7 +234,7 @@ function D:CreateListRow(parent)
 	no:SetJustifyV("MIDDLE")
 	b.no = no
 	b.label:ClearAllPoints()
-	b.label:SetPoint("LEFT", 68, 0)
+	b.label:SetPoint("LEFT", 66, 0)
 	b.label:SetPoint("RIGHT", b.right, "LEFT", -4, 0)
 	b.right:SetFontObject(UI.F.small)
 	return b
@@ -337,11 +335,11 @@ function D:RefreshList()
 	self.listScroll:SetContentHeight(y)
 
 	local foundN, total, species, rares, kills, dynCount = B:Completion()
-	self.compText:SetText(string.format("%d / %d", foundN, total))
+	self.compText:SetText(string.format("도감 완성도   %d / %d 종족", foundN, total))
 	self.compBar:SetMinMaxValues(0, total)
 	self.compBar:SetValue(foundN)
 	self.compBar.text:SetText(string.format("%d%%", math.floor(foundN / total * 100 + 0.5)))
-	self.compSub:SetText(string.format("개체 %s종  ·  희귀 %d\n처치 %s  ·  야수 계통 %d종", ns.Comma(species), rares, ns.Comma(kills), dynCount))
+	self.compSub:SetText(string.format("개체 %s종  ·  희귀 %d  ·  처치 %s\n야수 계통 %d종 발견", ns.Comma(species), rares, ns.Comma(kills), dynCount))
 end
 
 -- 알림·검색에서 특정 개체로 바로 이동: 종족을 고르고, 개체를 선택하고, 목록에서 그 줄이 보이게 한다
@@ -421,19 +419,20 @@ function D:Text(str, font, color, indent, after)
 end
 
 function D:Heading(str)
-	self.y = self.y + 18
-	self:Text(str, UI.F.heading, UI.COL.accent, 0, 7)
+	self.y = self.y + 12
 	local div = self.dividerPool:Acquire()
 	div:ClearAllPoints()
 	div:SetWidth(self.width)
 	div:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 0, -self.y)
-	self.y = self.y + 11
+	self.y = self.y + (div:GetHeight() or 18) + 4
+	local fs = self:Text(str, UI.F.heading, UI.COL.accent, 0, 8)
+	fs:SetJustifyH("CENTER")
 end
 
 function D:Space(n) self.y = self.y + (n or 6) end
 
 function D:CreateSpeciesRow(parent)
-	local b = UI.NavRow(parent, 24)
+	local b = UI.NavRow(parent, 22, { flat = true })
 	b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	b.label:SetFontObject(UI.F.body)
 	b.onClick = function(self, button)
@@ -463,7 +462,7 @@ function D:SpeciesRow(name, leftText, rightText, leftColor)
 		r.label:SetTextColor(c[1], c[2], c[3])
 	end
 	r.right:SetText(UI:Themed(rightText or ""))
-	self.y = self.y + 25
+	self.y = self.y + 22
 	return r
 end
 
@@ -502,20 +501,20 @@ function D:DrawTribe(id)
 
 	-- 머리말: 아이콘 + 번호/이름 (대화창의 NPC 이름처럼)
 	local icon = self.iconPool:Acquire()
-	icon:SetSize(44, 44)
+	icon:SetSize(48, 48)
 	icon:ClearAllPoints()
-	icon:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 1, -(self.y + 3))
+	icon:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 0, -self.y)
 	icon:SetTexture(found and def.icon or QUESTION)
 	icon:SetDesaturated(not found)
 	icon:SetAlpha(found and 1 or 0.6)
 
 	local no = self.textPool:Acquire()
-	no:SetFontObject(UI.F.label)
-	no:SetTextColor(Col(col.muted))
+	no:SetFontObject(UI.F.tiny)
+	no:SetTextColor(Col(col.accent))
 	no:SetWidth(self.width - 60)
 	no:SetJustifyH("LEFT")
 	no:ClearAllPoints()
-	no:SetPoint("TOPLEFT", icon, "TOPRIGHT", 14, 3)
+	no:SetPoint("TOPLEFT", icon, "TOPRIGHT", 12, -1)
 	no:SetText(B:FormatNo(id) .. (found and def.en and def.en ~= def.name and ("   ·   " .. def.en) or ""))
 
 	local head = self.textPool:Acquire()
@@ -524,7 +523,7 @@ function D:DrawTribe(id)
 	head:SetWidth(self.width - 60)
 	head:SetJustifyH("LEFT")
 	head:ClearAllPoints()
-	head:SetPoint("TOPLEFT", no, "BOTTOMLEFT", 0, -4)
+	head:SetPoint("TOPLEFT", no, "BOTTOMLEFT", 0, -3)
 	head:SetText(found and def.name or "???")
 
 	local sub = self.textPool:Acquire()
@@ -552,8 +551,9 @@ function D:DrawTribe(id)
 	elseif not found or firstView then
 		self.stamp:Hide()
 	end
-	local headH = (no:GetStringHeight() or 12) + 4 + (head:GetStringHeight() or 24) + 4 + (sub:GetStringHeight() or 14)
-	self.y = self.y + math.max(50, headH) + 16
+	-- 명조 제목은 줄 높이가 커서, 실제 글자 높이로 다음 줄 위치를 잡는다
+	local headH = (no:GetStringHeight() or 12) + 3 + (head:GetStringHeight() or 30) + 4 + (sub:GetStringHeight() or 14)
+	self.y = self.y + math.max(56, headH) + 12
 
 	if not found then
 		local hint = self:Text("“" .. (def.hint or "...") .. "”", UI.F.body, col.sub, 0, 12)
@@ -564,9 +564,7 @@ function D:DrawTribe(id)
 	end
 
 	-- 연구도 막대
-	-- 막대 위 오른쪽에 설명 글씨가 놓이므로 그만큼 자리를 띄운다
 	local bar = self.detailBar
-	self.y = self.y + 16
 	bar:ClearAllPoints()
 	bar:SetPoint("TOPLEFT", self.scroll.child, "TOPLEFT", 0, -self.y)
 	bar:SetWidth(self.width)
@@ -581,8 +579,8 @@ function D:DrawTribe(id)
 		bar:SetValue(1)
 		bar.text:SetText("연구도 " .. ns.Comma(s.score) .. "   ·   최고 등급 달성!")
 	end
-	self.y = self.y + 12
-	self:Text("연구도 = 발견한 종 ×10 + 처치 + 희귀 개체 ×50 + 우두머리 ×20", UI.F.tiny, col.muted, 0, 14)
+	self.y = self.y + 18
+	self:Text("연구도 = 발견한 종 ×10 + 처치 + 희귀 개체 ×50 + 우두머리 ×20", UI.F.tiny, col.muted, 0, 10)
 
 	self:Text(string.format("발견 %d종   ·   처치 %s%s   ·   희귀 %d   ·   서식지 %d곳",
 		s.species, ns.Comma(s.kills), (def.unit and def.unit ~= "마리") and def.unit or "", s.rares, s.zoneCount), UI.F.body, col.text, 0, 4)
@@ -735,7 +733,7 @@ function D:RefreshCard()
 		self.modelHint:Show()
 		self.modelHint:SetText(found and "개체를 선택하면\n그 모습이 이곳에 나타납니다." or "")
 		self.cardName:SetText(found and def.name or (def and "???" or "도감"))
-		self.cardName:SetTextColor(Col(col.title))
+		UI.OnLeather(self.cardName, UI.LEATHER.title) -- 가죽 명판 위의 금박
 		local info = ""
 		if found then
 			local s = B:CollectAll()[def.id]
@@ -772,9 +770,9 @@ function D:RefreshCard()
 
 	self.cardName:SetText(name)
 	if B.IsRare(c.cls) then
-		self.cardName:SetTextColor(Col(col.rare))
+		UI.OnLeather(self.cardName, { 0.82, 0.66, 0.98 })
 	else
-		self.cardName:SetTextColor(Col(col.title))
+		UI.OnLeather(self.cardName, UI.LEATHER.title)
 	end
 
 	local lines = {}
@@ -813,30 +811,34 @@ function D:ShowReassign(name)
 		f:SetFrameStrata("DIALOG")
 		f:EnableMouse(true)
 		f:SetClampedToScreen(true)
-		f:SetSize(272, 452)
-		UI.Paper(f)
+		f:SetSize(280, 450)
+		UI.WindowFrame(f, { scale = 0.42 })
 		if UISpecialFrames then table.insert(UISpecialFrames, "BigChronicleReassign") end
-		local title = f:CreateFontString(nil, "OVERLAY", UI.F.header)
-		title:SetPoint("TOPLEFT", 22, -20)
-		title:SetPoint("RIGHT", -34, 0)
-		title:SetJustifyH("LEFT")
-		title:SetWordWrap(false)
+		local title = f:CreateFontString(nil, "OVERLAY", UI.F.heading)
+		title:SetPoint("TOP", 0, -24)
+		title:SetWidth(200)
+		title:SetJustifyH("CENTER")
+		UI.OnLeather(title, UI.LEATHER.title)
 		f.title = title
 		local close = UI.CloseButton(f, function() f:Hide() end, 24)
-		close:SetPoint("TOPRIGHT", -6, -6)
+		close:SetPoint("TOPRIGHT", -16, -16)
+		close:SetFrameLevel(f:GetFrameLevel() + 10)
 		local auto = UI.Button(f, "자동 분류로 되돌리기", 228, 26, function()
 			B:SetTribe(f.creature, nil)
 			f:Hide()
 			D:AfterReassign(f.creature)
 		end)
-		auto:SetPoint("TOPLEFT", 22, -52)
+		auto:SetPoint("TOP", 0, -50)
 		f.auto = auto
-		local scroll = UI.Scroll(f)
-		scroll:SetPoint("TOPLEFT", 10, -90)
-		scroll:SetPoint("BOTTOMRIGHT", -22, 18)
+		local sheet = UI.Section(f)
+		sheet:SetPoint("TOPLEFT", 22, -86)
+		sheet:SetPoint("BOTTOMRIGHT", -22, 24)
+		local scroll = UI.Scroll(sheet)
+		scroll:SetPoint("TOPLEFT", 8, -10)
+		scroll:SetPoint("BOTTOMRIGHT", -22, 10)
 		f.scroll = scroll
 		f.pool = UI.Pool(function()
-			local b = UI.NavRow(scroll.child, 24)
+			local b = UI.NavRow(scroll.child, 21, { flat = true })
 			b.icon = b:CreateTexture(nil, "ARTWORK")
 			b.icon:SetSize(16, 16)
 			b.icon:SetPoint("LEFT", 8, 0)
@@ -864,7 +866,7 @@ function D:ShowReassign(name)
 	end
 	f.pool:ReleaseAll()
 	local y = 0
-	local width = 240
+	local width = 204
 	f.scroll.child:SetWidth(width)
 	for _, t in ipairs(B:GetTribeList()) do
 		local b = f.pool:Acquire()
@@ -875,7 +877,7 @@ function D:ShowReassign(name)
 		b.icon:SetTexture(t.icon)
 		b.label:SetText(t.name)
 		b:SetSelected(c.tribe == t.id)
-		y = y + 25
+		y = y + 22
 	end
 	f.scroll:SetContentHeight(y)
 	f.scroll:ScrollToTop()

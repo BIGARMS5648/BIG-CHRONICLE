@@ -253,20 +253,25 @@ end
 ------------------------------------------------------------------------
 -- 도장 찍기: 커다랗게 떨어져 '쿵' 하고 자리 잡는다
 ------------------------------------------------------------------------
--- kind: "ach"(업적, 월계관 문양) / "dex"(도감, 발바닥 문양) / 그 밖(왕관 문양)
+-- kind: "ach"(업적, 리본 달린 나침반 별) / "dex"(도감, 사자 문장) / 그 밖(백합 문장)
+-- 인장 그림을 바꾼다 (그림마다 가로세로 비율이 달라 크기도 다시 잡는다)
+function E.SetSeal(f, kind)
+	local name = (kind == "ach" or kind == "업적") and "SealAch" or ((kind == "dex" or kind == "새 기록") and "SealDex" or "Seal")
+	local info = UI.ATLAS[name]
+	local size = f.size
+	f.tex:SetTexture(UI.Tex(name))
+	f.tex:ClearAllPoints()
+	f.tex:SetPoint("TOP", 0, 0)
+	f.tex:SetSize(size * info.w / 110, size * info.h / 110)
+	f.kind = kind
+end
+
 function E.MakeSeal(parent, size, kind)
 	local f = CreateFrame("Frame", nil, parent)
 	f:SetSize(size, size)
-	local tex = f:CreateTexture(nil, "OVERLAY")
-	tex:SetAllPoints()
-	if kind == "ach" or kind == "업적" then
-		tex:SetTexture(UI.TEX.sealAch)
-	elseif kind == "dex" or kind == "새 기록" then
-		tex:SetTexture(UI.TEX.sealDex)
-	else
-		tex:SetTexture(UI.TEX.seal)
-	end
-	f.tex = tex
+	f.size = size
+	f.tex = f:CreateTexture(nil, "OVERLAY")
+	E.SetSeal(f, kind)
 	f:Hide()
 	return f
 end
@@ -309,34 +314,34 @@ end
 function E.MakePageTurn(page)
 	local C = UI.COL
 	local sheet = CreateFrame("Frame", nil, page)
-	sheet:SetPoint("TOPLEFT", page, "TOPLEFT")
-	sheet:SetPoint("BOTTOMLEFT", page, "BOTTOMLEFT")
+	sheet:SetPoint("TOPLEFT", page, "TOPLEFT", -3, 3)
+	sheet:SetPoint("BOTTOMLEFT", page, "BOTTOMLEFT", -3, -3)
 	sheet:SetWidth(1)
 	sheet:SetFrameLevel(page:GetFrameLevel() + 35)
 	sheet:EnableMouse(false)
-	-- 종이 한 장: 폭이 줄면 통째로 눌려 원근처럼 보인다
+	-- 가장자리가 찢긴 양피지 한 장: 폭이 줄면 통째로 눌려 원근처럼 보인다
 	local paper = sheet:CreateTexture(nil, "BACKGROUND", nil, 0)
 	paper:SetAllPoints()
-	paper:SetTexture(UI.TEX.paper)
+	paper:SetTexture(UI.Tex("PageSheet"))
 	UI.Tint(paper, C.page)
 	-- 들릴수록 바깥쪽이 그늘진다
 	local shade = sheet:CreateTexture(nil, "ARTWORK")
-	shade:SetAllPoints()
-	UI.Gradient(shade, "HORIZONTAL", { 0, 0, 0, 0 }, { 0, 0, 0, 0.45 })
+	shade:SetPoint("TOPLEFT", 6, -6)
+	shade:SetPoint("BOTTOMRIGHT", -6, 6)
+	UI.Gradient(shade, "HORIZONTAL", { 0, 0, 0, 0 }, { 0, 0, 0, 0.5 })
 	-- 말려 올라가는 끝자락이 빛을 받는다
 	local curl = sheet:CreateTexture(nil, "ARTWORK", nil, 2)
-	curl:SetPoint("TOPRIGHT", -2, 0); curl:SetPoint("BOTTOMRIGHT", -2, 0); curl:SetWidth(40)
-	UI.Gradient(curl, "HORIZONTAL", { 1, 1, 1, 0 }, { 1, 1, 1, 0.22 })
-	-- 책장 끝의 모서리 선
+	curl:SetPoint("TOPRIGHT", -6, -6); curl:SetPoint("BOTTOMRIGHT", -6, 6); curl:SetWidth(40)
+	UI.Gradient(curl, "HORIZONTAL", { 1, 0.97, 0.9, 0 }, { 1, 0.97, 0.9, 0.28 })
 	local rim = sheet:CreateTexture(nil, "OVERLAY")
-	rim:SetPoint("TOPRIGHT"); rim:SetPoint("BOTTOMRIGHT"); rim:SetWidth(1)
-	rim:SetColorTexture(0, 0, 0, 0.35)
+	rim:SetPoint("TOPRIGHT", -5, -6); rim:SetPoint("BOTTOMRIGHT", -5, 6); rim:SetWidth(1)
+	rim:SetColorTexture(1, 0.95, 0.85, 0.3)
 	-- 아래 쪽에 드리우는 그림자
 	local cast = sheet:CreateTexture(nil, "BACKGROUND", nil, -2)
-	cast:SetPoint("TOPLEFT", sheet, "TOPRIGHT", 0, 0)
-	cast:SetPoint("BOTTOMLEFT", sheet, "BOTTOMRIGHT", 0, 0)
+	cast:SetPoint("TOPLEFT", sheet, "TOPRIGHT", -5, -8)
+	cast:SetPoint("BOTTOMLEFT", sheet, "BOTTOMRIGHT", -5, 8)
 	cast:SetWidth(1)
-	UI.Gradient(cast, "HORIZONTAL", { 0, 0, 0, 0.35 }, { 0, 0, 0, 0 })
+	UI.Gradient(cast, "HORIZONTAL", { 0, 0, 0, 0.45 }, { 0, 0, 0, 0 })
 	sheet.paper, sheet.shade, sheet.rim, sheet.cast, sheet.page, sheet.curl = paper, shade, rim, cast, page, curl
 	sheet:Hide()
 	return sheet
@@ -377,7 +382,7 @@ function E.TurnPage(sheet, dir, apply)
 		return
 	end
 	local page = sheet.page
-	local W = page:GetWidth() or 640
+	local W = (page:GetWidth() or 640) + 6
 	sheet:SetAlpha(1)
 	sheet:Show()
 	sheet.busy = true
@@ -412,85 +417,69 @@ function E.TurnPage(sheet, dir, apply)
 end
 
 ------------------------------------------------------------------------
--- 장 제목 카드: 화면 가운데에 검은 띠가 펼쳐지고 금박 제목이 떠오른다
+-- 장 제목 카드: 화면 가운데에 양피지 두루마리가 펼쳐지고 장 제목이 떠오른다
 ------------------------------------------------------------------------
 local card
-local CARD_W, CARD_H = 820, 170
-local function MakeFont(name, base, size, path, color)
+local CARD_W, SCROLL_H = 620, 124
+local function MakeFont(name, base, size, color, shadow)
 	local font = _G[name] or (CreateFont and CreateFont(name))
 	if not font then return end
-	local b = _G[base] or _G.GameFontNormalHuge
+	local b = _G[base] or _G.GameFontNormalLarge or _G.GameFontNormal
 	if b and font.CopyFontObject then pcall(font.CopyFontObject, font, b) end
-	local applied = false
-	if path and font.SetFont then
-		local ok, res = pcall(font.SetFont, font, path, size, "")
-		applied = ok and res ~= false
-	end
-	if not applied and b and b.GetFont and font.SetFont then
+	if b and b.GetFont and font.SetFont then
 		local ok, p, _, flags = pcall(b.GetFont, b)
 		if ok and p then pcall(font.SetFont, font, p, size, flags or "") end
 	end
 	if font.SetShadowOffset then
-		font:SetShadowOffset(1, -1)
-		font:SetShadowColor(0, 0, 0, 0.9)
+		if shadow then
+			font:SetShadowOffset(1, -1)
+			font:SetShadowColor(0, 0, 0, 0.9)
+		else
+			font:SetShadowOffset(0, 0)
+			font:SetShadowColor(0, 0, 0, 0)
+		end
 	end
 	if color and font.SetTextColor then font:SetTextColor(color[1], color[2], color[3]) end
 end
 
 local function BuildCard()
 	if card then return card end
-	MakeFont("BigChronicleFontCinematic", "QuestTitleFont", 38, nil, { 0.96, 0.88, 0.70 })
-	MakeFont("BigChronicleFontCinematicLabel", "GameFontNormal", 14, nil, { 0.86, 0.70, 0.40 })
-	MakeFont("BigChronicleFontCinematicSmall", "GameFontNormal", 13, nil, { 0.78, 0.72, 0.62 })
+	-- 두루마리 위의 글씨는 테마와 상관없이 잉크 색
+	MakeFont("BigChronicleFontCinematic", "GameFontNormalLarge", 30, { 0.22, 0.10, 0.05 }, false)
+	MakeFont("BigChronicleFontCinematicLabel", "GameFontNormal", 13, { 0.55, 0.12, 0.07 }, false)
+	MakeFont("BigChronicleFontCinematicSmall", "GameFontNormal", 13, { 0.95, 0.88, 0.74 }, true)
 	local f = CreateFrame("Frame", "BigChronicleChapterCard", UIParent)
-	f:SetSize(CARD_W, CARD_H)
+	f:SetSize(CARD_W, SCROLL_H + 34)
 	f:SetPoint("CENTER", UIParent, "CENTER", 0, 170)
 	f:SetFrameStrata("FULLSCREEN_DIALOG")
 	f:EnableMouse(false)
 	f:Hide()
 
-	-- 가운데가 짙고 양옆으로 사라지는 검은 띠
+	-- 양 끝이 말린 양피지 두루마리 (가운데만 늘어난다)
 	local band = CreateFrame("Frame", nil, f)
-	band:SetPoint("CENTER")
-	band:SetSize(CARD_W, CARD_H - 30)
-	local half = CARD_W / 2
-	local l = band:CreateTexture(nil, "BACKGROUND")
-	l:SetPoint("TOPLEFT"); l:SetPoint("BOTTOMLEFT"); l:SetWidth(half)
-	UI.Gradient(l, "HORIZONTAL", { 0.03, 0.02, 0.015, 0 }, { 0.03, 0.02, 0.015, 0.82 })
-	local r = band:CreateTexture(nil, "BACKGROUND")
-	r:SetPoint("TOPRIGHT"); r:SetPoint("BOTTOMRIGHT"); r:SetWidth(half)
-	UI.Gradient(r, "HORIZONTAL", { 0.03, 0.02, 0.015, 0.82 }, { 0.03, 0.02, 0.015, 0 })
-	-- 위아래 금박 실선
-	local gold = { 0.86, 0.70, 0.40 }
-	for _, side in ipairs({ "TOP", "BOTTOM" }) do
-		for _, pair in ipairs({ { "LEFT", half, { gold[1], gold[2], gold[3], 0 }, { gold[1], gold[2], gold[3], 0.8 } },
-			{ "RIGHT", half, { gold[1], gold[2], gold[3], 0.8 }, { gold[1], gold[2], gold[3], 0 } } }) do
-			local t = band:CreateTexture(nil, "BORDER")
-			t:SetHeight(1)
-			t:SetWidth(pair[2])
-			t:SetPoint(side .. pair[1], band, side .. pair[1], 0, side == "TOP" and -6 or 6)
-			UI.Gradient(t, "HORIZONTAL", pair[3], pair[4])
-		end
-	end
+	band:SetPoint("TOP", 0, 0)
+	band:SetSize(CARD_W, SCROLL_H)
+	UI.Slice(band, "Scroll", { layer = "BACKGROUND" })
 	f.band = band
 
-	local label = f:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicLabel")
-	label:SetPoint("TOP", band, "TOP", 0, -22)
+	-- 글씨는 두루마리(자식 프레임)보다 위 프레임 레벨에 둔다
+	local ink = CreateFrame("Frame", nil, f)
+	ink:SetAllPoints(f)
+	if ink.SetFrameLevel and f.GetFrameLevel then ink:SetFrameLevel((f:GetFrameLevel() or 0) + 5) end
+
+	local label = ink:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicLabel")
+	label:SetPoint("TOP", band, "TOP", 10, -30)
 	f.label = label
 
-	local titleHolder = CreateFrame("Frame", nil, f)
-	titleHolder:SetSize(CARD_W - 80, 50)
-	titleHolder:SetPoint("TOP", label, "BOTTOM", 0, -4)
+	local titleHolder = CreateFrame("Frame", nil, ink)
+	titleHolder:SetSize(CARD_W - 220, 40)
+	titleHolder:SetPoint("TOP", label, "BOTTOM", 0, -2)
 	local title = titleHolder:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematic")
 	title:SetPoint("CENTER")
 	f.title, f.titleHolder = title, titleHolder
 
-	local rule = UI.Divider(f, 300, gold)
-	rule:SetPoint("TOP", titleHolder, "BOTTOM", 0, -2)
-	f.rule = rule
-
-	local sub = f:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicSmall")
-	sub:SetPoint("TOP", rule, "BOTTOM", 0, -6)
+	local sub = ink:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicSmall")
+	sub:SetPoint("TOP", band, "BOTTOM", 0, -8)
 	f.sub = sub
 	card = f
 	return f
@@ -500,37 +489,31 @@ end
 function E.ShowCard(label, title, sub)
 	if not Enabled() then return end
 	local f = BuildCard()
-	f.label:SetText(UI.Spaced(label or "", 1))
+	f.label:SetText(label or "")
 	f.title:SetText(title or "")
 	f.sub:SetText(sub or "")
 	f:SetAlpha(1)
 	f:Show()
-	f.band:SetWidth(1)
-	f.label:SetAlpha(0); f.titleHolder:SetAlpha(0); f.rule:SetAlpha(0); f.sub:SetAlpha(0)
-	f.rule:SetWidth(1)
+	local minW = 230
+	f.band:SetWidth(minW)
+	f.label:SetAlpha(0); f.titleHolder:SetAlpha(0); f.sub:SetAlpha(0)
 	E.Sound("chapter")
-	-- 1) 검은 띠가 가운데에서 좌우로 펼쳐진다
-	E.Tween("card-band", 0.6, function(p)
-		f.band:SetWidth(math.max(1, CARD_W * E.Ease.outCubic(p)))
+	-- 1) 말려 있던 두루마리가 좌우로 펼쳐진다
+	E.Tween("card-band", 0.65, function(p)
+		f.band:SetWidth(minW + (CARD_W - minW) * E.Ease.outCubic(p))
+		f:SetAlpha(math.min(1, p * 3))
 	end)
-	-- 2) 머리글과 제목이 천천히 떠오른다
-	E.Tween("card-text", 0.9, function(p)
+	-- 2) 머리글과 제목이 잉크가 번지듯 떠오른다
+	E.Tween("card-text", 0.8, function(p)
 		local k = E.Ease.outCubic(p)
 		f.label:SetAlpha(k)
 		f.titleHolder:SetAlpha(k)
-		f.titleHolder:SetScale(1.04 - 0.04 * k)
+		f.sub:SetAlpha(k)
 	end, function()
 		-- 제목이 자리 잡으면 금가루가 흩날린다
-		E.BurstAt(f.titleHolder, { count = 26, speed = 40, life = 2.2, spreadW = 220, lift = 18 })
-	end, 0.35)
-	-- 3) 장식선이 그어지고 아랫줄이 나타난다
-	E.Tween("card-rule", 0.7, function(p)
-		local k = E.Ease.outCubic(p)
-		f.rule:SetAlpha(1)
-		f.rule:SetWidth(1 + 300 * k)
-		f.sub:SetAlpha(k)
-	end, nil, 0.9)
-	-- 4) 잠시 머문 뒤 조용히 사라진다
+		E.BurstAt(f.titleHolder, { count = 22, speed = 40, life = 2.2, spreadW = 200, lift = 18 })
+	end, 0.45)
+	-- 3) 잠시 머문 뒤 조용히 사라진다
 	E.Tween("card-out", 1.0, function(p)
 		f:SetAlpha(1 - p)
 	end, function() f:Hide() end, 4.6)
@@ -543,7 +526,7 @@ function E.ChapterCard(chIdx, isStart)
 	local num, name = ch.title:match("^(.-)%s*·%s*(.+)$")
 	num = num or ch.title
 	if isStart then
-		E.ShowCard("BIG CHRONICLE", ns.PlayerName() .. "의 모험 수첩, 첫 장", ch.title .. "  —  " .. ch.desc)
+		E.ShowCard("BIG CHRONICLE", ns.PlayerName() .. "의 도감 수첩, 첫 장", ch.title .. "  —  " .. ch.desc)
 	else
 		E.ShowCard((num:gsub("%s+", "")), name or ch.title, ch.desc)
 	end

@@ -87,26 +87,25 @@ Every achievement arrives as a parchment dispatch sealed with red wax and adds a
 
 - The **leather front cover** really swings open on its spine every time you open the book
 - Changing chapters or turning journal pages **flips an actual parchment sheet** — forward for later chapters, backward for earlier ones
-- Reaching a new chapter unfurls a **dark cinematic band with a gilded chapter title between laurel branches**, with drifting gold dust
-- Every notification is **stamped with a red wax seal** — a laurel seal for achievements, a dragon seal for bestiary discoveries (new tribes, new creatures, rares and research ranks)
-- The first time you open a newly found tribe, a **dragon wax seal** is pressed onto the page
+- Reaching a new chapter **unrolls a parchment scroll** across the screen with the chapter title, with drifting gold dust
+- Every notification is **stamped with a red wax seal** — a ribboned compass-star seal for achievements, a lion seal for bestiary discoveries (new tribes, new creatures, rares and research ranks)
+- The first time you open a newly found tribe, a **wax seal** is pressed onto the page
 - Newly earned achievements glow gold for three seconds when you first see them, then keep a quiet NEW tag until you leave the tab
 - The **minimap button glows** when something new happened while the window was closed
 - Every effect can be turned off in the settings
 
 ---
 
-## 🎨 Layout
+## 🎨 Look
 
-A flat, roomy layout in the style of modern game journals and codexes.
+An **ornate leather bestiary notebook**. Every frame, plaque, tab, button, parchment panel, scroll, wax seal and icon is cut from hand-made asset sheets prepared by the author.
 
-- **Left navigation rail** on leather: character name and level, five tabs, and a summary of records, bestiary and achievements
-- **One wide page**: sections are separated by whitespace and hairlines instead of boxes
-- The **journal** is a day-by-day **timeline** (time · icon · text) with chapters and filters on the left
-- The **bestiary** is list · details · portrait; **achievements** use large rows with thin progress bars; **stats** are shown as cards
-- A single copper accent color, flat buttons and a slim scrollbar
-- Real leather and paper photo textures (CC0) and the **game's own fonts**
-- **Light and dark page** themes
+- A **gold-trimmed leather window** with a **BIG CHRONICLE plaque**, a trophy banner and buckled straps on the spine
+- Trapezoid **leather tabs** (gold when selected) with medallion icons
+- The **journal**: chapters with count badges and category check boxes on leather, and a day-by-day **timeline** on parchment
+- The **bestiary** in three columns (list, details, portrait in a gold frame); **achievements** with medallions and progress bars; **stats** on a single parchment page
+- The **game's own fonts**, light parchment text on leather and dark ink on parchment
+- **Parchment and scorched parchment** themes
 - Lore is revealed with a **typewriter effect** (click or press Space to show it all at once)
 - New journal entries gently fade in
 - Discovering a new tribe or rare creature brings a **wax-sealed parchment dispatch** to the top of the screen — click it to jump straight to that creature's bestiary page
@@ -164,9 +163,7 @@ Please leave bug reports and ideas in the comments. Typing `/bc debug` shows int
 
 ---
 
-## Credits for free assets
+## Credits
 
-- Leather cover: [Poly Haven "Brown Leather"](https://polyhaven.com/a/brown_leather) — CC0
-- Paper pages: [ambientCG "Paper 001"](https://ambientcg.com/view?id=Paper001) — CC0
+- Interface art (frame, tabs, buttons, parchment, seals, icons): hand-made asset sheets by the author
 - Effect particles and sounds: [Kenney](https://kenney.nl) Particle Pack and RPG Audio — CC0
-- Tab icons and wax seal design: [game-icons.net](https://game-icons.net) (Lorc, Delapouite and contributors) — CC BY 3.0

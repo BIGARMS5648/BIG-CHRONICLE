@@ -492,7 +492,14 @@ if pdir then
 	ns.Toast:Show("새로운 종족 발견!", "No.008  켄타우로스  —  켈키스 궁수", "Interface\\Icons\\Ability_Mount_WhiteDireWolf", "tribe", { creature = "켈키스 궁수" })
 	step(14); M.Dump(pdir .. "/toastdex.json"); settle()
 	ns.Toast.queue = {}; ns.Toast.frame:Hide()
-	ns:Fire("CHAPTER_STARTED", 4); step(24); M.Dump(pdir .. "/chapter.json"); settle()
+	ns:Fire("CHAPTER_STARTED", 4); step(40); M.Dump(pdir .. "/chapter.json"); settle()
+	-- 작은 창들: 내보내기, 종족 다시 분류
+	clean()
+	ns.UI:ShowExport(); settle(); M.Dump(pdir .. "/export.json"); ns.UI.exportFrame:Hide()
+	for name, c in pairs(ns.Bestiary.dex.creatures) do
+		if c.tribe == "centaur" then ns.BestiaryTab:ShowReassign(name); break end
+	end
+	settle(); M.Dump(pdir .. "/reassign.json")
 	print("== 미리보기 장면 저장: " .. pdir)
 end
 

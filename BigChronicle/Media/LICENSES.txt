@@ -1,33 +1,23 @@
-BIG CHRONICLE - third-party assets
-==================================
+BIG CHRONICLE - assets
+======================
 
-1) Leather cover: "Brown Leather" from Poly Haven
-   File    : Leather.tga (photo texture, resized to 512x512)
-   Source  : https://polyhaven.com/a/brown_leather
-   License : CC0 1.0 (public domain)
+1) Interface art (UI\*.tga)
+   Window frame, plaque, tabs, buttons, parchment panels, scroll, wax
+   seals, medallion icons, scrollbar, check boxes, bars and buckles.
+   Source  : asset sheets provided by the addon author (art\ in the
+             source repository), cut into pieces by tools/slice_assets.py
+   License : part of BIG CHRONICLE; not for reuse outside this addon
+             without the author's permission.
 
-2) Paper pages: "Paper 001" from ambientCG
-   File    : Paper.tga (photo texture, resized to 512x512)
-   Source  : https://ambientcg.com/view?id=Paper001
-   License : CC0 1.0 (public domain)
-
-3) Tab icons and wax seal design: game-icons.net
-   Icons   : quill-ink, dragon-head, laurel-crown, hourglass, cog, wax-seal
-   Files   : Icons\*.tga, Seal.tga, SealDex.tga, SealAch.tga
-   Source  : https://game-icons.net (via @iconify-json/game-icons)
-   License : CC BY 3.0 - https://creativecommons.org/licenses/by/3.0/
-   Credit  : Icons by Lorc, Delapouite and the game-icons.net contributors
-   Changes : rasterized; the seals were shaded and colored as red wax.
-
-Fonts: none bundled. The addon uses the game's own fonts.
-
-4) Effect particles: Kenney "Particle Pack"
+2) Effect particles: Kenney "Particle Pack"
    Files   : FX\Star.tga, FX\Glow.tga, FX\Crumb.tga, FX\Magic.tga
              (star_06, light_01, dirt_02, magic_05; resized to 64x64)
    Source  : https://kenney.nl/assets/particle-pack
    License : CC0 1.0 (public domain)
 
-5) Sound effects: Kenney "RPG Audio"
+3) Sound effects: Kenney "RPG Audio"
    Files   : Sounds\bookOpen.ogg, bookClose.ogg, bookFlip1-3.ogg, bookPlace1.ogg
    Source  : https://kenney.nl/assets/rpg-audio
    License : CC0 1.0 (public domain)
+
+Fonts: none bundled. The addon uses the game's own fonts.

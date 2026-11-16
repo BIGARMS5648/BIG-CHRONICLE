@@ -5,8 +5,8 @@ local UI = ns.UI
 local T = {}
 ns.AchievementsTab = T
 
-local NAV_W = 196
-local ROW_H = 58
+local NAV_W = 222
+local ROW_H = 52
 
 T.cat = nil         -- nil = 전체
 T.sessionNew = {}   -- 이번에 처음 본 새 업적 (탭을 떠날 때까지 NEW 표시)
@@ -32,33 +32,38 @@ function T:Create(parent)
 		if self.pool then for _, r in ipairs(self.pool.items) do ns.Effects.Pulse(r.glow, false) end end
 	end)
 
-	-- 왼쪽: 점수 요약 + 분류 + 보기 방식
-	local nav = CreateFrame("Frame", nil, p)
+	-- 왼쪽: 가죽 칸에 점수와 분류
+	local L = UI.LEATHER
+	local nav = UI.Section(p, { leather = true })
 	nav:SetPoint("TOPLEFT", 0, 0)
 	nav:SetPoint("BOTTOMLEFT", 0, 0)
 	nav:SetWidth(NAV_W)
 
-	local label = UI.Label(nav, "업적 점수")
-	label:SetPoint("TOPLEFT", 0, -6)
-	local points = nav:CreateFontString(nil, "OVERLAY", UI.F.big)
-	points:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -6)
+	local label = UI.Text(nav, UI.F.tiny)
+	label:SetPoint("TOP", 0, -12)
+	label:SetJustifyH("CENTER")
+	label:SetText("업적 점수")
+	UI.OnLeather(label, L.sub)
+	local points = nav:CreateFontString(nil, "OVERLAY", UI.F.title)
+	points:SetPoint("TOP", label, "BOTTOM", 0, -3)
+	UI.OnLeather(points, L.title)
 	self.points = points
-	local bar = UI.Bar(nav, NAV_W - 26, 4)
-	bar:SetPoint("TOPLEFT", points, "BOTTOMLEFT", 0, -12)
+	local bar = UI.Bar(nav, NAV_W - 28, 11)
+	bar:SetPoint("TOP", points, "BOTTOM", 0, -7)
 	self.bar = bar
 	local summary = UI.Text(nav, UI.F.small)
-	summary:SetPoint("TOPLEFT", bar, "BOTTOMLEFT", 0, -8)
+	summary:SetPoint("TOP", bar, "BOTTOM", 0, -7)
+	summary:SetJustifyH("CENTER")
+	UI.OnLeather(summary, L.sub)
 	self.summary = summary
 
-	local h2 = UI.Label(nav, "분류")
-	h2:SetPoint("TOPLEFT", 0, -132)
 	self.catRows = {}
 	local cats = { { id = nil, name = "전체" } }
 	for _, c in ipairs(ns.ACH_CATS) do cats[#cats + 1] = c end
 	for i, c in ipairs(cats) do
-		local r = UI.NavRow(nav, 26)
-		r:SetPoint("TOPLEFT", nav, "TOPLEFT", -12, -154 - (i - 1) * 27)
-		r:SetPoint("RIGHT", nav, "RIGHT", -14, 0)
+		local r = UI.NavRow(nav, 25, { badge = true })
+		r:SetPoint("TOPLEFT", nav, "TOPLEFT", 8, -100 - (i - 1) * 27)
+		r:SetPoint("RIGHT", nav, "RIGHT", -8, 0)
 		r.label:SetText(c.name)
 		r.cat = c.id
 		r.onClick = function()
@@ -68,40 +73,38 @@ function T:Create(parent)
 		self.catRows[i] = r
 	end
 
-	-- 보기 방식 (전체 / 달성 / 미달성)
 	local filters = { { "all", "전체" }, { "done", "달성" }, { "todo", "미달성" } }
 	self.filterButtons = {}
-	local bw = math.floor((NAV_W - 26 - 4) / 3)
+	local bw = math.floor((NAV_W - 20 - 8) / 3)
 	for i, f in ipairs(filters) do
 		local b = UI.Button(nav, f[2], bw, 26, function()
 			T.filter = f[1]
 			T:Refresh(true)
 		end)
-		b:SetPoint("BOTTOMLEFT", (i - 1) * (bw + 2), 0)
+		b:SetPoint("BOTTOMLEFT", 10 + (i - 1) * (bw + 4), 9)
 		self.filterButtons[f[1]] = b
 	end
 
-	local sep = UI.VRule(p)
-	sep:SetPoint("TOPLEFT", nav, "TOPRIGHT", 0, 0)
-	sep:SetPoint("BOTTOMLEFT", nav, "BOTTOMRIGHT", 0, 0)
-
-	-- 오른쪽: 업적 목록
-	local main = CreateFrame("Frame", nil, p)
-	main:SetPoint("TOPLEFT", nav, "TOPRIGHT", 26, 0)
-	main:SetPoint("BOTTOMRIGHT", 0, 0)
-	local title = main:CreateFontString(nil, "OVERLAY", UI.F.title)
-	title:SetPoint("TOPLEFT", 0, -2)
+	-- 오른쪽: 양피지 위의 업적 목록
+	local sheet = UI.Section(p)
+	sheet:SetPoint("TOPLEFT", nav, "TOPRIGHT", 12, 0)
+	sheet:SetPoint("BOTTOMRIGHT", 0, 0)
+	local main = CreateFrame("Frame", nil, sheet)
+	main:SetPoint("TOPLEFT", 20, -14)
+	main:SetPoint("BOTTOMRIGHT", -18, 14)
+	local title = main:CreateFontString(nil, "OVERLAY", UI.F.header)
+	title:SetPoint("TOPLEFT", 4, -4)
 	self.title = title
 	local desc = UI.Text(main, UI.F.small)
-	desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -7)
+	desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -5)
 	self.desc = desc
-	local rule = UI.Rule(main)
-	rule:SetPoint("TOPLEFT", 0, -60)
-	rule:SetPoint("TOPRIGHT", 0, -60)
+	local rule = UI.Rule(main, 0.4)
+	rule:SetPoint("TOPLEFT", 0, -58)
+	rule:SetPoint("TOPRIGHT", 0, -58)
 
 	local scroll = UI.Scroll(main)
-	scroll:SetPoint("TOPLEFT", 0, -64)
-	scroll:SetPoint("BOTTOMRIGHT", -12, 0)
+	scroll:SetPoint("TOPLEFT", 0, -66)
+	scroll:SetPoint("BOTTOMRIGHT", -18, 2)
 	self.scroll = scroll
 	self.pool = UI.Pool(function() return T:CreateRow(scroll.child) end)
 
@@ -115,7 +118,7 @@ end
 function T:CreateRow(parent)
 	local col = UI.COL
 	local r = CreateFrame("Frame", nil, parent)
-	r:SetHeight(ROW_H)
+	r:SetHeight(ROW_H - 4)
 	r:EnableMouse(true)
 	local bg = r:CreateTexture(nil, "BACKGROUND")
 	bg:SetAllPoints()
@@ -123,56 +126,55 @@ function T:CreateRow(parent)
 	local glow = r:CreateTexture(nil, "BORDER")
 	glow:SetAllPoints()
 	glow:SetTexture(UI.WHITE)
-	glow:SetVertexColor(col.accent[1], col.accent[2], col.accent[3], 0.35)
+	glow:SetVertexColor(1, 0.80, 0.35, 0.45)
 	glow:Hide()
 	r.glow = glow
 	local hl = r:CreateTexture(nil, "HIGHLIGHT")
 	hl:SetAllPoints()
 	UI.Color(hl, col.hover)
-	local rule = r:CreateTexture(nil, "BORDER", nil, 1)
-	rule:SetPoint("BOTTOMLEFT", 0, 0)
-	rule:SetPoint("BOTTOMRIGHT", 0, 0)
-	rule:SetHeight(1)
-	UI.Color(rule, col.line)
 	local icon = r:CreateTexture(nil, "ARTWORK")
 	icon:SetSize(36, 36)
-	icon:SetPoint("LEFT", 10, 0)
+	icon:SetPoint("LEFT", 8, 0)
 	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 	r.icon = icon
-	UI.FrameIcon(icon)
-	-- 달성 표시: 아이콘 모서리의 작은 강조색 네모
+	UI.FrameIcon(icon, 4)
+	local rule = r:CreateTexture(nil, "BORDER", nil, 1)
+	rule:SetPoint("BOTTOMLEFT", 4, -2)
+	rule:SetPoint("BOTTOMRIGHT", -4, -2)
+	rule:SetHeight(1)
+	rule:SetColorTexture(col.line[1], col.line[2], col.line[3], 0.35)
 	local check = r:CreateTexture(nil, "OVERLAY", nil, 3)
-	check:SetSize(9, 9)
-	check:SetPoint("CENTER", icon, "BOTTOMRIGHT", -1, 1)
-	UI.Color(check, col.accent)
+	check:SetSize(20, 20)
+	check:SetPoint("CENTER", icon, "BOTTOMRIGHT", 1, 2)
+	check:SetTexture(UI.Tex("CheckBoxOn"))
+	UI.Tint(check, col.accent)
 	r.check = check
-	local name = r:CreateFontString(nil, "OVERLAY", UI.F.body)
-	name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 14, 1)
+	local name = r:CreateFontString(nil, "OVERLAY", UI.F.heading)
+	name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 16, -1)
 	name:SetJustifyH("LEFT")
-	name:SetWordWrap(false)
 	r.name = name
 	local desc = UI.Text(r, UI.F.small)
-	desc:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -5)
+	desc:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -4)
 	desc:SetWordWrap(false)
 	r.desc = desc
-	local pts = r:CreateFontString(nil, "OVERLAY", UI.F.body)
-	pts:SetPoint("TOPRIGHT", -12, -11)
-	pts:SetJustifyH("RIGHT")
-	r.pts = pts
 	local newTag = r:CreateFontString(nil, "OVERLAY", UI.F.key)
 	newTag:SetText("NEW")
-	newTag:SetTextColor(col.accent[1], col.accent[2], col.accent[3])
-	newTag:SetPoint("RIGHT", pts, "LEFT", -10, 0)
+	newTag:SetTextColor(0.25, 0.65, 0.25)
 	r.newTag = newTag
+	local pts = r:CreateFontString(nil, "OVERLAY", UI.F.heading)
+	pts:SetPoint("TOPRIGHT", -10, -6)
+	newTag:SetPoint("RIGHT", pts, "LEFT", -8, 0)
+	pts:SetJustifyH("RIGHT")
+	r.pts = pts
 	local when = UI.Text(r, UI.F.tiny)
-	when:SetPoint("BOTTOMRIGHT", -12, 12)
+	when:SetPoint("BOTTOMRIGHT", -10, 7)
 	when:SetJustifyH("RIGHT")
 	r.when = when
-	local bar = UI.Bar(r, 150, 4)
-	bar:SetPoint("BOTTOMRIGHT", -12, 12)
+	local bar = UI.Bar(r, 140, 9)
+	bar:SetPoint("BOTTOMRIGHT", -10, 8)
 	r.bar = bar
-	name:SetPoint("RIGHT", pts, "LEFT", -48, 0)
-	desc:SetPoint("RIGHT", bar, "LEFT", -16, 0)
+	name:SetPoint("RIGHT", pts, "LEFT", -10, 0)
+	desc:SetPoint("RIGHT", bar, "LEFT", -10, 0)
 	r:SetScript("OnEnter", function(self)
 		if not GameTooltip or not self.def then return end
 		local def = self.def
@@ -207,11 +209,11 @@ function T:Refresh(resetScroll)
 
 	-- 왼쪽
 	local done, total, pts, maxPts = A:Summary()
-	self.points:SetText(ns.Comma(pts))
+	self.points:SetText(ns.Comma(pts) .. "점")
 	self.bar:SetMinMaxValues(0, total)
 	self.bar:SetValue(done)
 	self.bar.text:SetText(math.floor(done / math.max(1, total) * 100 + 0.5) .. "%")
-	self.summary:SetText(string.format("%d / %d 달성\n최대 %s점", done, total, ns.Comma(maxPts)))
+	self.summary:SetText(string.format("달성 %d / %d   ·   최대 %s점", done, total, ns.Comma(maxPts)))
 	for _, r in ipairs(self.catRows) do
 		local d, t = A:Summary(r.cat)
 		r.right:SetText(d .. "/" .. t)
@@ -265,21 +267,20 @@ function T:Refresh(resetScroll)
 			r.icon:SetTexture(def.icon)
 			r.icon:SetDesaturated(not isDone)
 			r.check:SetShown(isDone)
-			r.icon:SetAlpha(isDone and 1 or 0.45)
+			r.icon:SetAlpha(isDone and 1 or 0.55)
 			r.name:SetText(def.name)
 			r.desc:SetText(def.desc)
 			r.pts:SetText(def.points .. "점")
-			r.desc:SetTextColor(Col(isDone and col.sub or col.muted))
 			if isDone then
-				r.bg:SetColorTexture(0, 0, 0, 0)
+				UI.Color(r.bg, col.sel, (col.sel[4] or 0.2) * 0.6)
 				r.name:SetTextColor(Col(col.title))
 				r.pts:SetTextColor(Col(col.accent))
 				r.bar:Hide()
 				r.when:Show()
 				r.when:SetText(ach.retro[def.id] and "기록 이전에 달성" or ns.FormatShortDate(ach.done[def.id]))
 			else
-				r.bg:SetColorTexture(0, 0, 0, 0)
-				r.name:SetTextColor(Col(col.muted))
+				UI.Color(r.bg, col.shade)
+				r.name:SetTextColor(Col(col.sub))
 				r.pts:SetTextColor(Col(col.muted))
 				r.when:Hide()
 				local cur = A:Progress(def, A.ctx)

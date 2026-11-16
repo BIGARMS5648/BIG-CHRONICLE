@@ -1,3 +1,12 @@
+## 1.9.0
+
+- **New look from hand-made art**: the whole window is rebuilt from the author's own asset sheets: a gold-trimmed leather frame, the BIG CHRONICLE plaque, trapezoid leather tabs with medallion icons, leather and gold buttons, parchment panels, count badges, check boxes, a gold scrollbar, progress bars, a trophy banner and buckled straps
+- The journal, bestiary, achievements, stats and settings sit on parchment inside the leather frame, like a bestiary notebook
+- New wax seals: a lion seal for bestiary discoveries and a ribboned compass-star seal for achievements
+- Chapter titles now appear on an **unrolling parchment scroll**
+- The leather cover, page turns, sounds and particles stay, redrawn with the new art
+- Removed the old photo textures and icon files; the download now only contains the new art, the Kenney effects and the minimap icon
+
 ## 1.8.0
 
 - **New layout**: a left navigation rail (character, tabs, summary) and one wide page. Boxes and outlines are gone; sections are separated by whitespace and hairlines

@@ -6,8 +6,8 @@ local J = {}
 ns.JournalTab = J
 
 local PAGE_SIZE = 80
-local NAV_W = 196
--- 타임라인의 세로 위치: 시각 | 아이콘(세로선 위) | 글
+local NAV_W = 238
+-- 타임라인의 가로 위치: 시각 | 아이콘(세로선 위) | 글
 local X_ICON, X_TEXT = 52, 80
 
 J.chapter = 0       -- 0 = 전체
@@ -17,7 +17,6 @@ J.filters = {}
 function J:Create(parent)
 	local C = ns.Chronicle
 	local col = UI.COL
-	local pad = UI.PAGE_PAD
 	local p = CreateFrame("Frame", nil, parent)
 	p:SetAllPoints()
 	self.panel = p
@@ -25,20 +24,25 @@ function J:Create(parent)
 		if self.filters[g.id] == nil then self.filters[g.id] = true end
 	end
 
-	-- 왼쪽: 장 목록 + 분류
-	local nav = CreateFrame("Frame", nil, p)
+	-- 왼쪽: 가죽 칸에 장 목록 + 분류 필터
+	local L = UI.LEATHER
+	local nav = UI.Section(p, { leather = true })
 	nav:SetPoint("TOPLEFT", 0, 0)
 	nav:SetPoint("BOTTOMLEFT", 0, 0)
 	nav:SetWidth(NAV_W)
-	local h1 = UI.Label(nav, "전기의 장")
-	h1:SetPoint("TOPLEFT", 0, -6)
+
+	local h1 = UI.Text(nav, UI.F.heading)
+	h1:SetPoint("TOPLEFT", 14, -12)
+	h1:SetText("전기의 장")
+	UI.OnLeather(h1, L.title)
 
 	self.chapterButtons = {}
+	local prev = h1
 	for i = 0, #C.CHAPTERS do
-		local b = UI.NavRow(nav, 28)
+		local b = UI.NavRow(nav, 27, { badge = true })
 		b.label:SetText(i == 0 and "전체 기록" or C.CHAPTERS[i].title)
-		b:SetPoint("TOPLEFT", nav, "TOPLEFT", -12, -30 - i * 29)
-		b:SetPoint("RIGHT", nav, "RIGHT", -14, 0)
+		b:SetPoint("TOPLEFT", nav, "TOPLEFT", 8, -36 - i * 29)
+		b:SetPoint("RIGHT", nav, "RIGHT", -8, 0)
 		b.onClick = function()
 			UI:FinishTurn(J.turner)
 			local cur = J.chapter or 0
@@ -63,65 +67,67 @@ function J:Create(parent)
 			end)
 		end
 		self.chapterButtons[i] = b
+		prev = b
 	end
 
-	local filterTop = -30 - (#C.CHAPTERS + 1) * 29 - 22
-	local h2 = UI.Label(nav, "기록 분류")
-	h2:SetPoint("TOPLEFT", 0, filterTop)
+	local h2 = UI.Text(nav, UI.F.heading)
+	h2:SetPoint("TOPLEFT", prev, "BOTTOMLEFT", 6, -14)
+	h2:SetText("기록 분류")
+	UI.OnLeather(h2, L.title)
+	prev = h2
 	self.filterChecks = {}
 	for idx, g in ipairs(C.GROUPS) do
 		local cb = UI.Check(nav, g.name,
 			function() return J.filters[g.id] end,
-			function(v) J.filters[g.id] = v; J.page = nil; J.scrollPending = true; J:Refresh() end)
+			function(v) J.filters[g.id] = v; J.page = nil; J.scrollPending = true; J:Refresh() end, nil, true)
+		cb:SetSize(14, 14)
 		local colIdx = (idx - 1) % 2
 		local rowIdx = math.floor((idx - 1) / 2)
-		cb:SetPoint("TOPLEFT", nav, "TOPLEFT", 1 + colIdx * 92, filterTop - 24 - rowIdx * 24)
+		cb:SetPoint("TOPLEFT", h2, "BOTTOMLEFT", 4 + colIdx * 98, -11 - rowIdx * 23)
 		self.filterChecks[g.id] = cb
 	end
 
-	local sep = UI.VRule(p)
-	sep:SetPoint("TOPLEFT", nav, "TOPRIGHT", 0, 0)
-	sep:SetPoint("BOTTOMLEFT", nav, "BOTTOMRIGHT", 0, 0)
-
-	local main = CreateFrame("Frame", nil, p)
-	main:SetPoint("TOPLEFT", nav, "TOPRIGHT", 26, 0)
-	main:SetPoint("BOTTOMRIGHT", 0, 0)
-	self.main = main
-
-	-- 오른쪽: 본문. 장을 바꾸거나 쪽을 넘기면 이 자리(페이지 오른쪽 전체) 위로 종이 한 장이 넘어간다.
-	local sheet = CreateFrame("Frame", nil, p)
-	sheet:SetPoint("TOPLEFT", nav, "TOPRIGHT", 1, pad.top - 1)
-	sheet:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", pad.x - 1, -pad.bottom + 1)
-	self.sheet = sheet
-	self.turner = ns.Effects.MakePageTurn(sheet)
-
-	-- 머리말: 제목과 요약, 오른쪽에 정렬·내보내기
-	local title = main:CreateFontString(nil, "OVERLAY", UI.F.title)
-	title:SetPoint("TOPLEFT", 0, -2)
-	title:SetJustifyH("LEFT")
-	self.title = title
-	local desc = UI.Text(main, UI.F.small)
-	desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -7)
-	self.desc = desc
-	local exportBtn = UI.Button(main, "내보내기", 78, 24, function() UI:ShowExport() end)
-	exportBtn:SetPoint("TOPRIGHT", -4, -8)
-	UI.Tooltip(exportBtn, "내보내기", "지금까지의 모험 전기 전체를 복사할 수 있는 글로 보여 줍니다.")
-	local sortBtn = UI.Button(main, "", 112, 24, function()
+	local sortBtn = UI.Button(nav, "", NAV_W - 20, 26, function()
 		ns.db.newestFirst = not ns.db.newestFirst
 		J.page = nil
 		J.scrollPending = true
 		J:Refresh()
 	end)
-	sortBtn:SetPoint("RIGHT", exportBtn, "LEFT", -6, 0)
+	sortBtn:SetPoint("BOTTOMLEFT", 10, 6)
 	self.sortBtn = sortBtn
-	local rule = UI.Rule(main)
-	rule:SetPoint("TOPLEFT", 0, -60)
-	rule:SetPoint("TOPRIGHT", 0, -60)
 
-	-- 타임라인
+	-- 목록 아래의 삽화 양피지 (성과 다리)
+	local picInfo = UI.ATLAS.PaperCastle
+	local pic = UI.Sprite(nav, "PaperCastle", "ARTWORK")
+	pic:SetSize(NAV_W - 16, (NAV_W - 16) * picInfo.h / picInfo.w)
+	pic:SetPoint("BOTTOM", 0, 38)
+
+	-- 오른쪽: 본문 (양피지 한 장, 아래쪽에 희미한 잉크 삽화)
+	local sheet = UI.Section(p)
+	sheet:SetPoint("TOPLEFT", nav, "TOPRIGHT", 12, 0)
+	sheet:SetPoint("BOTTOMRIGHT", 0, 0)
+	self.sheet = sheet
+	-- 장을 바꾸거나 쪽을 넘길 때 이 양피지 위로 한 장이 넘어간다
+	self.turner = ns.Effects.MakePageTurn(sheet)
+	local main = CreateFrame("Frame", nil, sheet)
+	main:SetPoint("TOPLEFT", 20, -14)
+	main:SetPoint("BOTTOMRIGHT", -18, 16)
+	self.main = main
+
+	local title = main:CreateFontString(nil, "OVERLAY", UI.F.header)
+	title:SetPoint("TOPLEFT", 4, -4)
+	title:SetJustifyH("LEFT")
+	self.title = title
+	local desc = UI.Text(main, UI.F.small)
+	desc:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -5)
+	self.desc = desc
+	local rule = UI.Rule(main, 0.4)
+	rule:SetPoint("TOPLEFT", 0, -58)
+	rule:SetPoint("TOPRIGHT", 0, -58)
+
 	local scroll = UI.Scroll(main)
-	scroll:SetPoint("TOPLEFT", 0, -72)
-	scroll:SetPoint("BOTTOMRIGHT", -12, 86)
+	scroll:SetPoint("TOPLEFT", 4, -66)
+	scroll:SetPoint("BOTTOMRIGHT", -18, 76)
 	self.scroll = scroll
 	local spine = scroll.child:CreateTexture(nil, "BACKGROUND")
 	spine:SetWidth(1)
@@ -153,22 +159,23 @@ function J:Create(parent)
 	empty:SetJustifyH("CENTER")
 	self.empty = empty
 
-	-- 아래쪽: 쪽 넘기기 + 나만의 기록
-	local rule2 = UI.Rule(main)
-	rule2:SetPoint("BOTTOMLEFT", 0, 76)
-	rule2:SetPoint("BOTTOMRIGHT", 0, 76)
-	local prevBtn = UI.Button(main, "←  이전 쪽", 92, 24, function() J:TurnPage(-1) end)
-	prevBtn:SetPoint("BOTTOMLEFT", 0, 42)
-	local nextBtn = UI.Button(main, "다음 쪽  →", 92, 24, function() J:TurnPage(1) end)
-	nextBtn:SetPoint("BOTTOMRIGHT", 0, 42)
-	local pageText = UI.Text(main, UI.F.small)
-	pageText:SetPoint("BOTTOM", 0, 48)
+	-- 쪽 넘기기
+	local rule2 = UI.Rule(main, 0.4)
+	rule2:SetPoint("BOTTOMLEFT", 0, 70)
+	rule2:SetPoint("BOTTOMRIGHT", 0, 70)
+	local prevBtn = UI.Button(main, "이전 쪽", 116, 26, function() J:TurnPage(-1) end, "←")
+	prevBtn:SetPoint("BOTTOMLEFT", 0, 38)
+	local nextBtn = UI.Button(main, "다음 쪽", 116, 26, function() J:TurnPage(1) end, "→")
+	nextBtn:SetPoint("BOTTOMRIGHT", 0, 38)
+	local pageText = UI.Text(main, UI.F.heading)
+	pageText:SetPoint("BOTTOM", 0, 44)
 	pageText:SetJustifyH("CENTER")
 	self.prevBtn, self.nextBtn, self.pageText = prevBtn, nextBtn, pageText
 
-	local note = UI.EditBox(main, 420, 30, "나만의 기록을 남겨 보세요… (예: 오늘 처음으로 그리핀을 탔다)")
-	note:SetPoint("BOTTOMLEFT", 0, 0)
-	note:SetPoint("RIGHT", main, "RIGHT", -104, 0)
+	-- 나만의 기록
+	local note = UI.EditBox(main, 420, 28, "나만의 기록을 남겨 보세요… (예: 오늘 처음으로 그리핀을 탔다)")
+	note:SetPoint("BOTTOMLEFT", 0, 2)
+	note:SetPoint("RIGHT", main, "RIGHT", -206, 0)
 	local function submit()
 		local t = note:GetText()
 		if t and ns.Trim(t) ~= "" then
@@ -179,8 +186,11 @@ function J:Create(parent)
 	end
 	note:SetScript("OnEnterPressed", submit)
 	self.note = note
-	local addBtn = UI.Button(main, "기록하기", 96, 30, submit, nil, "primary")
+	local addBtn = UI.Button(main, "기록하기", 96, 28, submit, nil, "red")
 	addBtn:SetPoint("LEFT", note, "RIGHT", 8, 0)
+	local exportBtn = UI.Button(main, "내보내기", 96, 28, function() UI:ShowExport() end)
+	exportBtn:SetPoint("LEFT", addBtn, "RIGHT", 6, 0)
+	UI.Tooltip(exportBtn, "내보내기", "지금까지의 모험 전기 전체를 복사할 수 있는 글로 보여 줍니다.")
 
 	self.scrollPending = true
 	return p
@@ -246,7 +256,7 @@ function J:Refresh(keepScroll, reason)
 		if i > 0 and counts[i] == 0 and i ~= self.chapter then b:SetDim() end
 	end
 	for _, cb in pairs(self.filterChecks) do cb:Sync() end
-	self.sortBtn:SetText(ns.db.newestFirst and "최신 기록부터" or "오래된 기록부터")
+	self.sortBtn:SetText(ns.db.newestFirst and "정렬: 최신 기록부터" or "정렬: 오래된 기록부터")
 
 	-- 제목
 	if self.chapter == 0 then
@@ -293,7 +303,7 @@ function J:Refresh(keepScroll, reason)
 		local e = item.e
 		local day = ns.DayKey(e.t)
 		if day ~= lastDay then
-			if lastDay then y = y + 14 end
+			if lastDay then y = y + 12 end
 			local dot = self.dotPool:Acquire()
 			dot:ClearAllPoints()
 			dot:SetPoint("CENTER", child, "TOPLEFT", X_ICON + 8, -(y + 8))
@@ -305,7 +315,7 @@ function J:Refresh(keepScroll, reason)
 			h:ClearAllPoints()
 			h:SetPoint("TOPLEFT", child, "TOPLEFT", X_TEXT, -y)
 			h:SetText(ns.FormatDate(e.t))
-			y = y + (h:GetStringHeight() or 14) + 12
+			y = y + (h:GetStringHeight() or 14) + 11
 			lastDay = day
 		end
 		local cat = C.CATS[e.cat] or C.CATS.start
@@ -337,7 +347,7 @@ function J:Refresh(keepScroll, reason)
 			UI.FadeIn(fs, 0.45, stagger)
 			stagger = math.min(stagger + 0.1, 0.6)
 		end
-		y = y + math.max(16, fs:GetStringHeight() or 14) + 11
+		y = y + math.max(16, fs:GetStringHeight() or 14) + 10
 	end
 	self.spine:ClearAllPoints()
 	self.spine:SetPoint("TOPLEFT", child, "TOPLEFT", X_ICON + 8, -8)

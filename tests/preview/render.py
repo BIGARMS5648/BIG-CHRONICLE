@@ -90,7 +90,8 @@ def tint(img, vc, alpha):
 
 def draw_texture(canvas, n, alpha):
     x0, y0, x1, y1 = screen_box(n)
-    w, h = int(round(x1 - x0)), int(round(y1 - y0))
+    # 끝점을 각각 반올림해야 이웃한 조각 사이에 1px 틈이 생기지 않는다
+    w, h = int(round(x1)) - int(round(x0)), int(round(y1)) - int(round(y0))
     if w <= 0 or h <= 0:
         return
     if n["color"]:
@@ -273,9 +274,16 @@ def draw_node(canvas, n, alpha):
     if kind == "StatusBar" and n["smax"] > n["smin"]:
         frac = max(0, min(1, (n["sval"] - n["smin"]) / (n["smax"] - n["smin"])))
         x0, y0, x1, y1 = screen_box(n)
-        c = n["sbc"] or [0.5, 0.5, 0.5, 1]
-        fill = Image.new("RGBA", (max(1, int((x1 - x0) * frac)), max(1, int(y1 - y0))),
-                         tuple(int(v * 255) for v in c[:3]) + (int((c[3] if len(c) > 3 else 1) * 200 * a),))
+        bw, bh = max(1, int(x1 - x0)), max(1, int(y1 - y0))
+        src = load_tex(n["sbt"]) if n.get("sbt") else None
+        fw = max(1, int(bw * frac))
+        if src is not None:
+            # 게임처럼 막대 그림의 왼쪽 부분만 보여 준다
+            fill = src.resize((bw, bh), Image.LANCZOS).crop((0, 0, fw, bh))
+            fill = tint(fill, n["sbc"], a)
+        else:
+            c = n["sbc"] or [0.5, 0.5, 0.5, 1]
+            fill = Image.new("RGBA", (fw, bh), tuple(int(v * 255) for v in c[:3]) + (int((c[3] if len(c) > 3 else 1) * 200 * a),))
         target.alpha_composite(fill, (int(x0), int(y0)))
         # 막대 위 글자
         for r in regions:
