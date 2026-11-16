@@ -83,6 +83,8 @@ UI.F = {
 	key     = "BigChronicleFontKey",
 	label   = "BigChronicleFontLabel",
 	brand   = "BigChronicleFontBrand",
+	toastName  = "BigChronicleFontToastName",       -- 발견 알림의 몬스터 이름 (크게, 제목 강조 글꼴)
+	toastNameS = "BigChronicleFontToastNameSmall",  -- 이름이 길 때
 	brandSmall = "BigChronicleFontBrandSmall",
 }
 
@@ -141,6 +143,9 @@ function UI:InitTheme()
 	-- 탭 이름은 제목 강조 글꼴로
 	local locale = GetLocale and GetLocale() or ""
 	MakeFont(self.F.tab,     TITLE_BASE, 15, L.text, true, TITLE_FILE[locale])
+	-- 발견 알림에서 몬스터 이름을 크고 진하게
+	MakeFont(self.F.toastName,  TITLE_BASE, 19, { 0.13, 0.06, 0.03 }, false, TITLE_FILE[locale])
+	MakeFont(self.F.toastNameS, TITLE_BASE, 16, { 0.13, 0.06, 0.03 }, false, TITLE_FILE[locale])
 	MakeFont(self.F.label,   BASE, 11, C.muted, sh)
 	MakeFont(self.F.body,    BASE, 13, C.text, sh)
 	MakeFont(self.F.small,   BASE, 11.5, C.sub, sh)

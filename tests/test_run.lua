@@ -319,7 +319,10 @@ local ok, err = pcall(function()
 	ns.db.toast = true
 	ns.Toast.queue = {}
 	if ns.Toast.frame then ns.Toast.frame:Hide() end
-	ns.Toast:Show("도감 등록", "켄타우로스 · 마그람 약탈자", nil, "species", { creature = "마그람 약탈자" })
+	ns.Toast:Show("새로운 생물 발견!", "마그람 약탈자", nil, "species", { creature = "마그람 약탈자" }, "No.008  켄타우로스")
+	assert(ns.Toast.frame.body:GetText() == "마그람 약탈자" and ns.Toast.frame.body.__font == ns.UI.F.toastName,
+		"discovery toast shows the creature name large")
+	assert((ns.Toast.frame.brand:GetText() or ""):find("No.008", 1, true), "tribe number on the bottom line")
 	ns.Toast.frame:Fire("OnMouseUp", "LeftButton")
 	assert(ns.UI.current == "bestiary", "toast click opens bestiary")
 	assert(ns.BestiaryTab.sel.kind == "tribe" and ns.BestiaryTab.sel.id == "centaur", "toast click selects the creature's tribe")

@@ -420,10 +420,11 @@ function B:OnNewCreature(name, c)
 	end
 
 	if ns.Toast and not IsRare(c.cls) then
+		-- 몬스터 이름을 크게 강조하고, 도감 번호와 종족은 아랫줄에
 		if newTribe then
-			ns.Toast:Show("새로운 종족 발견!", no .. "  " .. def.name .. "  —  " .. name, def.icon, "tribe", { creature = name })
+			ns.Toast:Show("새로운 종족 발견!", name, def.icon, "tribe", { creature = name }, no .. "  " .. def.name)
 		else
-			ns.Toast:Show("도감 등록", def.name .. "  ·  " .. name, def.icon, "species", { creature = name })
+			ns.Toast:Show("새로운 생물 발견!", name, def.icon, "species", { creature = name }, no .. "  " .. def.name)
 		end
 	end
 	if ns.db.chat and not ns.db.toast and not newTribe and not IsRare(c.cls) then -- 팝업을 끈 경우에만 채팅으로 알림
@@ -438,7 +439,7 @@ function B:OnRare(name, c, isNew)
 		{ creature = name })
 	local def = ns.GetTribe(c.tribe)
 	if ns.Toast then
-		ns.Toast:Show("희귀 개체 발견!", name .. "  (" .. def.name .. ")", def.icon, "rare", { creature = name })
+		ns.Toast:Show("희귀 개체 발견!", name, def.icon, "rare", { creature = name }, self:FormatNo(c.tribe) .. "  " .. def.name)
 	end
 	self:CheckRank(c.tribe)
 end

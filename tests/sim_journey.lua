@@ -493,7 +493,7 @@ if pdir then
 	step(14); M.Dump(pdir .. "/toast.json"); settle()
 	-- 도감 발견 알림 (용 문장 밀랍 인장)
 	ns.Toast.queue = {}; ns.Toast.frame:Hide()
-	ns.Toast:Show("새로운 종족 발견!", "No.008  켄타우로스  —  켈키스 궁수", "Interface\\Icons\\Ability_Mount_WhiteDireWolf", "tribe", { creature = "켈키스 궁수" })
+	ns.Toast:Show("새로운 종족 발견!", "켈키스 궁수", "Interface\\Icons\\Ability_Mount_WhiteDireWolf", "tribe", { creature = "켈키스 궁수" }, "No.008  켄타우로스")
 	step(14); M.Dump(pdir .. "/toastdex.json"); settle()
 	ns.Toast.queue = {}; ns.Toast.frame:Hide()
 	ns:Fire("CHAPTER_STARTED", 4); step(40); M.Dump(pdir .. "/chapter.json"); settle()

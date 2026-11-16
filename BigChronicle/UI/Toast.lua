@@ -161,7 +161,8 @@ function Toast:Build()
 end
 
 -- link: { creature = 이름 } / { tribe = 종족 id } / { ach = 업적 id }
-function Toast:Show(title, body, icon, kind, link)
+-- sub: 있으면 body(몬스터 이름)를 크게 강조하고, sub(도감 번호·종족)를 아랫줄에 쓴다
+function Toast:Show(title, body, icon, kind, link, sub)
 	if not (ns.db and ns.db.toast) then return end
 	self.queue = self.queue or {}
 	if #self.queue >= MAX_QUEUE then
@@ -177,7 +178,7 @@ function Toast:Show(title, body, icon, kind, link)
 			table.remove(self.queue, 1)
 		end
 	end
-	table.insert(self.queue, { title = title, body = body, icon = icon, kind = kind or "species", link = link })
+	table.insert(self.queue, { title = title, body = body, icon = icon, kind = kind or "species", link = link, sub = sub })
 	self:Build()
 	if not self.frame:IsShown() then self:Next() end
 end
@@ -251,14 +252,27 @@ function Toast:Next()
 	f.title:SetText(item.title)
 	f.title:SetTextColor(ink[1], ink[2], ink[3])
 	f.body:SetText(item.body)
-	-- 아랫줄이 길면 (긴 업적 이름 등) 한 단계 작은 글씨로
-	f.body:SetFontObject(UI.F.body)
 	local room = WIDTH - 86 - 88
-	if (f.body:GetStringWidth() or 0) > room then f.body:SetFontObject(UI.F.small) end
-	f.body:SetTextColor(0.16, 0.10, 0.06)
+	f.title:ClearAllPoints()
+	f.title:SetPoint("RIGHT", -88, 0)
+	if item.sub then
+		-- 발견 알림: 몬스터 이름을 크게, 진하게 (길면 한 단계 작게)
+		f.title:SetPoint("TOPLEFT", f.icon, "TOPRIGHT", 14, 8)
+		f.body:SetFontObject(UI.F.toastName)
+		if (f.body:GetStringWidth() or 0) > room then f.body:SetFontObject(UI.F.toastNameS) end
+		if (f.body:GetStringWidth() or 0) > room then f.body:SetFontObject(UI.F.body) end
+		f.body:SetTextColor(0.13, 0.06, 0.03)
+	else
+		f.title:SetPoint("TOPLEFT", f.icon, "TOPRIGHT", 14, 3)
+		-- 아랫줄이 길면 (긴 업적 이름 등) 한 단계 작은 글씨로
+		f.body:SetFontObject(UI.F.body)
+		if (f.body:GetStringWidth() or 0) > room then f.body:SetFontObject(UI.F.small) end
+		f.body:SetTextColor(0.16, 0.10, 0.06)
+	end
 	f.link, f.sample = item.link, item.sample
-	f.brand:SetText(item.sample and "BIG CHRONICLE"
-		or (item.link and (item.link.ach and "눌러서 업적 보기" or "눌러서 도감 보기") or "BIG CHRONICLE"))
+	local hint = item.sample and "BIG CHRONICLE"
+		or (item.link and (item.link.ach and "눌러서 업적 보기" or "눌러서 도감 보기") or "BIG CHRONICLE")
+	f.brand:SetText(item.sub and (item.sub .. "   ·   " .. hint) or hint)
 	f.hold = style.hold
 	f.t = 0
 	f.pendingFX = item.kind
