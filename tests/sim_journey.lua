@@ -489,7 +489,7 @@ if pdir then
 	ns.UI:SelectTab("settings"); settle(); dump("settings")
 	f:Hide(); ns.UI:Open("journal"); step(5); dump("opening"); settle()
 	f:Hide()
-	ns.Toast:Show("업적 달성!   +10점", "「백 가지 이야기」", "Interface\\Icons\\INV_Misc_Note_01", "achievement", { ach = "quest100" })
+	ns.Toast:Show("업적 달성!", "백 가지 이야기", "Interface\\Icons\\INV_Misc_Note_01", "achievement", { ach = "quest100" }, "+10점")
 	step(14); M.Dump(pdir .. "/toast.json"); settle()
 	-- 도감 발견 알림 (용 문장 밀랍 인장)
 	ns.Toast.queue = {}; ns.Toast.frame:Hide()

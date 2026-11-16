@@ -1,3 +1,7 @@
+## 1.10.14
+
+- Achievement notifications now look like discovery notifications: a small "업적 달성!" header, the achievement name large in the game's title font, and the points (and "N more" when several land at once) on the bottom line
+
 ## 1.10.13
 
 - Mouse-over highlights now follow each control's real shape instead of a plain rectangle: the trapezoid tabs, leather and gold buttons, chapter and category buttons, check boxes, the close button and the scrollbar arrows light up in a warm glow of their own art

@@ -476,12 +476,12 @@ function A:Announce(list)
 		ns.Chronicle:Add("achievement", (major[1].flavor or "또 하나의 이야기가 완성되었다.") .. ns.Hex(tail, ns.COLOR.dim), data)
 	end
 	if ns.Toast then
-		-- 점수는 제목 줄에, 업적 이름은 아랫줄에 (이름이 길어도 점수가 잘리지 않도록)
+		-- 발견 알림처럼: 위에 작게 '업적 달성!', 가운데 업적 이름을 크게, 아랫줄에 점수
 		if #list == 1 then
-			ns.Toast:Show("업적 달성!   +" .. top.points .. "점", "「" .. top.name .. "」", top.icon, "achievement", { ach = top.id })
+			ns.Toast:Show("업적 달성!", top.name, top.icon, "achievement", { ach = top.id }, "+" .. top.points .. "점")
 		else
-			ns.Toast:Show("업적 " .. #list .. "개 달성!   +" .. pts .. "점", "「" .. top.name .. "」",
-				top.icon, "achievement", { ach = top.id })
+			ns.Toast:Show("업적 " .. #list .. "개 달성!", top.name, top.icon, "achievement", { ach = top.id },
+				"외 " .. (#list - 1) .. "개  ·  +" .. pts .. "점")
 		end
 	end
 end
