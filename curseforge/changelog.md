@@ -1,3 +1,7 @@
+## 1.10.2
+
+- Chapter titles now sit in the middle of the scroll's parchment face (higher than before), on the first-page card and on every chapter card
+
 ## 1.10.1
 
 - The first-page scroll card ("…의 도감 수첩, 첫 장") no longer spills out of the scroll: the small "BIG CHRONICLE" header is gone, the title sits in the middle of the scroll, and long titles shrink to fit

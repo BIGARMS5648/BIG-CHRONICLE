@@ -361,7 +361,7 @@ local function BuildCard()
 	if ink.SetFrameLevel and f.GetFrameLevel then ink:SetFrameLevel((f:GetFrameLevel() or 0) + 5) end
 
 	local label = ink:CreateFontString(nil, "OVERLAY", "BigChronicleFontCinematicLabel")
-	label:SetPoint("TOP", band, "TOP", 10, -30)
+	label:SetPoint("TOP", band, "TOP", 10, -21)
 	f.label = label
 
 	local titleHolder = CreateFrame("Frame", nil, ink)
@@ -387,7 +387,8 @@ function E.ShowCard(label, title, sub)
 	-- 머리글이 없으면 제목을 두루마리 가운데에, 있으면 머리글 아래에 놓는다
 	f.titleHolder:ClearAllPoints()
 	if (label or "") == "" then
-		f.titleHolder:SetPoint("CENTER", f.band, "CENTER", 0, 3)
+		-- 두루마리 그림의 펼쳐진 면은 그림 높이의 약 39% 지점이 가운데다 (아래로 말린 끝이 매달려 있어서)
+		f.titleHolder:SetPoint("CENTER", f.band, "CENTER", 0, math.floor(SCROLL_H * 0.115 + 0.5))
 	else
 		f.titleHolder:SetPoint("TOP", f.label, "BOTTOM", 0, -2)
 	end
