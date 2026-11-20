@@ -66,7 +66,7 @@ On top of that, **beast families** such as wolves, spiders and raptors each get 
 
 ---
 
-## 🏆 Achievements — about 10,000
+## 🏆 Achievements — about 4,500
 
 Inspired by the Wrath-era achievements for classic (level 1–60) content, focusing on what **Forever's official achievements don't already cover**, plus achievements unique to this addon:
 
@@ -80,11 +80,11 @@ Inspired by the Wrath-era achievements for classic (level 1–60) content, focus
 - **Battlegrounds, Reputation, Trials, Chronicle** — battles joined, exalted factions, your first death, personal notes and exports (no hardcore "never die" achievements)
 - **Little Joys** — playful achievements based on real-world dates: 7- and 30-day streaks, 100 days together, weekend warrior, night owl, New Year's Day…
 
-- **About 10,000 tiered achievements** built on everything the addon records (nothing is counted twice):
+- **About 4,400 tiered achievements** built on everything the addon records. They start at meaningful amounts and climb in steps of about ×2–2.5, so they don't pop all the time (nothing is counted twice):
   - every tribe: kills (up to 200,000), species, research ranks ★1–★5, sightings, and finds in each known habitat
   - every one of the 40 classic zones: visits, time spent, quests, places, creatures found, sightings and deaths
   - every dungeon and raid: entries, clears, boss kills and fast clears (90 to 20 minutes); every battleground
-  - every level from 2 to 60, plus levels **per class, per race and per race/class** (achievements are account-wide, so alts fill these in)
+  - levels **per class (20/40/60), per race (30/60) and per race/class (60)** (achievements are account-wide, so alts fill these in)
   - kills, quests and bestiary species per class, kills per race, lifetime totals and journal statistics by hour, weekday and month
 - **Account-wide**: an achievement earned on one character counts on all of them, showing who earned it
 - **Search** achievements by name or description

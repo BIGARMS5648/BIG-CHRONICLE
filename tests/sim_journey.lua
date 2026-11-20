@@ -44,9 +44,18 @@ local function deepcopy(v, path, seen)
 end
 
 local ns
+-- 업적이 얼마나 자주 뜨는지 센다 (알림 = 한 번의 판정에서 새로 이룬 업적 묶음)
+local achPops, achPopSizes = 0, {}
 local function login()
 	M.tickers, M.timers = {}, {}
 	ns = M.load(addonDir)
+	local A = ns.Achievements
+	local realAnnounce = A.Announce
+	A.Announce = function(self, list)
+		achPops = achPops + 1
+		achPopSizes[#achPopSizes + 1] = #list
+		return realAnnounce(self, list)
+	end
 	M.fire("ADDON_LOADED", "BigChronicle")
 	M.fire("PLAYER_LOGIN")
 	M.fire("PLAYER_ENTERING_WORLD", true, false)
@@ -442,6 +451,29 @@ for _, e in ipairs(db.log) do
 	if e.cat == "level" then levelLines = levelLines + 1 elseif e.cat == "achievement" then achLines = achLines + 1 end
 end
 if achLines > levelLines * 1.2 then issue(string.format("업적 기록이 너무 많다: %d줄 (레벨업 %d줄)", achLines, levelLines)) end
+
+-- 업적이 너무 자주 뜨면 재미가 없다: 1~60 여정 동안의 업적 알림 수와 달성 수를 본다
+do
+	local done = 0
+	for _ in pairs(db.ach.done) do done = done + 1 end
+	local hours = (db.stats.tracked or 0) / 3600
+	local perHour = achPops / math.max(1, hours)
+	if os.getenv("ACH_STATS") then
+		print(string.format("== 업적: 달성 %d개, 알림 %d번 (시간당 %.1f번, 모험 %.1f시간)", done, achPops, perHour, hours))
+		local fam = {}
+		for id in pairs(db.ach.done) do
+			local def = ns.ACH_BY_ID[id]
+			local k = def and def.minor and (id:match("^(%a+)_") or id) or "손으로 쓴 업적"
+			fam[k] = (fam[k] or 0) + 1
+		end
+		local keys = {}
+		for k in pairs(fam) do keys[#keys + 1] = k end
+		table.sort(keys, function(a, b) return fam[a] > fam[b] end)
+		for _, k in ipairs(keys) do io.write(string.format("   %s %d", k, fam[k])) end
+		print()
+	end
+	if perHour > 3 then issue(string.format("업적 알림이 너무 잦다: 시간당 %.1f번", perHour)) end
+end
 
 -- 9) UI를 모두 열어 본다 (큰 데이터에서 오류가 없는지)
 local ok, err = pcall(function()

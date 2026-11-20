@@ -1,3 +1,8 @@
+## 1.11.0
+
+- **Achievement balance**: the tiered achievements were too easy and popped far too often. Every series now starts at a meaningful amount and climbs in steps of about ×2–2.5 (for example tribe kills 250 → 500 → 1,000…, zone time 1h → 2h → 4h…, lifetime kills from 1,000). The one-per-level achievements are gone (the story achievements every 5 levels stay), class levels are 20/40/60, race levels 30/60 and race/class 60. In a simulated 1–60 run, achievement notifications dropped from 3.2 to 1.8 per hour and earned achievements from 744 to 111; there are now 4,508 achievements in all
+- The hand-written story achievements are unchanged
+
 ## 1.10.15
 
 - The achievement wax seal lost its hanging ribbons: it is now a round seal like the bestiary one, with a compass star instead of the lion
